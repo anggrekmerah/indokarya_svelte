@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { PRIVATE_KEY } from '$env/static/private';
 import jwt from 'jsonwebtoken';
+import { user } from '$lib/stores/user';
 
 /** @type {import('./$types').Actions} */
 export const actions = {
@@ -34,6 +35,7 @@ export const actions = {
             
         // Simulate a successful login with hardcoded credentials
         if (dataLogin) {
+
             // Set a cookie to remember the user. The cookie is named 'session_id' and
             // its value is an arbitrary string. In a real app, this would be a secure token.
             cookies.set('session_id', token, {
@@ -43,6 +45,8 @@ export const actions = {
                 secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
                 maxAge: 60 * 60 * 24 // Cookie expires in 1 day
             });
+
+            user.set(dataLogin.data);
 
             // Redirect the user to the home page after a successful login.
             // The 303 status code is a "See Other" redirect, which is the standard
