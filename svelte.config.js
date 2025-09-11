@@ -3,7 +3,9 @@ import adapter from '@sveltejs/adapter-node';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	kit: { adapter: adapter() },
+	kit: { adapter: adapter(), csrf: {
+			trustedOrigins: ['https://e6a08e973f03.ngrok-free.app']
+		} },
 	preprocess: [mdsvex()],
 	extensions: ['.svelte', '.svx']
 };
