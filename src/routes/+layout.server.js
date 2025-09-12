@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 
 /** @type {import('./$types').LayoutServerLoad} */
-export const load = async ({ cookies, url }) => {
+export const load = async ({ cookies, url, locals }) => {
     // Check if the 'session_id' cookie exists.
     const sessionId = cookies.get('session_id');
 
@@ -9,4 +9,7 @@ export const load = async ({ cookies, url }) => {
     if (!sessionId && url.pathname !== '/login') {
         throw redirect(303, '/login');
     } 
+
+    const deviceType = locals.device;
+    console.log(deviceType)
 };
