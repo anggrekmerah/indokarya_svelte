@@ -3,7 +3,8 @@
     import { quintOut } from 'svelte/easing';
     import { fade } from 'svelte/transition';
     import { enhance } from '$app/forms';
-
+    import { _ } from 'svelte-i18n';
+    
     let { children } = $props();
 
     // State variables for each menu's open/close state
@@ -77,24 +78,36 @@
     >
         
         <div class="p-4">
-            <h3 class="text-lg font-semibold mb-4">Setting Profile</h3>
+            <h3 class="text-lg font-semibold mb-4">{$_('Setting Profile')}</h3>
             <ul class="space-y-2 text-sm">
                 {#each statuses as status}
                     <li class="border-2 border-x-transparent border-t-transparent border-b-grey-500" onclick={closeMenu}>
                         <a href="/profile" class="flex w-full text-left p-3 rounded-md hover:bg-gray-100 space-x-2">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="h-5 w-5 fill-current text-gray-700">
                                 <path d="{status.svg}"/></svg>
-                            <span>{status.title}</span>
+                            <span>{$_(status.title)}</span>
                         </a>
                     </li>
                 {/each}
+                <li class="border-2 border-x-transparent border-t-transparent border-b-grey-500" onclick={ () => { closeMenu()} }>
+                    <button class="flex w-full text-left p-3 rounded-md hover:bg-gray-100 space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="h-5 w-5 fill-current text-gray-700"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M415.9 344L225 344C227.9 408.5 242.2 467.9 262.5 511.4C273.9 535.9 286.2 553.2 297.6 563.8C308.8 574.3 316.5 576 320.5 576C324.5 576 332.2 574.3 343.4 563.8C354.8 553.2 367.1 535.8 378.5 511.4C398.8 467.9 413.1 408.5 416 344zM224.9 296L415.8 296C413 231.5 398.7 172.1 378.4 128.6C367 104.2 354.7 86.8 343.3 76.2C332.1 65.7 324.4 64 320.4 64C316.4 64 308.7 65.7 297.5 76.2C286.1 86.8 273.8 104.2 262.4 128.6C242.1 172.1 227.8 231.5 224.9 296zM176.9 296C180.4 210.4 202.5 130.9 234.8 78.7C142.7 111.3 74.9 195.2 65.5 296L176.9 296zM65.5 344C74.9 444.8 142.7 528.7 234.8 561.3C202.5 509.1 180.4 429.6 176.9 344L65.5 344zM463.9 344C460.4 429.6 438.3 509.1 406 561.3C498.1 528.6 565.9 444.8 575.3 344L463.9 344zM575.3 296C565.9 195.2 498.1 111.3 406 78.7C438.3 130.9 460.4 210.4 463.9 296L575.3 296z"/></svg>
+                        <span>
+                            <!-- {#if $lang === 'en'}
+                                Change language To ID
+                            {:else}
+                                Change language To EN
+                            {/if} -->
+                        </span>
+                    </button>
+                </li>
                 <li class="border-2 border-x-transparent border-t-transparent border-b-grey-500"> 
                     <form action="/login?/logout" method="POST" use:enhance class="flex items-center space-x-2 p-3 rounded-md hover:bg-gray-100">
                         <button type="submit" class="flex items-center space-x-2 w-full text-left">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="h-5 w-5 fill-current text-gray-700">
                                 <path d="M569 337C578.4 327.6 578.4 312.4 569 303.1L425 159C418.1 152.1 407.8 150.1 398.8 153.8C389.8 157.5 384 166.3 384 176L384 256L272 256C245.5 256 224 277.5 224 304L224 336C224 362.5 245.5 384 272 384L384 384L384 464C384 473.7 389.8 482.5 398.8 486.2C407.8 489.9 418.1 487.9 425 481L569 337zM224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160z"/>
                             </svg>
-                            <span>Log Out</span>
+                            <span>{$_('Log Out')}</span>
                         </button>
                     </form>
                 </li>

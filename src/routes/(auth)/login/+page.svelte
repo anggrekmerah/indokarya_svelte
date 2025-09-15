@@ -1,10 +1,11 @@
 
 
-<script lang="ts">
+<script>
   // @ts-nocheck
   // This script section contains the Svelte logic for the login form.
   import { enhance } from '$app/forms';
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
   
   // A loading state to show a spinner or disable the button during submission.
   let loading = false;
@@ -40,7 +41,7 @@
             <a href="#">
                 <img src="/images/logo.svg" class="w-40" alt="tailus logo">
             </a>
-            <p class="font-medium text-lg text-gray-600">Welcome to tailus ! Login first</p>
+            <p class="font-medium text-lg text-gray-600">{$_('greeting')}</p>
         </div>
         
         <div class="mt-12 grid gap-6 sm:grid-cols-2">
@@ -99,7 +100,7 @@
                 class="w-full py-3 px-6 ring-1 ring-gray-300 rounded-xl placeholder-gray-600 bg-transparent transition disabled:ring-gray-200 disabled:bg-gray-100 disabled:placeholder-gray-400 invalid:ring-red-400 focus:invalid:outline-none"
               />
               <button type="reset" class="w-max p-3 -mr-3">
-                  <span class="text-sm tracking-wide text-blue-600">Forgot password ?</span>
+                  <span class="text-sm tracking-wide text-blue-600">{$_('Forgot Password')} ?</span>
               </button>
             </div>
 
@@ -116,7 +117,7 @@
                 </svg>
                 Logging In...
               {:else}
-                Sign In
+                {$_('Sign In')}
               {/if}
               </button>
             </div>

@@ -1,9 +1,10 @@
 <script>
-    let { children } = $props();
+    let { data, children } = $props();
 
     import { slide } from 'svelte/transition';
     import { quintOut } from 'svelte/easing';
     import { fade } from 'svelte/transition';
+    import { _ } from 'svelte-i18n';
 
     // State variables for each menu's open/close state
     let openMenu = $state(null); // 'status', 'date', or 'category'
@@ -46,10 +47,10 @@
             <span class="block">Status</span>
         </button>
         <button onclick={() => toggleMenu('date')} class="flex-1 text-center py-2 px-1 md:px-4 text-gray-600 hover:text-blue-500">
-            <span class="block">Date</span>
+            <span class="block">{$_('Date')}</span>
         </button>
         <button onclick={() => toggleMenu('category')} class="flex-1 text-center py-2 px-1 md:px-4 text-gray-600 hover:text-blue-500">
-            <span class="block">Category</span>
+            <span class="block">{$_('Category')}</span>
         </button>
     </div>
 </header>
@@ -69,12 +70,12 @@
     >
         {#if openMenu === 'status'}
             <div class="p-4">
-                <h3 class="text-lg font-semibold mb-4">Select Status</h3>
+                <h3 class="text-lg font-semibold mb-4">{$_('Select Status')}</h3>
                 <ul class="space-y-2 text-sm">
-                    {#each statuses as status}
+                    {#each data.dataTicketStatus as status}
                         <li>
                             <button class="w-full text-left p-3 rounded-md hover:bg-gray-100 border-2 border-x-transparent border-t-transparent border-b-grey-500">
-                                {status}
+                                {$_(status.status_name)}
                             </button>
                         </li>
                     {/each}
@@ -84,18 +85,18 @@
 
         {#if openMenu === 'date'}
             <div class="p-4">
-                <h3 class="text-lg font-semibold mb-4">Filter by Date</h3>
+                <h3 class="text-lg font-semibold mb-4">{$_('Filter by Date')}</h3>
                 <div class="flex flex-col space-y-4">
                     <label>
-                        <span class="text-sm text-gray-600">From Date:</span>
+                        <span class="text-sm text-gray-600">{$_('From Date')}:</span>
                         <input type="date" bind:value={fromDate} class="w-full mt-1 p-2 border rounded-md">
                     </label>
                     <label>
-                        <span class="text-sm text-gray-600">To Date:</span>
+                        <span class="text-sm text-gray-600">{$_('To Date')}:</span>
                         <input type="date" bind:value={toDate} class="w-full mt-1 p-2 border rounded-md">
                     </label>
                     <button class="w-full mt-4 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                        Submit
+                        {$_('Submit')}
                     </button>
                 </div>
             </div>
@@ -103,12 +104,12 @@
 
         {#if openMenu === 'category'}
             <div class="p-4">
-                <h3 class="text-lg font-semibold mb-4">Select Category</h3>
+                <h3 class="text-lg font-semibold mb-4">{$_('Select Category')}</h3>
                 <ul class="space-y-2 text-sm">
-                    {#each categories as category}
+                    {#each data.dataTicketPriority as priority}
                         <li>
                             <button class="w-full text-left p-2 rounded-md hover:bg-gray-100 border-2 border-x-transparent border-t-transparent border-b-grey-500">
-                                {category}
+                                {$_(priority.priority_name)}
                             </button>
                         </li>
                     {/each}
