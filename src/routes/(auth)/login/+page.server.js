@@ -1,11 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit';
-// import { PRIVATE_KEY } from '$env/static/private';
-// import jwt from 'jsonwebtoken';
-import { user } from '$lib/stores/user';
-import { loginAPI } from '$lib/tools/clientApi';
+
+import { loginAPI } from '$lib/tools/tokenApi';
 
 /** @type {import('./$types').Actions} */
 export const actions = {
+    
     login: async ({ request, cookies, fetch }) => {
         const data = await request.formData();
         const username = data.get('email');
@@ -23,11 +22,11 @@ export const actions = {
         const dataLogin = await loginAPI({ auth : encodedString }, fetch);
             
         // Simulate a successful login with hardcoded credentials
-        if (dataLogin.response) {
+        if (dataLogin) {
 
             // Set a cookie to remember the user. The cookie is named 'session_id' and
             // its value is an arbitrary string. In a real app, this would be a secure token.
-            cookies.set('session_id', dataLogin.token, {
+            cookies.set('session_id', dataLogin.data.remember_token, {
                 path: '/', // The cookie is available to all routes
                 httpOnly: true, // The cookie can't be accessed by client-side JavaScript
                 sameSite: 'strict', // Protects against CSRF attacks
@@ -35,17 +34,16 @@ export const actions = {
                 maxAge: 60 * 60 * 24 // Cookie expires in 1 day
             });
 
-            user.set(dataLogin.response.data);
-
             // Redirect the user to the home page after a successful login.
             // The 303 status code is a "See Other" redirect, which is the standard
             // for form submissions that change data.
             throw redirect(303, '/home');
         } else {
             // If credentials are not valid, return a failure with a message.
-            return fail(400, { success: false, message: dataLogin.response.message });
+            return fail(400, { success: false, message: dataLogin.data.message });
         }
     },
+
     logout: async ({ cookies }) => {
         // Clear the session cookie to log the user out.
         cookies.delete('session_id', { path: '/' });

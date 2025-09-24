@@ -3,13 +3,13 @@ import { waitLocale } from 'svelte-i18n';
 import { browser } from '$app/environment';
 
 export async function load( {data}) {
-
-    const {users} = data;
-    const lang = (users !== null) ? users : 'id'
-    
+  
+  //   const userlang = locals.userlang.lang;
+  
+    await waitLocale();
     // if (browser) {
-      await waitLocale();
-      locale.set(lang)    
+    const L = data.userLang ?? 'id'  
+    await locale.set(L)    
     // }
 
 

@@ -1,7 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import {getLangAPI} from '$lib/tools/clientApi'
-import { user } from '$lib/stores/user.js';
-import { get } from 'svelte/store';
+
 
 /** @type {import('./$types').LayoutServerLoad} */
 export const load = async ({ cookies, url, locals, fetch }) => {
@@ -13,17 +12,10 @@ export const load = async ({ cookies, url, locals, fetch }) => {
         throw redirect(303, '/login');
     } 
 
-    const dataUser = get(user)
-    let userLang = null
-    if(dataUser !== null) {
-        const lang = await getLangAPI({'id_user':dataUser.id}, fetch)
-        userLang = lang.data.lang
-    }
+    const lang = locals.userLang ?? 'id';
     
-
-
     return {
-		users: userLang
+		userLang: lang.lang
 	};
 
 };

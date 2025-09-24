@@ -1,26 +1,28 @@
 import { error } from '@sveltejs/kit';
+import { PRIVATE_KEY,BASE_URL_API } from '$env/static/private';
 import jwt from 'jsonwebtoken';
-
-
-let base_url
-
-
 
 async function defaultBodyRequest(body) {
     body.app = 'svelte'
     return { request : body , signature : '' };
 }
 
-async function generateSignature(body, fetch) {
-    const response = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
+// async function generateSignature(body, fetch) {
+//     const response = await fetch('/api/auth', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify(body)
+//     });
 
-    const data = await response.json();
-    base_url = data.baseURL
-    return data.signature;
+//     const data = await response.json();
+//     base_url = data.baseURL
+//     return data.signature;
+// }
+
+async function generateSignature(body) {
+
+    const signature = jwt.sign(body, PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '1m' });
+    return signature
 }
 
 async function makeBody(body, fetch) {
@@ -33,14 +35,17 @@ async function makeBody(body, fetch) {
 
 }
 
-async function request(endpoint, body, fetch) {
+export async function requestAPI(method, endpoint, bodys, fetch) {
 
-    const responseAPI = await fetch( base_url + endpoint, {
+    const bodyReq = await makeBody(bodys, fetch)
+
+    const url = BASE_URL_API + endpoint
+    const responseAPI = await fetch( url , {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body) // This is correct, it uses the prepared `body` argument.
+        body: JSON.stringify(bodyReq) // This is correct, it uses the prepared `body` argument.
     });
     // console.log(body)
     // Check if the HTTP response status is in the 200-299 range.
@@ -64,48 +69,4 @@ async function request(endpoint, body, fetch) {
     const resJson = await responseAPI.json();
     return resJson;
 
-}
-
-async function requestAPIWithBody(endpoint, body, fetch) {
-
-    const bodyReq = await makeBody(body, fetch)
-
-    return await request( endpoint, bodyReq, fetch);
-    
-}
-
-export async function loginAPI(body, fetch) {
-
-    const bodyReq = await makeBody(body, fetch)
-    
-    const responseAPI = await request('/token/login', bodyReq, fetch) 
-   
-    const sessionID = await generateSessionId()
-
-    return {response : responseAPI, token : sessionID };
-    
-}
-
-export async function getLangAPI(body, fetch) {
-
-    const responseAPI = await requestAPIWithBody('/lang/get-active', body, fetch) 
-
-    return responseAPI;
-    
-}
-
-export async function getTicketStatusAPI(body, fetch) {
-
-    const responseAPI = await requestAPIWithBody('/ticket-status/get', body, fetch) 
-
-    return responseAPI;
-    
-}
-
-export async function getTicketPriorityAPI(body, fetch) {
-
-    const responseAPI = await requestAPIWithBody('/priority/get', body, fetch) 
-
-    return responseAPI;
-    
 }

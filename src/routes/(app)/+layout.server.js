@@ -1,11 +1,10 @@
 
-import { user } from '$lib/stores/user.js';
-import { get } from 'svelte/store';
-
 /** @type {import('./$types').LayoutServerLoad} */
-export async function load() {
+export async function load({locals}) {
+
 	return {
-		users: get(user)
+		userMenu: locals.userMenu,
+		userID: locals.user.id
 	};
 }
 

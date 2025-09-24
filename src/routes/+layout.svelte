@@ -2,14 +2,9 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
-    import { connectSocket , socketStore} from '$lib/stores/socket';
 
 	let { children } = $props();
 
-	onMount(() => {
-        console.log('Layout component is mounted, connecting to Socket.IO...');
-        connectSocket();
-    });
 </script>
 
 <svelte:head>

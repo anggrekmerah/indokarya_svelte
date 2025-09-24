@@ -7,6 +7,9 @@ export default defineConfig({
 	server: {
 		allowedHosts: true,
 	},
+	ssr:{
+		noExternal : ['@googlemaps/js-api-loader']
+	},
 	plugins: [tailwindcss(), sveltekit(), devtoolsJson()],
 	test: {
 		expect: { requireAssertions: true },

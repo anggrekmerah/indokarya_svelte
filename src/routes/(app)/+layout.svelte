@@ -4,6 +4,7 @@
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
     import { _ } from 'svelte-i18n';
+    import { ioClient } from '$lib/stores/socket.js';
 
 
     // The provided children prop for rendering content
@@ -15,6 +16,15 @@
         // return url.pathname === href;
         return $page.url.pathname === href;
     };
+
+    onMount(() => {
+
+        if (ioClient) {
+            console.log('Socket available. Attaching listener...');
+            ioClient.emit('join_user_room', data.userID);
+        }
+        
+    });
     
 </script>
  
@@ -27,9 +37,9 @@
     
     <div class="flex justify-around text-center text-xs sm:text-sm">
       
-      {#if data.users}
+      {#if data.userMenu}
        
-        {#each data.users.menus as item}
+        {#each data.userMenu as item}
           <a
             href="{item.menu_url}"
             class="flex flex-col items-center transition-colors duration-200"
