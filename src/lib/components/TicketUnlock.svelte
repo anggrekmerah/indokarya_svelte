@@ -5,10 +5,10 @@
 <a href={`/ticket/${ticket.id_ticket}`} class="block">
 <div class="bg-white p-6 mb-2 rounded-xl shadow-md border border-gray-100 transition-all duration-300 hover:shadow-lg"> 
     <h4 class="text-md font-bold text-gray-900 mb-2">#{ticket.id_ticket}  
-    <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/20">
+    <span class="inline-flex items-center rounded-full bg-{ticket.priority_color}-100 px-3 py-1 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/20">
         {$_(ticket.priority_name)}
     </span>
-    <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+    <span class="inline-flex items-center rounded-full bg-{ticket.status_color}-100 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
         {$_(ticket.status_name)}
     </span>
     </h4>

@@ -1,4 +1,4 @@
-import { ticketDetailAPI, ticketCheckInAPI, ticketCheckOutAPI } from '$lib/tools/ticketApi';
+import { ticketDetailAPI, ticketCheckInAPI, ticketCheckOutAPI, ticketRequestUnlockAPI } from '$lib/tools/ticketApi';
 import { writeFile } from 'fs/promises';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,7 +10,13 @@ import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_ID } from '$env/static/private';
 export async function load({ params, fetch, locals }) {
   // You can use fetch to call APIs or access database here
     
-    const detailTicket = await ticketDetailAPI({"ID" : params.id}, fetch)
+    const detailTicket = await ticketDetailAPI({ID : locals.user.id, id_ticket: params.id}, fetch)
+    
+    if(detailTicket.error){
+        // If the process is successful, redirect the user
+            redirect(303, '/home');
+    }     
+
     return {
         detailTicket: detailTicket.data[0],
         mapsKey : GOOGLE_MAPS_API_KEY,
@@ -23,6 +29,30 @@ export async function load({ params, fetch, locals }) {
 /** @type {import('./$types').Actions} */
 export const actions = {
 
+    unlock_report: async ({request, fetch, locals, params}) => {
+        const data = await request.formData();
+        const id_ticket = data.get('id_ticket');
+        const reason_unlocked = data.get('reason_unlocked');
+        if (!reason_unlocked) {
+            return fail(400, { message: 'Please fill the reason.' });
+        }
+        try {
+            const unlockReport = await ticketRequestUnlockAPI({ID:locals.user.id, id_ticket: id_ticket, unlock_reason: reason_unlocked }, fetch)
+            
+            if(unlockReport.error)
+                return fail(500, { message: 'Server error during unlock ticket.' });
+
+            const updatedData = await load({ params, fetch, locals });
+            return {
+                status: 200,
+                ...updatedData
+            };
+        } catch (error) {
+            
+            return fail(500, { message: 'Server error during upload.' });
+        }
+        
+    },
     checkin: async ({ request, cookies, fetch, locals, params }) => {
         const data = await request.formData();
 
@@ -58,7 +88,6 @@ export const actions = {
 
     checkout: async ({request, fetch, locals, params}) => {
         const data = await request.formData();
-        console.log(data)        
         
         const reportDescription = data.get('reportDescription')
         const ticketId = data.get('ticketId')
@@ -87,7 +116,7 @@ export const actions = {
             for (let i = 0; i < files.length; i++) {
                 let e = files[i];
                 let fileExt = extname(e.name);
-                console.log(fileExt)
+                
                 let uniqFilename = `${ticketId}_${uuidv4()}${fileExt}`;
                 let FilePath = `./static/report/${uniqFilename}`;
                 
@@ -108,21 +137,19 @@ export const actions = {
                     photos:pathImage,
                     spareparts:(spareParts == '') ? [] : spareParts.split(',') 
                 }
-            console.log(bodyUpdate)
+            
             const updateTicket = await ticketCheckOutAPI(bodyUpdate, fetch);
-                console.log(updateTicket)
+                
             // If there is an error, fail and return immediately
             if (updateTicket.error) {
             return fail(500, { message: 'Server error during update ticket.' });
             }
 
         } catch (error) {
-            console.log(error)
+            
             console.error('Failed to save file:', error);
             return fail(500, { message: 'Server error during upload.' });
         }
-
-         // If the process is successful, redirect the user
-            redirect(303, '/home');      
+ 
     }
 }

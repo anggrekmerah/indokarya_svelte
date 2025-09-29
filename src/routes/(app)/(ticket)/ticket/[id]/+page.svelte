@@ -5,14 +5,9 @@
     import { slide } from 'svelte/transition';
     import { enhance } from '$app/forms';
     import { Loader } from '@googlemaps/js-api-loader';
+    import { afterNavigate } from '$app/navigation';
+    import { ioClient } from '$lib/stores/socket.js';
     
-
-
-    let isInfoExpanded = $state(true);
-    let isMapExpanded = $state(false);
-    let loadingCheckout = $state(false);
-    let alertPopup = $state(false)
-
     let { data, form } = $props();
 
     let report = $state({
@@ -21,6 +16,14 @@
         files: [],
         signature: ''
     });
+
+    let isInfoExpanded = $state(true);
+    let isMapExpanded = $state(false);
+    let loadingCheckout = $state(false);
+    let alertPopup = $state(false)
+    let isTicketLocked = $state(false)
+    
+    let popUpReportLocked = $state(false)
 
     let isSignaturePadOpen = $state(false);
     let isCameraPopupOpen = $state(false);
@@ -49,16 +52,60 @@
     let videoPlayerSrc = $state('');
     let currentPlayingVideoElement;
 
+    // Google direction
+    let directionsService
+    let directionsRenderer
+    let google
+    let defMap
+    let userMarker;
+    let mapElement
+    let AnimationFrameID = null
+    let pinElement
+    let wasNearDestination = false;
+    
+    let watchOriginMarked = $state(false)
+    let watchID = $state(false)
+    let startMarker = $state(null);
+    let isNearDestination = $state(false);
+    let userLocation = $state(null);
+        // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
+
+    const centerMarker = { lat:parseFloat(data.detailTicket.cust_latitude), lng: parseFloat(data.detailTicket.cust_longtitude) }
+    const mapID = data.mapsId
+    const mapsKey = data.mapsKey
+    const bikeIconSvg = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJpa2UtaWNvbiBsdWNpZGUtYmlrZSI+PGNpcmNsZSBjeD0iMTguNSIgY3k9IjE3LjUiIHI9IjMuNSIvPjxjaXJjbGUgY3g9IjUuNSIgY3k9IjE3LjUiIHI9IjMuNSIvPjxjaXJjbGUgY3g9IjE1IiBjeT0iNSIgcj0iMSIvPjxwYXRoIGQ9Ik0xMiAxNy41VjE0bC0zLTMgNC0zIDIgM2gyIi8+PC9zdmc+`
+    const pinOpt = {
+        background: "#00a2ff", // Red background
+        borderColor: "#033552", // Black border
+        glyph: new URL(bikeIconSvg), // Star symbol
+        glyphColor: "#033552", // White glyph
+        scale: 1 // Larger size
+    };
+
+    // checkIN
+    // Svelte's new reactive state primitive
+    let in_showPopup = $state(false);
+    let in_photoTaken = $state(false);
+    let in_photoPreviewUrl = $state('https://placehold.co/150x150/e2e8f0/64748b?text=Photo');
+    let in_videoElement = $state(false); // Reference to the video element
+    let in_capturedFile = null;
+    let in_canvasElement; // Reference to the canvas element
+    let in_stream = $state(null);
+    let in_checkin = $state(data.detailTicket.ticket_check_in);
+    let in_cameraFacingMode = $state('user');
+
+
     $effect(() => {
+
+        console.log('isTicketLocked',isTicketLocked)
         const savableData = {
             description: report.description,
             sparePart: report.sparePart,
             signature: report.signature
         };
+        
         sessionStorage.setItem('taskReportData', JSON.stringify(savableData));
-    });
 
-    $effect(() => {
         if (isSignaturePadOpen && canvas) {
             canvas.width = canvas.clientWidth;
             canvas.height = canvas.clientHeight;
@@ -85,7 +132,68 @@
                 img.src = report.signature;
             }
         }
+
+        if (userLocation) {
+            // Create or update the user's marker
+            if (!userMarker) {
+                userMarker = new google.maps.marker.AdvancedMarkerElement({
+                    map: defMap,
+                    position: userLocation,
+                    content: pinElement.element
+                });
+            } else {
+                userMarker.position = userLocation;
+            }
+
+            // Calculate and check the distance
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                new google.maps.LatLng(userLocation),
+                new google.maps.LatLng(centerMarker)
+            );
+
+            isNearDestination = distance <= 100;
+            console.log(isNearDestination)
+            console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
+            console.log(wasNearDestination)
+
+            if(isNearDestination){
+                isInfoExpanded = false
+            }
+
+            if (wasNearDestination === true && isNearDestination === false) {
+                console.log("Technician has left the area. Sending data to server.");
+                
+                // This function call is what you need to send the data.
+                sendLockTaskBeacon();
+            }
+
+            wasNearDestination = isNearDestination
+        }
+
     });
+
+    // The function to send the data
+    async function sendLockTaskBeacon() {
+        const taskId = data.detailTicket.id_ticket;
+        const payload = JSON.stringify({ id_ticket:taskId });
+        console.log(payload)
+        // Check if the browser supports sendBeacon before calling
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/ticket/locked', new Blob([payload], { type: 'application/json' }));
+            console.log('Task lock beacon sent successfully.');
+        } else {
+            // Fallback for older browsers (less reliable)
+            console.warn('navigator.sendBeacon not supported. Using a less reliable fetch request.');
+            fetch('/api/ticket/locked', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true // keepalive hint for the browser
+            }).catch(error => {
+                console.error('Fetch request failed on page exit.', error);
+            });
+        }
+    }
 
     async function closeAlertPopup() {
         alertPopup = false;
@@ -328,31 +436,8 @@
         sessionStorage.removeItem('taskReportData');
     }
 
-    
-    // Google direction
-    let directionsService
-    let directionsRenderer
-    let initgoogle
-    let defMap
-    let watchID = $state(false)
-    let mapElement
-    let watchOriginMarked = $state(false)
-    let startMarker = $state(null);
-    let isNearDestination = $state(false); 
-    let AnimationFrameID = null
-    const centerMarker = { lat:parseFloat(data.detailTicket.cust_latitude), lng: parseFloat(data.detailTicket.cust_longtitude) }
-    const mapID = data.mapsId
-    const mapsKey = data.mapsKey
-    const bikeIconSvg = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJpa2UtaWNvbiBsdWNpZGUtYmlrZSI+PGNpcmNsZSBjeD0iMTguNSIgY3k9IjE3LjUiIHI9IjMuNSIvPjxjaXJjbGUgY3g9IjUuNSIgY3k9IjE3LjUiIHI9IjMuNSIvPjxjaXJjbGUgY3g9IjE1IiBjeT0iNSIgcj0iMSIvPjxwYXRoIGQ9Ik0xMiAxNy41VjE0bC0zLTMgNC0zIDIgM2gyIi8+PC9zdmc+`
-    const pinOpt = {
-        background: "#00a2ff", // Red background
-        borderColor: "#033552", // Black border
-        glyph: new URL(bikeIconSvg), // Star symbol
-        glyphColor: "#033552", // White glyph
-        scale: 1 // Larger size
-    };
+    onDestroy( async () => {
 
-    onDestroy(() => {
         if (watchID !== null) {
             if (navigator.geolocation) {
                 navigator.geolocation.clearWatch(watchID);
@@ -370,6 +455,15 @@
 
     onMount( async () => {
 
+        isTicketLocked = (data.detailTicket.ticket_locked == 'N') ? false : true
+
+        if (ioClient) {
+            ioClient.on('ticketUnlocked', (newData) => {
+                console.log('New message received:', newData);
+                isTicketLocked = newData.ticket_ulocked ? false : true;
+            });
+        }
+
         // Load google maps
         const mapsConf = {
             apiKey:mapsKey,
@@ -377,47 +471,58 @@
             version: 'weekly',
             libraries: ['maps','marker','places','routes','geometry'] // 'places' is often needed for directions
         }
-        const mapsLoader = new Loader(mapsConf);
+        
         
         try {
             
-            mapsLoader.load().then( async (google) => {
-                // const { LatLngBounds, LatLng } = await google.maps.importLibrary("core")
-                // The API is now loaded and available via window.google
-                // let bounds = new LatLngBounds();
-                //     bounds.extend(new LatLng(centerMarker))
-                initgoogle = google
-                defMap = await initMap(google)
-                    // defMap.fitBounds(bounds);
-                await initCurrentPosistion(async (coords) => {
-                    await calculateAndDisplayRoute(google, defMap, coords, centerMarker, async (response) => {
-                        const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker")
+            const mapsLoader = new Loader(mapsConf);
 
-                        // Get the first (and usually only) leg of the route
-                        const route = response.routes[0];
-                        const leg = route.legs[0];
-                        const path = route.overview_path;
-                        
-                        // Display time and distance
-                        const estDistance = leg.distance.text;
-                        
-                        // Check if duration_in_traffic exists before trying to access it
-                        const durationText = leg.duration_in_traffic ? leg.duration_in_traffic.text : leg.duration.text;
-                        
-                        console.log(`Estimated Distance: ${estDistance}`);
-                        console.log(`Estimated Time: `, durationText);
-                        
-                        const pin = await new PinElement(pinOpt);
-                    
-                        startMarker = await new AdvancedMarkerElement({
-                            map: defMap,
-                            position: leg.start_location,
-                            content: pin.element,
-                        })
-                    });
-                });
+            google = await mapsLoader.load();
 
+            const { Map } = await google.maps.importLibrary("maps");
+            const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker")
+            const { LatLng } = await google.maps.importLibrary("core");
+            const { DirectionsRenderer } = await google.maps.importLibrary("routes");
+            pinElement = new google.maps.marker.PinElement(pinOpt);
+
+            // 2. Initialize the map and renderer
+            defMap = await new Map(mapElement, {
+                center: centerMarker,
+                zoom: 13,
+                mapId: mapID
             });
+            
+            await new AdvancedMarkerElement({
+                map: defMap,
+                position: centerMarker,
+                title: data.detailTicket.cust_name,
+            })
+
+            directionsRenderer = new DirectionsRenderer({
+                map: defMap,
+                suppressMarkers: true // We will use a custom marker for the user
+            });
+
+            // 3. Get the initial location and set up the route
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    console.log('position current')
+                    console.log(position)
+                    const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
+                    userLocation = origin
+                    // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
+                    await calculateAndDisplayRoute(origin, centerMarker);
+                    // After the route is set up, start continuous tracking
+                    // await watchUserLocation();
+                },
+                (error) => console.error("Could not get user's initial location:", error),
+                {
+                    enableHighAccuracy: true,
+                    timeout: 60000, // Increase this significantly
+                    maximumAge: 0
+                }
+            );
+            
                 
         } catch (e) {
             console.error('Error loading Google Maps', e);
@@ -430,76 +535,14 @@
             report.sparePart = parsedData.sparePart;
             report.signature = parsedData.signature;
         }
-
+        
     });
-
-    // Google Maps function
-    $effect(()=> {
-        
-        if(watchOriginMarked && !isNearDestination) {   
-            watchUserLocation(async (coords) => {
-                
-                await calculateAndDisplayRoute(initgoogle, defMap, coords, centerMarker, async (response) => {
-        
-                    const { LatLng } = await google.maps.importLibrary("core")
-                    // let userLocation = new LatLng(coords);
-                    let userLocation = new LatLng(-6.293923670298381, 106.79680552494052); 
-                    let destination = new LatLng(centerMarker);
-
-                    if (AnimationFrameID !== null) {
-                        cancelAnimationFrame(AnimationFrameID);
-                    }
-
-                    await checkDistance(userLocation, destination, 100)
-                    await animateMarkerWatch(initgoogle, startMarker, coords);
-                    
-                    directionsRenderer.setDirections(response); // Display the route line
-
-                    // // Get the first (and usually only) leg of the route
-                    // const route = response.routes[0];
-                    // const leg = route.legs[0];
-                    // const path = route.overview_path;
-
-                    // // Display time and distance
-                    // const estDistance = leg.distance.text;
-                    
-                    // // Check if duration_in_traffic exists before trying to access it
-                    // const durationText = leg.duration_in_traffic ? leg.duration_in_traffic.text : leg.duration.text;
-                    
-                    // console.log(`Estimated Distance: ${estDistance}`);
-                    // console.log(`Estimated Time: `, durationText);
-                    
-                    // // 1. Interpolate the path for smoother animation
-                    // const interpolatedPath = await interpolatePath(path, 10); // Add 10 points between each original point
-                    
-                    // await animateMarker(startMarker, interpolatedPath, 0, 1); 
-
-                });
-
-            })
-        } else {
-            console.log(AnimationFrameID)
-            if (navigator.geolocation) {
-                navigator.geolocation.clearWatch(watchID)
-                console.log("Geolocation watch cleared.");
-            }
-
-            
-            if (AnimationFrameID !== null) {
-                cancelAnimationFrame(AnimationFrameID);
-                AnimationFrameID = null; // Reset the ID
-                console.log('Animation stopped.');
-            }
-        }
-
-    }) 
-    
 
     function handleToggleMap() {
         isMapExpanded = !isMapExpanded;
         watchOriginMarked = !watchOriginMarked
         if (isMapExpanded) {
-            isInfoExpanded = false;
+            // isInfoExpanded = false;
             watchOriginMarked = true
         }
     }
@@ -519,11 +562,13 @@
         if (distance <= radius) {
             console.log("You have entered the destination zone!");
 
+            console.log(AnimationFrameID)
             // Optional: Stop watching the user's position to save battery
             isNearDestination = true
-
             return false
-        }
+        } else {
+            isNearDestination = false
+        } 
     }
 
     async function  initCurrentPosistion(callback) {
@@ -551,61 +596,22 @@
             // handleLocationError(false, map, defaultCenter);
         }
     }    
-    async function initMap(google) {
-        const { Map } = await google.maps.importLibrary("maps");
-        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker")
-        
-
-        const map = new Map(mapElement, {
-            center: centerMarker,
-            zoom: 13,
-            mapId: mapID // Optional, but recommended
-        })
-        
-
-        await new AdvancedMarkerElement({
-            map: map,
-            position: centerMarker,
-            title: data.detailTicket.cust_name,
-        })
-
-        return map
-        // You would initialize your directions service here
     
-    }
-
-    async function watchUserLocation(callback) {
-
-        const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker")
-
-        if (navigator.geolocation) {
-            // watchPosition returns a unique ID that can be used to stop watching later
+    async function watchUserLocation() {
+        if ('geolocation' in navigator) {
             watchID = navigator.geolocation.watchPosition(
-                async (position) => {
-                    const pos = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    };
-
-                    callback(pos)
-                    
+                (position) => {
+                    console.log('from watch function')
+                    console.log(position)
+                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
                 },
-                (error) => {
-                    // Handle any errors that occur
-                    handleLocationError(error);
-                },
-                {
-                    // Optional: set options for watchPosition
-                    enableHighAccuracy: true,
-                    timeout: 50000,
-                    maximumAge: 60000,
-                }
+                (error) => console.error('Geolocation watch error:', error),
+                { enableHighAccuracy: true, timeout: 100000, maximumAge: 60000 }
             );
-        } else {
-            console.error("Geolocation is not supported by this browser.");
         }
     }
 
+    
     async function interpolatePath(path, numPoints) {
         const newPath = [];
         for (let i = 0; i < path.length - 1; i++) {
@@ -640,10 +646,11 @@
     async function animateMarker(marker, path, index, speed) {
         // Check if we've reached the end of the path
         if (index >= path.length) {
+            userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
             return; 
         }
 
-        console.log(index)
+        console.log(1)
         
         // console.log(marker)
         // Update the marker's position
@@ -654,45 +661,37 @@
         requestAnimationFrame(() => animateMarker(marker, path, index, speed));
     }
 
-    async function calculateAndDisplayRoute(google, map, origin, destination, callback) {
-        const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary("routes");
-        
-        directionsService =  new DirectionsService();
-        directionsRenderer = new DirectionsRenderer();
-        directionsRenderer.setMap(map);
+    async function calculateAndDisplayRoute(origin, destination) {
+        const { DirectionsService } = await google.maps.importLibrary("routes");
+        const directionsService = new DirectionsService();
 
-        // Modify directionsRenderer to use custom markers
-        directionsRenderer.setOptions({
-            suppressMarkers: true,
-        });
-        
         directionsService.route(
-            {
-                origin: origin,
-                destination: destination,
-                travelMode: google.maps.TravelMode.DRIVING,
-                avoidTolls:true, 
-                avoidHighways:true, 
+            { 
+                origin, 
+                destination, 
+                travelMode: google.maps.TravelMode.DRIVING ,
+                avoidTolls:true,
+                avoidHighways:true,
                 avoidFerries:true,
                 drivingOptions: {
                     departureTime: new Date(Date.now()), // One hour from now
-                    trafficModel: 'optimistic'
+                    trafficModel: 'bestguess'
                 },
             },
             async (response, status) => {
+                console.log(response)
                 if (status === 'OK') {
-
                     directionsRenderer.setDirections(response);
-
-                    callback(response)
-                    
-
+                    // const overviewPath = response.routes[0].overview_path;
+                    // const animatedPath = await interpolatePath(overviewPath, 10);
+                    // await animateMarker(userMarker, animatedPath, 0, 1)
                 } else {
-                    window.alert('Directions request failed due to ' + status);
+                    console.error('Directions request failed due to ' + status);
                 }
             }
         );
     }
+
 
     function handleLocationError(browserHasGeolocation, map, pos) {
         // You can customize this function to display a more user-friendly error
@@ -703,19 +702,6 @@
                 : "Error: Your browser doesn't support geolocation."
         );
     }
-
-    // checkIN
-        // Svelte's new reactive state primitive
-    let in_showPopup = $state(false);
-    let in_photoTaken = $state(false);
-    let in_photoPreviewUrl = $state('https://placehold.co/150x150/e2e8f0/64748b?text=Photo');
-    let in_videoElement; // Reference to the video element
-    let in_capturedFile = null;
-    let in_canvasElement; // Reference to the canvas element
-    let in_stream = $state(null);
-    let in_ticketID = $state(null);
-    let in_cameraFacingMode = $state('user');
-   
 
     async function in_submitPhoto(taskID) {
         if (!in_capturedFile) {
@@ -845,11 +831,11 @@
         class=" -translate-y-3
                flex items-center justify-center w-10 h-10 rounded-full
                bg-[#407ad6] text-white font-semibold shadow-xl
-               hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+               hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
         {#if !isMapExpanded}
           <Route class="w-6 h-6" />
         {:else}
-          <RouteOff class="w-6 h-6 bg-red-700" />
+          <RouteOff class="w-6 h-6" />
         {/if}
       </button>
       </section>
@@ -858,274 +844,281 @@
 
     <div class="max-w-xl mx-auto space-y-6 py-6 px-4 pb-20 flex-grow w-full">
       
-        {#if data.detailTicket.ticket_locked == 'Y' && isNearDestination}
+        {#if !in_checkin && isNearDestination}
             <section class="flex flex-initial items-center justify-center">
                 <button
-                    type="submit"
+                    type="button"
                     onclick="{in_togglePopup}"
                     class="w-full bg-[#407ad6] text-white justify-center rounded-lg p-3 font-semibold shadow-md flex 
                         hover:bg-blue-700 transition-colors duration-200">
                     <Lock class="h-5 w-5 mr-2" />
                     {$_('Unlock')}
                 </button>
-            </section>    
+            </section>
+        {:else if data.detailTicket.id_ticket_status == 8 && isTicketLocked} 
+            <button
+                type="button"
+                class="w-full flex-1 bg-yellow-500 text-white rounded-lg p-3 font-semibold shadow-md flex items-center justify-center
+                    hover:bg-yellow-700 transition-colors duration-200">
+                
+                <CheckCircle class="h-5 w-5 mr-2" />
+                {$_('Pending Unlock Ticket')}
+            
+            </button>
+        {:else if in_checkin && !isNearDestination} 
+            <button
+                type="submit"
+                onclick={() => popUpReportLocked = !popUpReportLocked }
+                class="w-full flex-1 bg-red-500 text-white rounded-lg p-3 font-semibold shadow-md flex items-center justify-center
+                    hover:bg-yellow-700 transition-colors duration-200">
+                
+                <CheckCircle class="h-5 w-5 mr-2" />
+                {$_('Unlock Ticket')}
+            
+            </button>
         {/if}
         
         <section class="bg-white rounded-xl shadow-lg border border-gray-100">
-        <button onclick={() => isInfoExpanded = !isInfoExpanded}
+            <button onclick={() => isInfoExpanded = !isInfoExpanded}
                 class="w-full flex items-center justify-between p-5 text-lg font-semibold text-left
                        rounded-xl transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
-          <h2 class="flex items-center text-gray-700">
-            <MessageSquare class="h-5 w-5 mr-2 text-green-500" />
-            {$_('Task & Customer Information')}
-          </h2>
-          {#if isInfoExpanded}
-            <ChevronUp class="h-5 w-5 transition-transform text-gray-500" />
-          {:else}
-            <ChevronDown class="h-5 w-5 transition-transform text-gray-500" />
-          {/if}
-        </button>
+                <h2 class="flex items-center text-gray-700">
+                    <MessageSquare class="h-5 w-5 mr-2 text-green-500" />
+                    {$_('Task & Customer Information')}
+                </h2>
+                {#if isInfoExpanded}
+                    <ChevronUp class="h-5 w-5 transition-transform text-gray-500" />
+                {:else}
+                    <ChevronDown class="h-5 w-5 transition-transform text-gray-500" />
+                {/if}
+            </button>
         
         {#if isInfoExpanded}
-          <div transition:slide class="p-5 pt-0 space-y-5">
-            <div class="space-y-3">
-              <span class="text-md font-bold text-gray-900">
-                {data.detailTicket.ticket_title}
-              </span>
-              
-        
-              <p class="text-sm text-gray-500 font-light">
-                {$_('Task ID')}: <span class="font-medium text-gray-700">#{data.detailTicket.id_ticket}</span>
-              </p>
-              <p class="text-sm text-gray-500 font-light">
-                {$_('Priority')}: 
-                <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/20">
-                    {$_(data.detailTicket.priority_name)}
-                </span>
-              </p>
-              <p class="text-sm text-gray-500 font-light">
-                {$_('Status')}: 
-                <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                    {$_(data.detailTicket.status_name)}
-                </span>
-              </p>
+            <div transition:slide class="p-5 pt-0 space-y-5">
+                <div class="space-y-3">
+                    <span class="text-md font-bold text-gray-900">
+                        {data.detailTicket.ticket_title}
+                    </span>
+                    
+                
+                    <p class="text-sm text-gray-500 font-light">
+                        {$_('Task ID')}: <span class="font-medium text-gray-700">#{data.detailTicket.id_ticket}</span>
+                    </p>
+                    <p class="text-sm text-gray-500 font-light">
+                        {$_('Priority')}: 
+                        <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/20">
+                            {$_(data.detailTicket.priority_name)}
+                        </span>
+                    </p>
+                    <p class="text-sm text-gray-500 font-light">
+                        {$_('Status')}: 
+                        <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                            {$_(data.detailTicket.status_name)}
+                        </span>
+                    </p>
 
-              {#if data.detailTicket.id_sub_ticket}
-                <p class="text-sm text-gray-500 font-light">
-                    {$_('Parent')}: <a href="/ticket/{data.detailTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{data.detailTicket.id_sub_ticket}</span></a>
-                </p>  
-              {/if}
-              
-              <p class="text-sm text-gray-600">
-                <span class="font-bold font-medium">{$_('Description')}:</span> {data.detailTicket.ticket_description}
-              </p>
+                    {#if data.detailTicket.id_sub_ticket}
+                        <p class="text-sm text-gray-500 font-light">
+                            {$_('Parent')}: <a href="/ticket/{data.detailTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{data.detailTicket.id_sub_ticket}</span></a>
+                        </p>  
+                    {/if}
+                    
+                    <p class="text-sm text-gray-600">
+                        <span class="font-bold font-medium">{$_('Description')}:</span> {data.detailTicket.ticket_description}
+                    </p>
+                </div>
+
+                <hr class="border-gray-200">
+
+                <div class="space-y-2 text-sm text-gray-600">
+                    <h2 class="font-semibold text-gray-900">{$_('Customer')}</h2>
+                    <p class="flex items-center font-semibold">
+                        {data.detailTicket.cust_name}
+                    </p>
+                    <p class="flex items-center">
+                        {data.detailTicket.cust_address}
+                    </p>
+                    <a href={`tel:${data.detailTicket.cust_phone}`} class="flex items-center text-blue-600 hover:text-blue-500 transition-colors hover:underline">
+                        {data.detailTicket.cust_phone}
+                    </a>
+                </div>
+
+                <hr class="border-gray-200">
             </div>
-
-            <hr class="border-gray-200">
-
-            <div class="space-y-2 text-sm text-gray-600">
-              <h2 class="font-semibold text-gray-900">{$_('Customer')}</h2>
-              <p class="flex items-center font-semibold">
-                {data.detailTicket.cust_name}
-              </p>
-              <p class="flex items-center">
-                {data.detailTicket.cust_address}
-              </p>
-              <a href={`tel:${data.detailTicket.cust_phone}`} class="flex items-center text-blue-600 hover:text-blue-500 transition-colors hover:underline">
-                {data.detailTicket.cust_phone}
-              </a>
-            </div>
-
-            <hr class="border-gray-200">
-          </div>
         {/if}
-      </section>
+        </section>
 
-      {#if data.detailTicket.ticket_locked == 'N' || data.detailTicket.ticket_report_lock == 'N'}
-        
-      
-      <form method="post" enctype="multipart/form-data" action="?/checkout" class="bg-white rounded-xl shadow-lg p-5 space-y-6 border border-gray-100"
-        use:enhance={ async ({formData}) => {
-                
-                loadingCheckout = true
-
-                formData.append('reportDescription', report.description);
-                formData.append('ticketId', data.detailTicket.id_ticket);
-                formData.append('spareParts', report.sparePart);
-
-                // 2. Append the signature
-                if (report.signature) {
-                    // Convert base64 signature to a File object
-                    const signatureBlob = await fetch(report.signature).then(res => res.blob());
-                    const signatureFile = new File([signatureBlob], 'signature.png', { type: 'image/png' });
-                    formData.append('signature', signatureFile);
-                }
-
-                // 3. Append photos and videos
-                report.files.forEach(media => {
-                    if (media.file instanceof File) {
-                        // `files[]` will be treated as an array on the server
-                        formData.append('files', media.file, media.file.name); 
-                    }
-                });
-                
-                return async ({ result, update }) => {
-                    loadingCheckout = false
-                    console.log(result)
-                    // Check the result type for success, not the status
-                    if (result.type === 'failure') {
-                        alertPopup = true
-                    } else {
-                        alertPopup = false
-                    }  
-
-                    // Always call update() regardless of success or failure
-                    // to handle potential server errors or form failures.
-                    update();
-                };
-            }}
-        >
-        <h2 class="flex items-center text-xl font-bold text-gray-900">
-          <FileText class="h-6 w-6 mr-2 text-green-500" />
-          {$_('Task Report')}
-        </h2>
-        <input type="hidden" name="ID" value="{data.detailTicket.id_task}">
-        <div class="space-y-4">
-          <div>
-            <label for="report-description" class="text-sm font-medium text-gray-700">{$_('Report Description')}</label>
-            <textarea
-              id="report-description"
-              bind:value={report.description}
-              rows="4"
-              class="w-full mt-1 rounded-md border-gray-300 shadow-sm bg-gray-50 p-3 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
-              placeholder="Enter a detailed description of the work performed."
-            ></textarea>
-          </div>
-          
-          {#if data.detailTicket.spareparts}
-            <div>
-                <label class="text-sm font-medium text-gray-700">{$_('Spare Parts Used')}</label>
-                <div class="mt-2 space-y-2">
-                    {#each data.detailTicket.spareparts as part}
-                        <div class="flex items-center">
-                            <input
-                                id={`spare-part-${part.id_ticket_sparepart}`}
-                                type="checkbox"
-                                value={String(part.id_ticket_sparepart)}
-                                onchange={handleCheckboxChange}
-                                class="..."
-                                checked={report.sparePart.includes(String(part.id_ticket_sparepart))}
-                            />
-                            <label for={`spare-part-${part.id_ticket_sparepart}`} class="ml-2 text-sm text-gray-700 cursor-pointer">
-                                {part.sparepart_name}
-                            </label>
-                        </div>
-                    {/each}
-                </div>
-            </div>    
-          {/if}
+        {#if in_checkin !== null && isNearDestination && !isTicketLocked }
             
-        </div>
+        
+            <form method="post" enctype="multipart/form-data" action="?/checkout" class="bg-white rounded-xl shadow-lg p-5 space-y-6 border border-gray-100"
+                use:enhance={ async ({formData}) => {
+                    
+                    loadingCheckout = true
 
-        <div>
-            <label class="text-sm font-medium text-gray-700">{$_('Upload Photos / Videos')}</label>
-            <div class="flex space-x-2 mt-2">
-                <button onclick={() => startCamera('photo')} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
-                    <Camera class="w-4 h-4 mr-2" />
-                    {$_('Take Photo')}
-                </button>
-                <button onclick={() => startCamera('video')} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
-                    <Video class="w-4 h-4 mr-2" />
-                    {$_('Record Video')}
-                </button>
-                <input type="file" accept="image/*,video/*" multiple class="hidden" bind:this={fileInput} onchange={handleFileUpload} />
-                <button onclick={() => fileInput.click()} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
-                    <FilePlus class="w-4 h-4 mr-2" />
-                    {$_('Upload File')}
-                </button>
-            </div>
+                    formData.append('reportDescription', report.description);
+                    formData.append('ticketId', data.detailTicket.id_ticket);
+                    formData.append('spareParts', report.sparePart);
 
-            {#if report.files.length > 0}
-                <div class="mt-3 flex flex-wrap gap-4">
-                    {#each report.files as media}
-                        <div class="relative group">
-                            {#if media.type === 'image'}
-                                <img src={URL.createObjectURL(media.file)} alt={media.file.name} class="w-24 h-24 object-cover rounded-md border" />
-                            {:else if media.type === 'video'}
-                                <button onclick={() => openVideoPlayer(media.file)} class="relative w-24 h-24 flex items-center justify-center bg-black rounded-md border overflow-hidden">
-                                    <img src={media.thumbnail} alt={media.file.name} class="w-full h-full object-cover opacity-70" />
-                                    <Play class="absolute w-8 h-8 text-white opacity-90 group-hover:opacity-100 transition-opacity" />
-                                </button>
-                            {/if}
-                            <button onclick={() => removeFile(media)} class="absolute -top-2 -right-2 bg-white rounded-full p-1 text-red-500 hover:text-red-700 shadow-md transition-opacity">
-                                <Trash2 class="w-4 h-4" />
-                            </button>
-                        </div>
-                    {/each}
+                    // 2. Append the signature
+                    if (report.signature) {
+                        // Convert base64 signature to a File object
+                        const signatureBlob = await fetch(report.signature).then(res => res.blob());
+                        const signatureFile = new File([signatureBlob], 'signature.png', { type: 'image/png' });
+                        formData.append('signature', signatureFile);
+                    }
+
+                    // 3. Append photos and videos
+                    report.files.forEach(media => {
+                        if (media.file instanceof File) {
+                            // `files[]` will be treated as an array on the server
+                            formData.append('files', media.file, media.file.name); 
+                        }
+                    });
+                    
+                    return async ({ result, update }) => {
+                        loadingCheckout = false
+                        console.log(result)
+                        // Check the result type for success, not the status
+                        if (result.type === 'failure') {
+                            alertPopup = true
+                        } else {
+                            alertPopup = false
+                        }  
+
+                        // Always call update() regardless of success or failure
+                        // to handle potential server errors or form failures.
+                        update();
+                    };
+                }}
+            >
+                <h2 class="flex items-center text-xl font-bold text-gray-900">
+                    <FileText class="h-6 w-6 mr-2 text-green-500" />
+                    {$_('Task Report')}
+                </h2>
+                <input type="hidden" name="ID" value="{data.detailTicket.id_task}">
+                <div class="space-y-4">
+                    <div>
+                        <label for="report-description" class="text-sm font-medium text-gray-700">{$_('Report Description')}</label>
+                        <textarea
+                        id="report-description"
+                        bind:value={report.description}
+                        rows="4"
+                        class="w-full mt-1 rounded-md border-gray-300 shadow-sm bg-gray-50 p-3 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                        placeholder="Enter a detailed description of the work performed."
+                        ></textarea>
+                    </div>
+                
+                    {#if data.detailTicket.spareparts}
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">{$_('Spare Parts Used')}</label>
+                            <div class="mt-2 space-y-2">
+                                {#each data.detailTicket.spareparts as part}
+                                    <div class="flex items-center">
+                                        <input
+                                            id={`spare-part-${part.id_ticket_sparepart}`}
+                                            type="checkbox"
+                                            value={String(part.id_ticket_sparepart)}
+                                            onchange={handleCheckboxChange}
+                                            class="..."
+                                            checked={report.sparePart.includes(String(part.id_ticket_sparepart))}
+                                        />
+                                        <label for={`spare-part-${part.id_ticket_sparepart}`} class="ml-2 text-sm text-gray-700 cursor-pointer">
+                                            {part.sparepart_name}
+                                        </label>
+                                    </div>
+                                {/each}
+                            </div>
+                        </div>    
+                    {/if}
+                    
                 </div>
-            {/if}
-        </div>
 
-        <div class="flex flex-col items-center">
-          <h3 class="text-sm font-medium text-gray-700 mb-2">{$_('Customer Signature')}</h3>
-          <div class="w-full max-w-sm h-32 rounded-lg border border-gray-300 overflow-hidden flex items-center justify-center bg-gray-50">
-              {#if report.signature}
-                  <img src={report.signature} alt="Saved Signature" class="w-full h-full object-contain" />
-              {:else}
-                  <button onclick={() => isSignaturePadOpen = true}
-                      type="button"
-                      class="w-full h-full flex items-center justify-center text-gray-400 text-sm hover:text-gray-600 transition-colors duration-200">
-                      <PenSquare class="w-6 h-6 mr-2" />
-                      {$_('Add Signature')}
-                  </button>
-              {/if}
-          </div>
-        </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700">{$_('Upload Photos / Videos')}</label>
+                    <div class="flex space-x-2 mt-2">
+                        <button onclick={() => startCamera('photo')} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
+                            <Camera class="w-4 h-4 mr-2" />
+                            {$_('Take Photo')}
+                        </button>
+                        <button onclick={() => startCamera('video')} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
+                            <Video class="w-4 h-4 mr-2" />
+                            {$_('Record Video')}
+                        </button>
+                        <input type="file" accept="image/*,video/*" multiple class="hidden" bind:this={fileInput} onchange={handleFileUpload} />
+                        <button onclick={() => fileInput.click()} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
+                            <FilePlus class="w-4 h-4 mr-2" />
+                            {$_('Upload File')}
+                        </button>
+                    </div>
 
-        <div class="flex space-x-3 mt-4">
-          <button onclick={clearSignature}
-            type="button"
-            class="flex-1 bg-gray-100 text-gray-800 rounded-lg p-3 font-semibold shadow-sm
-                   hover:bg-gray-200 transition-colors duration-200">
-            {$_('Clear Signature')}
-          </button>
-            <input type="hidden" name="isNear" value="{isNearDestination}">
-            {#if isNearDestination}
-                <button
-                    type="submit"
-                    disabled={loadingCheckout}
-                    class="flex-1 bg-green-600 text-white rounded-lg p-3 font-semibold shadow-md flex items-center justify-center
-                        hover:bg-green-700 transition-colors duration-200">
-                    {#if loadingCheckout}
-                        <LoaderCircle class="h-5 w-5 mr-2" />
-                        Loading...
-                    {:else}
-                        <CheckCircle class="h-5 w-5 mr-2" />
-                        {$_('Check Out')}
+                    {#if report.files.length > 0}
+                        <div class="mt-3 flex flex-wrap gap-4">
+                            {#each report.files as media}
+                                <div class="relative group">
+                                    {#if media.type === 'image'}
+                                        <img src={URL.createObjectURL(media.file)} alt={media.file.name} class="w-24 h-24 object-cover rounded-md border" />
+                                    {:else if media.type === 'video'}
+                                        <button onclick={() => openVideoPlayer(media.file)} class="relative w-24 h-24 flex items-center justify-center bg-black rounded-md border overflow-hidden">
+                                            <img src={media.thumbnail} alt={media.file.name} class="w-full h-full object-cover opacity-70" />
+                                            <Play class="absolute w-8 h-8 text-white opacity-90 group-hover:opacity-100 transition-opacity" />
+                                        </button>
+                                    {/if}
+                                    <button onclick={() => removeFile(media)} class="absolute -top-2 -right-2 bg-white rounded-full p-1 text-red-500 hover:text-red-700 shadow-md transition-opacity">
+                                        <Trash2 class="w-4 h-4" />
+                                    </button>
+                                </div>
+                            {/each}
+                        </div>
                     {/if}
+                </div>
+
+                <div class="flex flex-col items-center">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">{$_('Customer Signature')}</h3>
+                <div class="w-full max-w-sm h-32 rounded-lg border border-gray-300 overflow-hidden flex items-center justify-center bg-gray-50">
+                    {#if report.signature}
+                        <img src={report.signature} alt="Saved Signature" class="w-full h-full object-contain" />
+                    {:else}
+                        <button onclick={() => isSignaturePadOpen = true}
+                            type="button"
+                            class="w-full h-full flex items-center justify-center text-gray-400 text-sm hover:text-gray-600 transition-colors duration-200">
+                            <PenSquare class="w-6 h-6 mr-2" />
+                            {$_('Add Signature')}
+                        </button>
+                    {/if}
+                </div>
+                </div>
+
+                <div class="flex space-x-3 mt-4">
+                <button onclick={clearSignature}
+                    type="button"
+                    class="flex-1 bg-gray-100 text-gray-800 rounded-lg p-3 font-semibold shadow-sm
+                        hover:bg-gray-200 transition-colors duration-200">
+                    {$_('Clear Signature')}
                 </button>
-            {:else}
-                <button
-                    type="submit"
-                    disabled={loadingCheckout}
-                    class="flex-1 bg-yellow-600 text-white rounded-lg p-3 font-semibold shadow-md flex items-center justify-center
-                        hover:bg-yellow-700 transition-colors duration-200">
-                    {#if loadingCheckout}
-                        <LoaderCircle class="h-5 w-5 mr-2" />
-                        Loading...
-                    {:else}
-                        <CheckCircle class="h-5 w-5 mr-2" />
-                        {$_('Unlock')}
-                    {/if}
-                </button>    
-            {/if}
-          
-        </div>
-      </form>
-      {/if}
+                    <input type="hidden" name="isNear" value="{isNearDestination}">
+                    <button
+                        type="submit"
+                        disabled={loadingCheckout}
+                        class="flex-1 bg-green-600 text-white rounded-lg p-3 font-semibold shadow-md flex items-center justify-center
+                            hover:bg-green-700 transition-colors duration-200">
+                        {#if loadingCheckout}
+                            <LoaderCircle class="h-5 w-5 mr-2" />
+                            Loading...
+                        {:else}
+                            <CheckCircle class="h-5 w-5 mr-2" />
+                            {$_('Check Out')}
+                        {/if}
+                    </button>
+                
+                </div>
+            </form>
+        {/if}
     </div>
 </main>
 
+
+<!-- popup signature -->
 {#if isSignaturePadOpen}
     <div class="fixed inset-0 w-screen h-dvh bg-gray-50 flex flex-col items-center justify-center p-4 z-50">
       <div class="flex items-center justify-between w-full max-w-lg mb-4">
@@ -1157,6 +1150,7 @@
     </div>
 {/if}
 
+<!-- popup camera -->
 {#if isCameraPopupOpen}
     <div class="fixed inset-0 w-screen h-dvh bg-gray-50 flex flex-col items-center justify-center p-4 z-50">
         <div class="flex items-center justify-between w-full max-w-lg mb-4">
@@ -1204,6 +1198,7 @@
     </div>
 {/if}
 
+<!-- popup video -->
 {#if isVideoPlayerOpen}
     <div class="fixed inset-0 w-screen h-dvh bg-gray-50 flex flex-col items-center justify-center p-4 z-50">
       <div class="flex items-center justify-between w-full max-w-lg mb-4">
@@ -1248,10 +1243,19 @@
                     // Check the result type for success, not the status
                     if (result.type === 'success') {
                         
+                        // untuk test
+                        setTimeout(function() {
+                            userLocation = { lat: -6.294097629517158, lng: 106.79894726866495 };
+                            console.log("This message appears after 2 seconds.");
+                        }, 2000); // 2000 milliseconds = 2 seconds
+                    
                         // You can also hide the popup here
                         in_showPopup = false; 
                         in_photoTaken = false
                         in_stream = null
+                        in_checkin = true
+                    } else {
+                        alertPopup = true    
                     }
 
                     // Always call update() regardless of success or failure
@@ -1303,6 +1307,8 @@
     </div>
 {/if}
 
+
+<!-- notif popup -->
 {#if alertPopup}
     <div class="fixed inset-0 z-50 bg-gray-900/50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm space-y-4">
@@ -1320,6 +1326,60 @@
             </div>
         </div>
     </div>
+{/if}
+
+
+<!-- Popup request unlock report  -->
+{#if popUpReportLocked}
+<div class="fixed inset-0 w-screen h-dvh bg-gray-50 flex flex-col items-center justify-center p-4 z-50">
+    <div class="flex items-center justify-between w-full max-w-lg mb-4">
+        <h2 class="text-xl font-bold text-gray-900">
+            {$_('Request Unlock Report')}
+        </h2>
+        <button onclick={() => popUpReportLocked = false} class="text-gray-500 hover:text-gray-700 transition-colors">
+        <XCircle class="w-6 h-6" />
+        </button>
+    </div>
+    <form method="post" action="?/unlock_report" class="w-full h-full max-w-lg flex-col flex space-y-4"
+        use:enhance={ async ({formData}) => {
+            formData.append('id_ticket', data.detailTicket.id_ticket);
+            
+            return async ({ result, update }) => {
+                console.log(result)
+                popUpReportLocked = false
+                // Check the result type for success, not the status
+                if (result.type === 'failure') {
+                    alertPopup = true
+                } else {
+                    alertPopup = false
+                }  
+
+                // Always call update() regardless of success or failure
+                // to handle potential server errors or form failures.
+                update();
+            };
+        }}
+    >
+        <div class="w-full max-w-lg flex-grow border border-gray-300 rounded-lg overflow-hidden mb-4 shadow-inner">
+            <textarea
+            id="report-description"
+            rows="4"
+            class="w-full h-full mt-1 rounded-md border-gray-300 shadow-sm bg-gray-50 p-3 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
+            placeholder="Enter a detailed description."
+            name="reason_unlocked"
+            ></textarea>
+        </div>
+
+        <div class="flex space-x-3 w-full max-w-lg">
+            <button onclick={() => popUpReportLocked = false} class="rounded-lg items-center justify-center flex-1 flex p-4 bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors">
+                {$_('Cancel')}
+            </button>
+            <button onclick={stopCamera} class="rounded-lg items-center justify-center flex-1 flex p-4 bg-blue-600 text-white hover:bg-red-700 transition-colors">
+                {$_('Save')}
+            </button>
+        </div>
+    </form>
+</div>
 {/if}
 
 <style>

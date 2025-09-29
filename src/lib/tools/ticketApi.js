@@ -9,6 +9,22 @@ export async function getTicketStatusAPI(body, fetch) {
     
 }
 
+export async function getTicketStatusActiveAPI(body, fetch) {
+
+    const responseAPI = await requestAPI('POST','/ticket-status/active', body, fetch) 
+
+    return responseAPI;
+    
+}
+
+export async function getTicketStatusHistoryAPI(body, fetch) {
+
+    const responseAPI = await requestAPI('POST','/ticket-status/history', body, fetch) 
+
+    return responseAPI;
+    
+}
+
 export async function getTicketAssign(body, fetch) {
 
     const responseAPI = await requestAPI('POST','/ticket/assign', body, fetch) 
@@ -44,6 +60,22 @@ export async function ticketDetailAPI(body, fetch) {
 export async function ticketTotalAPI(body, fetch) {
 
     const responseAPI = await requestAPI('POST','/ticket/total', body, fetch) 
+
+    return responseAPI;
+    
+}
+
+export async function ticketLockedAPI(body, fetch) {
+
+    const responseAPI = await requestAPI('POST','/ticket/locked', body, fetch) 
+
+    return responseAPI;
+    
+}
+
+export async function ticketRequestUnlockAPI(body, fetch) {
+
+    const responseAPI = await requestAPI('POST','/ticket/request_unlock', body, fetch) 
 
     return responseAPI;
     

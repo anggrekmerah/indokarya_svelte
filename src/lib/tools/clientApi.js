@@ -1,11 +1,17 @@
 import { error } from '@sveltejs/kit';
 import { PRIVATE_KEY,BASE_URL_API } from '$env/static/private';
 import jwt from 'jsonwebtoken';
+import https from 'https';
+
+// Node.js agent to bypass the self-signed certificate error
+const agents = new https.Agent({
+  rejectUnauthorized: true
+});
 
 async function defaultBodyRequest(body) {
     body.app = 'svelte'
     return { request : body , signature : '' };
-}
+} 
 
 // async function generateSignature(body, fetch) {
 //     const response = await fetch('/api/auth', {
@@ -25,10 +31,10 @@ async function generateSignature(body) {
     return signature
 }
 
-async function makeBody(body, fetch) {
+async function makeBody(body) {
     
     let BodyRequest = await defaultBodyRequest(body);
-    let signature = await generateSignature(body, fetch);
+    let signature = await generateSignature(body);
         BodyRequest.signature = signature
 
     return BodyRequest
@@ -37,10 +43,12 @@ async function makeBody(body, fetch) {
 
 export async function requestAPI(method, endpoint, bodys, fetch) {
 
-    const bodyReq = await makeBody(bodys, fetch)
+    const bodyReq = await makeBody(bodys)
 
     const url = BASE_URL_API + endpoint
+    
     const responseAPI = await fetch( url , {
+        // agent: agents,
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
