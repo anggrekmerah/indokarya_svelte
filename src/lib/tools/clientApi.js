@@ -40,7 +40,7 @@ export async function requestAPI(method, endpoint, bodys, fetch) {
     const bodyReq = await makeBody(bodys)
 
     const url = BASE_URL_API + endpoint
-    
+    console.log(url)
     const responseAPI = await fetch( url , {
         // agent: agents,
         method: 'POST',
@@ -49,7 +49,7 @@ export async function requestAPI(method, endpoint, bodys, fetch) {
         },
         body: JSON.stringify(bodyReq) // This is correct, it uses the prepared `body` argument.
     });
-
+    
     // Check if the HTTP response status is in the 200-299 range.
     if (!responseAPI.ok) {
         // Attempt to parse the error message from the response body.
@@ -61,14 +61,14 @@ export async function requestAPI(method, endpoint, bodys, fetch) {
             // If the response is not JSON, use a generic message.
             errorData.message = responseAPI.statusText;
         }
-
+        console.log(errorData)
         // Use SvelteKit's built-in `error` function to handle the issue.
         // It will redirect to the nearest `+error.svelte` page.
         error(responseAPI.status, `API Error: ${errorData.message || 'Unknown error'}`);
+    } else {
+        // If the response is ok, parse and return the JSON.
+        const resJson = await responseAPI.json();
+        return resJson;
+
     }
-
-    // If the response is ok, parse and return the JSON.
-    const resJson = await responseAPI.json();
-    return resJson;
-
 }

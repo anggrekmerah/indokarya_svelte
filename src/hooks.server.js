@@ -18,7 +18,7 @@ export async function handle({ event, resolve }) {
         console.log(`User with session ID ${sessionId} is logged in.`);
         
         const dataUser = await userByTokenAPI({token: sessionId},event.fetch)
-
+        
         if(!dataUser.error) {
             
             const userMenu = await ClientMenuAPI({email:dataUser.data.email}, event.fetch)
