@@ -49,7 +49,7 @@ export async function requestAPI(method, endpoint, bodys, fetch) {
         },
         body: JSON.stringify(bodyReq) // This is correct, it uses the prepared `body` argument.
     });
-    console.log(responseAPI.text())
+
     // Check if the HTTP response status is in the 200-299 range.
     if (!responseAPI.ok) {
         // Attempt to parse the error message from the response body.
