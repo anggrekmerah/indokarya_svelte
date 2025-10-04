@@ -1,7 +1,7 @@
 
 import { io } from 'socket.io-client';
 
-const socket = io("https://10.231.77.68:3000", { 
+const socket = io("https://socketio.appstesting.cloud", { 
             transports: ["websocket", "polling"] ,
             reconnection: true
         });

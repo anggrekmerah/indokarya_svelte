@@ -1,12 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { PRIVATE_KEY,BASE_URL_API } from '$env/static/private';
 import jwt from 'jsonwebtoken';
-import https from 'https';
-
-// Node.js agent to bypass the self-signed certificate error
-const agents = new https.Agent({
-  rejectUnauthorized: true
-});
 
 async function defaultBodyRequest(body) {
     body.app = 'svelte'
@@ -55,23 +49,23 @@ export async function requestAPI(method, endpoint, bodys, fetch) {
         },
         body: JSON.stringify(bodyReq) // This is correct, it uses the prepared `body` argument.
     });
-    // console.log(body)
+    console.log(responseAPI.text())
     // Check if the HTTP response status is in the 200-299 range.
-    // if (!responseAPI.ok) {
-    //     // Attempt to parse the error message from the response body.
-    //     // Use a try...catch block in case the body is not JSON.
-    //     let errorData = {};
-    //     try {
-    //         errorData = await responseAPI.json();
-    //     } catch (e) {
-    //         // If the response is not JSON, use a generic message.
-    //         errorData.message = responseAPI.statusText;
-    //     }
+    if (!responseAPI.ok) {
+        // Attempt to parse the error message from the response body.
+        // Use a try...catch block in case the body is not JSON.
+        let errorData = {};
+        try {
+            errorData = await responseAPI.json();
+        } catch (e) {
+            // If the response is not JSON, use a generic message.
+            errorData.message = responseAPI.statusText;
+        }
 
-    //     // Use SvelteKit's built-in `error` function to handle the issue.
-    //     // It will redirect to the nearest `+error.svelte` page.
-    //     // error(responseAPI.status, `API Error: ${errorData.message || 'Unknown error'}`);
-    // }
+        // Use SvelteKit's built-in `error` function to handle the issue.
+        // It will redirect to the nearest `+error.svelte` page.
+        error(responseAPI.status, `API Error: ${errorData.message || 'Unknown error'}`);
+    }
 
     // If the response is ok, parse and return the JSON.
     const resJson = await responseAPI.json();

@@ -2,6 +2,7 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte'
 
 	let { children } = $props();
 
@@ -14,5 +15,5 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="icon" href={favicon} />
 </svelte:head>
-
+<LoadingIndicator />
 {@render children()}

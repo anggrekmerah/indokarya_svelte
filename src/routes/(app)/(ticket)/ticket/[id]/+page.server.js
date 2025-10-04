@@ -42,10 +42,9 @@ export const actions = {
             if(unlockReport.error)
                 return fail(500, { message: 'Server error during unlock ticket.' });
 
-            const updatedData = await load({ params, fetch, locals });
             return {
                 status: 200,
-                ...updatedData
+                success: true
             };
         } catch (error) {
             
@@ -74,10 +73,9 @@ export const actions = {
             if(updateTicket.error)
                 return fail(500, { message: 'Server error during update ticket.' });
 
-            const updatedData = await load({ params, fetch, locals });
             return {
                 status: 200,
-                ...updatedData
+                success: true
             };
         } catch (error) {
             console.error('Failed to save file:', error);

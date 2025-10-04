@@ -4,16 +4,12 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import fs from 'fs'; 
 
-const certPath = './cert/cert.crt';
-const keyPath = './cert/cert.key';
+// const certPath = './cert/cert.crt';
+// const keyPath = './cert/cert.key';
 
 export default defineConfig({
 	server: {
-		allowedHosts: true,
-		https : {
-			key: fs.readFileSync(keyPath),
-      		cert: fs.readFileSync(certPath),
-		}
+		allowedHosts: true
 	},
 	ssr:{
 		noExternal : ['@googlemaps/js-api-loader']

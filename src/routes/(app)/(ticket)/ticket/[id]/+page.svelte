@@ -682,9 +682,9 @@
                 console.log(response)
                 if (status === 'OK') {
                     directionsRenderer.setDirections(response);
-                    // const overviewPath = response.routes[0].overview_path;
-                    // const animatedPath = await interpolatePath(overviewPath, 10);
-                    // await animateMarker(userMarker, animatedPath, 0, 1)
+                    const overviewPath = response.routes[0].overview_path;
+                    const animatedPath = await interpolatePath(overviewPath, 10);
+                    await animateMarker(userMarker, animatedPath, 0, 1)
                 } else {
                     console.error('Directions request failed due to ' + status);
                 }
@@ -787,7 +787,7 @@
             // The blob is what you'll send to the server
             in_capturedFile = new File([blob], 'photo.png', { type: 'image/png' });
             
-        }, 'image/png');
+        }, 'image/png', 0.3);
         
         in_stopCamera(); // Stop the camera after the photo is taken
     }

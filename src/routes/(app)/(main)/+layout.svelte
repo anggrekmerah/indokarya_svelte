@@ -14,15 +14,9 @@
     let openMenu = $state(null); // 'status', 'date', or 'category'
     let currentStatus = $state(null);
 
-    // Status menu data
-    const statuses = ['All', 'Open', 'Assigned', 'Closed', 'Pending', 'In progress', 'Canceled'];
-
     // Date menu state
     let fromDate = $state('');
     let toDate = $state('');
-
-    // Category menu data
-    const categories = ['Low', 'Medium', 'Urgent'];
 
     /**
      * Toggles the state of the menus.
