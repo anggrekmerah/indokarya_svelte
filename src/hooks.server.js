@@ -1,6 +1,7 @@
 import { parse } from 'cookie';
 import {userByTokenAPI} from '$lib/tools/tokenApi'
 import {ClientMenuAPI} from '$lib/tools/menuApi'
+import {userGroupAPI} from '$lib/tools/userGroupAPI'
 import {LangAPI} from '$lib/tools/langApi'
 import { redirect } from '@sveltejs/kit';
 
@@ -23,10 +24,12 @@ export async function handle({ event, resolve }) {
             
             const userMenu = await ClientMenuAPI({email:dataUser.data.email}, event.fetch)
             const userLang = await LangAPI({id_user:dataUser.data.id }, event.fetch)
+            const userGroup = await userGroupAPI({ID:dataUser.data.id }, event.fetch)
 
             event.locals.user = dataUser.data
             event.locals.userMenu = userMenu.data
             event.locals.userLang = userLang.data
+            event.locals.userGroup = userGroup.data
 
         } else {
 

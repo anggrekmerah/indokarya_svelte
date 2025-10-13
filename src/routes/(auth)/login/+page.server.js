@@ -23,6 +23,9 @@ export const actions = {
             
         // Simulate a successful login with hardcoded credentials
         if (dataLogin) {
+    
+            if(dataLogin.error)
+                return fail(400, { success: false, message: dataLogin.message });
 
             // Set a cookie to remember the user. The cookie is named 'session_id' and
             // its value is an arbitrary string. In a real app, this would be a secure token.

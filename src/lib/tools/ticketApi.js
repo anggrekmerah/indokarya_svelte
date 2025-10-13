@@ -33,6 +33,14 @@ export async function getTicketAssign(body, fetch) {
     
 }
 
+export async function getTicketHistory(body, fetch) {
+
+    const responseAPI = await requestAPI('POST','/ticket/history', body, fetch) 
+
+    return responseAPI;
+    
+}
+
 export async function ticketCheckInAPI(body, fetch) {
 
     const responseAPI = await requestAPI('POST','/ticket/checkin', body, fetch) 
@@ -52,6 +60,14 @@ export async function ticketCheckOutAPI(body, fetch) {
 export async function ticketDetailAPI(body, fetch) {
 
     const responseAPI = await requestAPI('POST','/ticket/detail', body, fetch) 
+
+    return responseAPI;
+    
+}
+
+export async function ticketDetailHistoryAPI(body, fetch) {
+
+    const responseAPI = await requestAPI('POST','/ticket/detail-history', body, fetch) 
 
     return responseAPI;
     

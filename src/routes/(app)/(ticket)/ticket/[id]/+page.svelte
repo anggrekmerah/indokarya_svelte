@@ -7,6 +7,8 @@
     import { Loader } from '@googlemaps/js-api-loader';
     import { afterNavigate } from '$app/navigation';
     import { ioClient } from '$lib/stores/socket.js';
+    import { tweened } from 'svelte/motion';
+    import { cubicInOut } from 'svelte/easing';
     
     let { data, form } = $props();
 
@@ -16,6 +18,24 @@
         files: [],
         signature: ''
     });
+    
+    // General ticket data (Notes and final signature, applies to the whole ticket)
+    let generalReport = $state({
+        generalNotes: '',
+        signature: ''
+    });
+
+    // --- Video Playback Modal State ---
+    let isVideoModalOpen = $state(false);
+    let currentVideoUrl = $state(null);
+
+    // Array of reports, one object per machine/asset
+    let machineReports = $state([]); 
+    
+    // Used to track which machine we are currently taking a photo/video for
+    let currentMachineId = $state(null);
+
+    let sparePartsList = $state([]); // List of available parts for this ticket
 
     let isInfoExpanded = $state(true);
     let isMapExpanded = $state(false);
@@ -24,6 +44,7 @@
     let isTicketLocked = $state(false)
     
     let popUpReportLocked = $state(false)
+    let RequestReportUnLocked = $state(false)
 
     let isSignaturePadOpen = $state(false);
     let isCameraPopupOpen = $state(false);
@@ -81,6 +102,18 @@
         glyphColor: "#033552", // White glyph
         scale: 1 // Larger size
     };
+    // Define the tweened store for smooth marker position
+    const smoothLocation = tweened({ lat: 0, lng: 0 }, {
+        duration: 300, // Duration of the animation in milliseconds
+        easing: cubicInOut,
+    });
+
+    smoothLocation.subscribe(pos => {
+        if (userMarker && pos.lat !== 0 && pos.lng !== 0) {
+            userMarker.position = pos;
+        }
+    });
+
 
     // checkIN
     // Svelte's new reactive state primitive
@@ -145,6 +178,8 @@
                 userMarker.position = userLocation;
             }
 
+            smoothLocation.set(userLocation); 
+
             // Calculate and check the distance
             const distance = google.maps.geometry.spherical.computeDistanceBetween(
                 new google.maps.LatLng(userLocation),
@@ -172,6 +207,27 @@
 
     });
 
+    function saveState() {
+        sessionStorage.setItem('generalReportData', JSON.stringify(generalReport));
+        sessionStorage.setItem('machineReportsData', JSON.stringify(machineReports));
+    }
+
+    function loadState() {
+        const generalData = sessionStorage.getItem('generalReportData');
+        if (generalData) {
+            generalReport = JSON.parse(generalData);
+        }
+
+        const reportsData = sessionStorage.getItem('machineReportsData');
+        if (reportsData) {
+            machineReports = JSON.parse(reportsData);
+        }
+    }
+
+    function findMachineReport(machineId) {
+        return machineReports.find(r => String(r.id) === String(machineId));
+    }
+    
     // The function to send the data
     async function sendLockTaskBeacon() {
         const taskId = data.detailTicket.id_ticket;
@@ -199,7 +255,7 @@
         alertPopup = false;
     }
 
-    async function startCamera(type) {
+    async function startCamera(type, machineId) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             alert('Your browser does not support the MediaDevices API.');
             return;
@@ -221,16 +277,22 @@
         };
 
         try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            currentStream = stream;
+            const constraints = {
+                video: {
+                    facingMode: selectedCamera
+                }
+            };
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             if (videoElement) {
-                videoElement.srcObject = stream;
-                videoElement.play();
+                videoElement.srcObject = currentStream;
             }
+            currentMachineId = machineId; // Set the active machine ID
+            mediaType = type;
+            isCameraPopupOpen = true;
         } catch (err) {
-            console.error('Error accessing the camera:', err);
-            alert('Could not access the camera. Please check your permissions.');
-            isCameraPopupOpen = false;
+            console.error('Error accessing camera:', err);
+            // In a real app, show a friendly error modal instead of alert
+            alert('Cannot access camera. Please check permissions.');
         }
     }
 
@@ -240,6 +302,8 @@
             currentStream = null;
         }
         isCameraPopupOpen = false;
+        isRecording = false;
+        recordedChunks = [];
     }
 
     function switchCamera() {
@@ -249,52 +313,56 @@
     }
 
     function takePhoto() {
-        if (!videoElement || !canvasElement) return;
+        if (!canvasElement || !videoElement) return;
 
+        const context = canvasElement.getContext('2d');
         canvasElement.width = videoElement.videoWidth;
         canvasElement.height = videoElement.videoHeight;
-        const ctx = canvasElement.getContext('2d');
-        ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
 
         canvasElement.toBlob(blob => {
             const file = new File([blob], `photo_${Date.now()}.jpeg`, { type: 'image/jpeg' });
-            report.files = [...report.files, { file, type: 'image' }];
+            
+            const machineReport = findMachineReport(currentMachineId);
+            if (machineReport) {
+                machineReport.files = [...machineReport.files, { file, type: 'image', preview: URL.createObjectURL(file) }];
+                saveState();
+            }
+            
             stopCamera();
         }, 'image/jpeg');
     }
 
     function startRecording() {
-        if (!currentStream) {
-            alert('No camera stream available.');
-            return;
-        }
-        
-        isRecording = true;
+        if (!currentStream) return;
         recordedChunks = [];
-        mediaRecorder = new MediaRecorder(currentStream, { mimeType: 'video/webm;codecs=vp9' });
+        mediaRecorder = new MediaRecorder(currentStream);
 
-        mediaRecorder.ondataavailable = event => {
+        mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) {
                 recordedChunks.push(event.data);
             }
         };
 
-        mediaRecorder.onstop = async () => {
+        mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            const videoFile = new File([blob], `video_${Date.now()}.webm`, { type: 'video/webm' });
-            const thumbnail = await createVideoThumbnail(videoFile);
-            
-            report.files = [...report.files, { file: videoFile, type: 'video', thumbnail }];
-            
+            const file = new File([blob], `video_${Date.now()}.webm`, { type: 'video/webm' });
+
+            const machineReport = findMachineReport(currentMachineId);
+            if (machineReport) {
+                machineReport.files = [...machineReport.files, { file, type: 'video', preview: URL.createObjectURL(file) }];
+                saveState();
+            }
             isRecording = false;
             stopCamera();
         };
 
         mediaRecorder.start();
+        isRecording = true;
     }
 
     function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
     }
@@ -390,40 +458,67 @@
         isSignaturePadOpen = false;
     }
 
-    function handleCheckboxChange(event) {
-        
-        const value = event.target.value; // This is a string
+    function handleCheckboxChange(event, machineId) { // Added machineId
+        const value = event.target.value;
         const checked = event.target.checked;
         
-        if (checked) {
-            // Add the new string value to the array
-            report.sparePart = [...report.sparePart, value];
-        } else {
-            // Filter out the string value from the array
-            report.sparePart = report.sparePart.filter(item => item !== value);
+        const machineReport = findMachineReport(machineId);
+        
+        if (machineReport) {
+            if (checked) {
+                machineReport.sparePart = [...machineReport.sparePart, value];
+            } else {
+                machineReport.sparePart = machineReport.sparePart.filter(item => item !== value);
+            }
+            saveState();
         }
     }
 
-    function handleFileUpload(event) {
-        const files = event.target.files;
-        if (files.length > 0) {
-            for (const file of Array.from(files)) {
-                if (file.type.startsWith('video/')) {
-                    // This function would be for a video thumbnail but is not needed for direct camera access
-                } else {
-                    report.files = [...report.files, { file, type: 'image' }];
-                }
-            }
+    function openVideoModal(url) {
+        currentVideoUrl = url;
+        isVideoModalOpen = true;
+    }
+
+    function closeVideoModal() {
+        currentVideoUrl = null;
+        isVideoModalOpen = false;
+    }
+
+    // Functionality to prepare media paths for display (only needed if using server data display)
+    function getRootRelativePath(path) {
+        return path ? path.replace(/^\.\/static/, '') : null;
+    }
+
+    function handleFileUpload(event) { // Removed machineId parameter, use currentMachineId set by button click
+        const files = Array.from(event.target.files);
+        // Use the ID stored when the upload button was clicked
+        const machineReport = findMachineReport(currentMachineId); 
+
+        if (machineReport) {
+            const newFiles = files.map(file => {
+                const type = file.type.startsWith('image/') ? 'image' : 'video';
+                return {
+                    file,
+                    type,
+                    preview: URL.createObjectURL(file)
+                };
+            });
+            machineReport.files = [...machineReport.files, ...newFiles];
+            saveState();
+        }
+        // Reset file input value to allow the same file to be selected again
+        if (fileInput) {
+            fileInput.value = '';
         }
     }
     
-    function removeFile(fileToRemove) {
-        report.files = report.files.filter(f => {
-            if (f === fileToRemove && f.type === 'video' && f.file instanceof File) {
-                URL.revokeObjectURL(URL.createObjectURL(f.file));
-            }
-            return f !== fileToRemove;
-        });
+    function removeFile(fileToRemove, machineId) { // Added machineId
+        const machineReport = findMachineReport(machineId);
+        if (machineReport) {
+            machineReport.files = machineReport.files.filter(f => f !== fileToRemove);
+            URL.revokeObjectURL(fileToRemove.preview); // Clean up memory
+            saveState();
+        }
     }
 
     function handleFormSubmit(e) {
@@ -455,12 +550,34 @@
 
     onMount( async () => {
 
+        loadState(); // Load saved report data
+
+        // Initialize machineReports based on ticket data
+        const machines = data.detailTicket.machines || [{ id: data.detailTicket.id_ticket, name: 'Main Ticket Service' }];
+
+        // Initialize report objects for each machine if not loaded from session
+        if (machineReports.length === 0 || machineReports.length !== machines.length) {
+             machineReports = machines.map(machine => {
+                return {
+                    id: String(machine.id_ticket_machine), // Ensure BIGINT is treated as a string
+                    name: machine.machine_name || `Machine #${String(machine.id_ticket_machine)}`,
+                    description: '',
+                    sparePart: [],
+                    files: [],
+                };
+            });
+        }
+        
+        // Initialize the spare parts list from ticket data
+        sparePartsList = data.detailTicket.spareparts || [];
+
         isTicketLocked = (data.detailTicket.ticket_locked == 'N') ? false : true
 
         if (ioClient) {
             ioClient.on('ticketUnlocked', (newData) => {
                 console.log('New message received:', newData);
                 isTicketLocked = newData.ticket_ulocked ? false : true;
+                RequestReportUnLocked = newData.ticket_ulocked ? false : true;
             });
         }
 
@@ -513,13 +630,13 @@
                     // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
                     await calculateAndDisplayRoute(origin, centerMarker);
                     // After the route is set up, start continuous tracking
-                    // await watchUserLocation();
+                    await watchUserLocation();
                 },
                 (error) => console.error("Could not get user's initial location:", error),
                 {
                     enableHighAccuracy: true,
                     timeout: 60000, // Increase this significantly
-                    maximumAge: 0
+                    maximumAge: 30000
                 }
             );
             
@@ -606,7 +723,7 @@
                     userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
                 },
                 (error) => console.error('Geolocation watch error:', error),
-                { enableHighAccuracy: true, timeout: 100000, maximumAge: 60000 }
+                { enableHighAccuracy: true, maximumAge: 0 }
             );
         }
     }
@@ -646,7 +763,11 @@
     async function animateMarker(marker, path, index, speed) {
         // Check if we've reached the end of the path
         if (index >= path.length) {
-            userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
+            // in range 
+            userLocation = { lat: -6.293884346171741, lng: 106.79672640071097 };
+
+            // out of range
+            // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
             return; 
         }
 
@@ -682,9 +803,9 @@
                 console.log(response)
                 if (status === 'OK') {
                     directionsRenderer.setDirections(response);
-                    const overviewPath = response.routes[0].overview_path;
-                    const animatedPath = await interpolatePath(overviewPath, 10);
-                    await animateMarker(userMarker, animatedPath, 0, 1)
+                    // const overviewPath = response.routes[0].overview_path;
+                    // const animatedPath = await interpolatePath(overviewPath, 10);
+                    // await animateMarker(userMarker, animatedPath, 0, 1)
                 } else {
                     console.error('Directions request failed due to ' + status);
                 }
@@ -865,7 +986,7 @@
                 {$_('Pending Unlock Ticket')}
             
             </button>
-        {:else if in_checkin && !isNearDestination} 
+        {:else if in_checkin && !isNearDestination && !RequestReportUnLocked} 
             <button
                 type="submit"
                 onclick={() => popUpReportLocked = !popUpReportLocked }
@@ -950,44 +1071,167 @@
 
         {#if in_checkin !== null && isNearDestination && !isTicketLocked }
             
-        
+            <!-- General Notes Section -->
+            <div class="bg-white rounded-xl shadow-lg p-5 space-y-4 border border-gray-100">
+                <h2 class="flex items-center text-lg font-bold text-gray-900">
+                    <MessageSquare class="h-5 w-5 mr-2 text-blue-500" /> 
+                    {$_('General Ticket Notes')}
+                </h2>
+                <textarea id="general-notes" bind:value={generalReport.generalNotes} rows="2" class="w-full mt-1 rounded-md border-gray-300 shadow-sm bg-gray-50 p-3 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors" placeholder="Enter notes or observations for the entire site/ticket (e.g., access issues, overall environment)."
+                oninput={saveState}
+                ></textarea>
+            </div>
+
+            <!-- START OF MACHINE REPORTS LOOP -->
+            {#each machineReports as mReport (mReport.id)}
+                <section class="bg-white rounded-xl shadow-lg p-5 space-y-6 border-l-4 border-green-500">
+                    <h2 class="flex items-center text-xl font-bold text-gray-900 border-b pb-2">
+                        <FileText class="h-6 w-6 mr-2 text-green-600" /> 
+                        <span class="font-bold ml-1 text-blue-700">Machine: {mReport.name}</span>
+                    </h2>
+
+                    <div class="space-y-4">
+                        <!-- 1. Report Description (Binds to mReport.description) -->
+                        <div>
+                            <label for={`report-description-${mReport.id}`} class="text-sm font-medium text-gray-700">{$_('Work Performed / Description')}</label>
+                            <textarea 
+                                id={`report-description-${mReport.id}`} 
+                                bind:value={mReport.description} 
+                                oninput={saveState}
+                                rows="4" 
+                                class="w-full mt-1 rounded-md border-gray-300 shadow-sm bg-gray-50 p-3 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors" 
+                                placeholder="Detail the work specific to this machine."
+                            ></textarea>
+                        </div>
+
+                        <!-- 2. Spare Parts Used -->
+                        {#if sparePartsList.length > 0}
+                            <div class="pt-2 border-t border-gray-100">
+                                <label class="text-sm font-medium text-gray-700">{$_('Spare Parts Used on this Machine')}</label>
+                                <div class="mt-2 space-y-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg">
+                                    {#each sparePartsList as part}
+                                        <div class="flex items-center">
+                                            <input 
+                                                id={`spare-part-${mReport.id}-${part.id_ticket_sparepart}`} 
+                                                type="checkbox" 
+                                                value={String(part.id_ticket_sparepart)} 
+                                                onchange={(e) => handleCheckboxChange(e, mReport.id)}
+                                                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" 
+                                                checked={mReport.sparePart.includes(String(part.id_ticket_sparepart))} 
+                                            />
+                                            <label for={`spare-part-${mReport.id}-${part.id_ticket_sparepart}`} class="ml-2 text-sm text-gray-700 cursor-pointer">
+                                                {part.sparepart_name} (P/N: {part.sparepart_part_number || 'N/A'})
+                                            </label>
+                                        </div>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+
+                        <!-- 3. Upload Photos / Videos -->
+                        <div class="pt-2 border-t border-gray-100">
+                            <label class="text-sm font-medium text-gray-700">{$_('Media Evidence for this Machine')}</label>
+                            <div class="flex space-x-2 mt-2">
+                                <!-- PASS MACHINE ID to all media functions -->
+                                <button onclick={() => startCamera('photo', mReport.id)} type="button" class="flex items-center justify-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
+                                    <Camera class="w-4 h-4 mr-2" /> {$_('Photo')}
+                                </button>
+                                <button onclick={() => startCamera('video', mReport.id)} type="button" class="flex items-center justify-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
+                                    <Video class="w-4 h-4 mr-2" /> {$_('Video')}
+                                </button>
+                                <input type="file" accept="image/*,video/*" multiple class="hidden" bind:this={fileInput} onchange={(e) => handleFileUpload(e, mReport.id)} />
+                                <button onclick={() => fileInput.click()} type="button" class="flex items-center justify-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
+                                    <FilePlus class="w-4 h-4 mr-2" /> {$_('Upload')}
+                                </button>
+                            </div>
+
+                            {#if mReport.files.length > 0}
+                                <div class="mt-3 flex flex-wrap gap-4">
+                                    {#each mReport.files as media}
+                                        <div class="relative w-24 h-24 rounded-lg overflow-hidden shadow-md">
+                                            {#if media.type === 'image'}
+                                                <img src={media.preview} alt="Evidence" class="w-full h-full object-cover">
+                                            {:else}
+                                                <button onclick={() => openVideoPlayer(media.file)} class="relative w-24 h-24 flex items-center justify-center bg-black rounded-md border overflow-hidden">
+                                                    <img src={media.thumbnail} alt={media.file.name} class="w-full h-full object-cover opacity-70" />
+                                                    <Play class="absolute w-8 h-8 text-white opacity-90 group-hover:opacity-100 transition-opacity" />
+                                                </button>
+                                            {/if}
+                                            <button 
+                                                onclick={() => removeFile(media, mReport.id)} 
+                                                class="absolute top-0 right-0 p-1 bg-red-600 text-white rounded-bl-lg hover:bg-red-700 transition-colors"
+                                                aria-label="Remove file"
+                                            >
+                                                <Trash2 class="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                </section>
+            {/each}
+            <!-- END OF MACHINE REPORTS LOOP -->
             <form method="post" enctype="multipart/form-data" action="?/checkout" class="bg-white rounded-xl shadow-lg p-5 space-y-6 border border-gray-100"
                 use:enhance={ async ({formData}) => {
-                    
-                    loadingCheckout = true
+                    loadingCheckout = true;
 
-                    formData.append('reportDescription', report.description);
-                    formData.append('ticketId', data.detailTicket.id_ticket);
-                    formData.append('spareParts', report.sparePart);
+                    // 1. Append general ticket data (Notes and final signature)
+                    formData.append('id_ticket', data.detailTicket.id_ticket);
+                    formData.append('generalNotes', generalReport.generalNotes); 
+                    // formData.append('signature', report.signature);
+                    formData.append('description', report.description); 
 
-                    // 2. Append the signature
+                    // 2. Append all machine reports as a single JSON string
+                    const reportsJson = JSON.stringify(machineReports.map(r => ({
+                        id: r.id,
+                        name: r.name,
+                        description: r.description,
+                        spareparts: r.sparePart // Array of selected spare part IDs
+                    })));
+                    formData.append('machineReports', reportsJson); 
+
+                    // 3. Append ALL photos and videos, tagged with their machine ID in the file name
+                    let fileIndex = 0;
+                    machineReports.forEach(mReport => {
+                        mReport.files.forEach(media => {
+                            if (media.file instanceof File) {
+                                // 1. Get the original extension (e.g., '.jpg', '.mp4')
+                                const originalFileName = media.file.name;
+                                const extensionMatch = originalFileName.match(/\.[0-9a-z]+$/i);
+                                const fileExtension = extensionMatch ? extensionMatch[0] : '';
+                                
+                                // 2. Create the unique filename WITH the extension
+                                const uniqueFileName = `machine_${mReport.id}_file_${fileIndex++}${fileExtension}`;
+                                
+                                // 3. Append to FormData
+                                formData.append('files', media.file, uniqueFileName); 
+                                console.log(`Appending file as: ${uniqueFileName}`);
+                            }
+                        });
+                    });
+
+                    // 4. Append the signature (which remains ticket-wide)
                     if (report.signature) {
-                        // Convert base64 signature to a File object
                         const signatureBlob = await fetch(report.signature).then(res => res.blob());
                         const signatureFile = new File([signatureBlob], 'signature.png', { type: 'image/png' });
                         formData.append('signature', signatureFile);
                     }
-
-                    // 3. Append photos and videos
-                    report.files.forEach(media => {
-                        if (media.file instanceof File) {
-                            // `files[]` will be treated as an array on the server
-                            formData.append('files', media.file, media.file.name); 
-                        }
-                    });
                     
                     return async ({ result, update }) => {
-                        loadingCheckout = false
-                        console.log(result)
-                        // Check the result type for success, not the status
+                        loadingCheckout = false;
+
                         if (result.type === 'failure') {
                             alertPopup = true
                         } else {
                             alertPopup = false
+                            sessionStorage.removeItem('generalReportData');
+                            sessionStorage.removeItem('machineReportsData');
+                            sessionStorage.removeItem('taskReportData');
                         }  
-
-                        // Always call update() regardless of success or failure
-                        // to handle potential server errors or form failures.
+                        
+                        // Use update() to handle potential server errors or form failures.
                         update();
                     };
                 }}
@@ -1009,7 +1253,7 @@
                         ></textarea>
                     </div>
                 
-                    {#if data.detailTicket.spareparts}
+                    <!-- {#if data.detailTicket.spareparts}
                         <div>
                             <label class="text-sm font-medium text-gray-700">{$_('Spare Parts Used')}</label>
                             <div class="mt-2 space-y-2">
@@ -1030,11 +1274,11 @@
                                 {/each}
                             </div>
                         </div>    
-                    {/if}
+                    {/if} -->
                     
                 </div>
 
-                <div>
+                <!-- <div>
                     <label class="text-sm font-medium text-gray-700">{$_('Upload Photos / Videos')}</label>
                     <div class="flex space-x-2 mt-2">
                         <button onclick={() => startCamera('photo')} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
@@ -1071,22 +1315,22 @@
                             {/each}
                         </div>
                     {/if}
-                </div>
+                </div> -->
 
                 <div class="flex flex-col items-center">
-                <h3 class="text-sm font-medium text-gray-700 mb-2">{$_('Customer Signature')}</h3>
-                <div class="w-full max-w-sm h-32 rounded-lg border border-gray-300 overflow-hidden flex items-center justify-center bg-gray-50">
-                    {#if report.signature}
-                        <img src={report.signature} alt="Saved Signature" class="w-full h-full object-contain" />
-                    {:else}
-                        <button onclick={() => isSignaturePadOpen = true}
-                            type="button"
-                            class="w-full h-full flex items-center justify-center text-gray-400 text-sm hover:text-gray-600 transition-colors duration-200">
-                            <PenSquare class="w-6 h-6 mr-2" />
-                            {$_('Add Signature')}
-                        </button>
-                    {/if}
-                </div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">{$_('Customer Signature')}</h3>
+                    <div class="w-full max-w-sm h-32 rounded-lg border border-gray-300 overflow-hidden flex items-center justify-center bg-gray-50">
+                        {#if report.signature}
+                            <img src={report.signature} alt="Saved Signature" class="w-full h-full object-contain" />
+                        {:else}
+                            <button onclick={() => isSignaturePadOpen = true}
+                                type="button"
+                                class="w-full h-full flex items-center justify-center text-gray-400 text-sm hover:text-gray-600 transition-colors duration-200">
+                                <PenSquare class="w-6 h-6 mr-2" />
+                                {$_('Add Signature')}
+                            </button>
+                        {/if}
+                    </div>
                 </div>
 
                 <div class="flex space-x-3 mt-4">
@@ -1245,7 +1489,7 @@
                         
                         // untuk test
                         setTimeout(function() {
-                            userLocation = { lat: -6.294097629517158, lng: 106.79894726866495 };
+                            // userLocation = { lat: -6.294097629517158, lng: 106.79894726866495 };
                             console.log("This message appears after 2 seconds.");
                         }, 2000); // 2000 milliseconds = 2 seconds
                     
@@ -1347,6 +1591,7 @@
             return async ({ result, update }) => {
                 console.log(result)
                 popUpReportLocked = false
+                RequestReportUnLocked = true
                 // Check the result type for success, not the status
                 if (result.type === 'failure') {
                     alertPopup = true
@@ -1380,6 +1625,41 @@
         </div>
     </form>
 </div>
+{/if}
+
+<!-- Video Playback Modal -->
+{#if isVideoModalOpen}
+    <div 
+        class="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
+        role="dialog" 
+        aria-modal="true" 
+        onclick={closeVideoModal}
+    >
+        <div 
+            class="w-full max-w-4xl max-h-full bg-black relative" 
+        >
+            <!-- Close Button -->
+            <button 
+                class="absolute top-2 right-2 z-10 p-2 rounded-full text-white bg-gray-800 hover:bg-gray-700 transition-colors"
+                onclick={closeVideoModal}
+                aria-label="Close video player"
+            >
+                <XCircle class="w-6 h-6" />
+            </button>
+
+            <!-- Video Player -->
+            <video 
+                src={currentVideoUrl} 
+                class="w-full h-auto max-h-[80vh] object-contain" 
+                controls 
+                autoplay 
+                preload="auto"
+                tabindex="0"
+            >
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
 {/if}
 
 <style>

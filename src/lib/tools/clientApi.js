@@ -40,10 +40,10 @@ export async function requestAPI(method, endpoint, bodys, fetch) {
     const bodyReq = await makeBody(bodys)
 
     const url = BASE_URL_API + endpoint
-    console.log(url)
+    // console.log(url)
     const responseAPI = await fetch( url , {
         // agent: agents,
-        method: 'POST',
+        method: method,
         headers: {
             'Content-Type': 'application/json'
         },
@@ -54,21 +54,20 @@ export async function requestAPI(method, endpoint, bodys, fetch) {
     if (!responseAPI.ok) {
         // Attempt to parse the error message from the response body.
         // Use a try...catch block in case the body is not JSON.
-        let errorData = {};
+        
         try {
-            errorData = await responseAPI.json();
+            return await responseAPI.json();
         } catch (e) {
             // If the response is not JSON, use a generic message.
-            errorData.message = responseAPI.statusText;
+            return {
+                error : true,
+                message : responseAPI.statusText 
+            }
         }
-        console.log(errorData)
-        // Use SvelteKit's built-in `error` function to handle the issue.
-        // It will redirect to the nearest `+error.svelte` page.
-        error(responseAPI.status, `API Error: ${errorData.message || 'Unknown error'}`);
+        
     } else {
         // If the response is ok, parse and return the JSON.
-        const resJson = await responseAPI.json();
-        return resJson;
-
+        return await responseAPI.json();
     }
+
 }
