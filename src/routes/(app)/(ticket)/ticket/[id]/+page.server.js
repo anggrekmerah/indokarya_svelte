@@ -59,14 +59,16 @@ export const actions = {
         const photo = data.get('photo');
         const id_ticket = data.get('id_ticket');
         const idUser = locals.user.id
+        const directoryPath = './static/report/' + id_ticket + '/';
 
         if (!photo) {
             return fail(400, { message: 'No photo uploaded.' });
         }
 
+        mkdirSync(directoryPath, { recursive: true });
         const extension = extname(photo.name);
         const uniqueFilename = `${id_ticket}_${uuidv4()}${extension}`;
-        const filePath = `./static/uploads/${uniqueFilename}`;
+        const filePath = `${directoryPath}${uniqueFilename}`;
 
         try {
             await writeFile(filePath, Buffer.from(await photo.arrayBuffer()));

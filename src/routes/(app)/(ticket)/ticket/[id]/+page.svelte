@@ -630,7 +630,7 @@
                     // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
                     await calculateAndDisplayRoute(origin, centerMarker);
                     // After the route is set up, start continuous tracking
-                    await watchUserLocation();
+                    // await watchUserLocation();
                 },
                 (error) => console.error("Could not get user's initial location:", error),
                 {
@@ -803,9 +803,9 @@
                 console.log(response)
                 if (status === 'OK') {
                     directionsRenderer.setDirections(response);
-                    // const overviewPath = response.routes[0].overview_path;
-                    // const animatedPath = await interpolatePath(overviewPath, 10);
-                    // await animateMarker(userMarker, animatedPath, 0, 1)
+                    const overviewPath = response.routes[0].overview_path;
+                    const animatedPath = await interpolatePath(overviewPath, 10);
+                    await animateMarker(userMarker, animatedPath, 0, 1)
                 } else {
                     console.error('Directions request failed due to ' + status);
                 }
@@ -1069,7 +1069,7 @@
         {/if}
         </section>
 
-        {#if in_checkin !== null && isNearDestination && !isTicketLocked }
+        {#if in_checkin && isNearDestination && !isTicketLocked }
             
             <!-- General Notes Section -->
             <div class="bg-white rounded-xl shadow-lg p-5 space-y-4 border border-gray-100">
@@ -1498,6 +1498,7 @@
                         in_photoTaken = false
                         in_stream = null
                         in_checkin = true
+                        isTicketLocked = false
                     } else {
                         alertPopup = true    
                     }
