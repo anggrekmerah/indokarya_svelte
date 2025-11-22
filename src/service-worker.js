@@ -11,6 +11,7 @@
 /// <reference types="../.svelte-kit/ambient.d.ts" />
 
 import { build, files, version } from '$service-worker';
+import { deleteOfflineTask, deserializeTask} from '$lib/stores/report'
 
 // This gives `self` the correct types
 const self = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (globalThis.self));
@@ -19,6 +20,8 @@ const self = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (gl
 const CACHE = `cache-${version}`;
 
 const ASSETS = [
+    '/',
+    '/home',
 	...build, // the app itself
 	...files  // everything in `static`
 ];
@@ -44,52 +47,113 @@ self.addEventListener('activate', (event) => {
 	event.waitUntil(deleteOldCaches());
 });
 
+
+self.addEventListener('sync', (event) => {
+    // 1. Periksa apakah event.tag sesuai dengan ID formulir yang kita simpan
+    console.log('event.tag.startsWith(\'sync-\')')
+    console.log(event.tag.startsWith('sync-'))
+	if (event.tag.startsWith('sync-')) {
+        console.log(`[SW] Background Sync terdeteksi untuk ID: ${event.tag}`);
+        
+        // 2. Cegah SW tidur sampai tugas selesai
+        event.waitUntil(
+            // Fungsi Asinkron untuk Mengambil data formulir dari IndexedDB
+            deserializeTask(event.tag)
+                .then(result => {
+
+					if (!result) {
+                        console.log(`[SW] Tugas dengan ID ${event.tag} tidak ditemukan.`);
+                        return;
+                    }
+                    const { task, formData } = result;
+
+                    // Lakukan pengiriman POST ke server SvelteKit (URL yang tersimpan di Dexie)
+                    return fetch(task.url, {
+                        method: 'POST',
+                        body: formData 
+                    });
+
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log(`[SW] Formulir ${event.tag} berhasil dikirim!`);
+                        // 4. Hapus data dari IndexedDB setelah sukses
+                        return deleteOfflineTask(event.tag);
+                    } else {
+                        // Jika server merespon error, biarkan data tetap di IDB untuk percobaan selanjutnya
+                        console.error(`[SW] Pengiriman Gagal (Server Error ${response.status}). Akan dicoba lagi.`);
+                        throw new Error('Server returned an error');
+                    }
+                })
+                .catch(error => {
+                    // Jika gagal karena masalah jaringan/klien, SW akan otomatis mencoba lagi nanti.
+                    console.error('[SW] Pengiriman Gagal Total. Dicoba lagi nanti:', error);
+                    // Lemparkan error agar SyncManager tahu untuk mencoba lagi
+                    throw error; 
+                })
+        );
+    }
+});
+
 self.addEventListener('fetch', (event) => {
     
-	// ignore POST requests etc
-	if (event.request.method !== 'GET') return;
+    // Abaikan permintaan yang bukan GET
+    if (event.request.method !== 'GET') return;
 
-	async function respond() {
-		const url = new URL(event.request.url);
-		const cache = await caches.open(CACHE);
+    async function respond() {
+        const url = new URL(event.request.url);
+        const cache = await caches.open(CACHE);
+        
+        // Cek apakah itu permintaan Navigasi (memuat halaman HTML)
+        const isNavigationRequest = event.request.mode === 'navigate';
 
-		// `build`/`files` can always be served from the cache
-		if (ASSETS.includes(url.pathname)) {
-			const response = await cache.match(url.pathname);
+        // 1. Prioritas tertinggi: Aset yang di-precache (`build` dan `files`)
+        // Ini memastikan aset JS/CSS aplikasi selalu tersedia.
+        if (ASSETS.includes(url.pathname)) {
+            const response = await cache.match(url.pathname);
+            if (response) return response;
+        }
 
-			if (response) {
-				return response;
-			}
-		}
+        // 2. Penanganan Halaman Navigasi (termasuk /home)
+        if (isNavigationRequest) {
+            
+            // ⭐ PENTING: Buat URL baru TANPA parameter kueri
+            // Ini mengubah '/home?id_status=1' menjadi '/home'
+            const cleanUrl = url.origin + url.pathname;
+            
+            // Coba temukan di cache dengan URL yang sudah dibersihkan
+            const cachedResponse = await cache.match(cleanUrl);
 
-		// for everything else, try the network first, but
-		// fall back to the cache if we're offline
-		try {
-			const response = await fetch(event.request);
+            if (cachedResponse) {
+                console.log(`[SW] Melayani halaman dari cache: ${cleanUrl}`);
+                return cachedResponse;
+            }
+        }
+        
+        // 3. Fallback: Coba dari Jaringan (dan cache jika respons OK)
+        try {
+            const response = await fetch(event.request);
 
-			// if we're offline, fetch can return a value that is not a Response
-			// instead of throwing - and we can't pass this non-Response to respondWith
-			if (!(response instanceof Response)) {
-				throw new Error('invalid response from fetch');
-			}
+            if (!(response instanceof Response)) {
+                 throw new Error('invalid response from fetch');
+            }
 
-			if (response.status === 200) {
-				cache.put(event.request, response.clone());
-			}
+            // Jika status 200, Anda bisa memilih untuk menyimpan respons ini (Dynamic Cache)
+            // Namun, untuk halaman navigasi, biasanya ini dihindari untuk menghemat ruang.
+            // Biarkan baris cache.put di-comment jika Anda hanya ingin precache.
+            // if (response.status === 200) { cache.put(event.request, response.clone()); }
 
-			return response;
-		} catch (err) {
-			const response = await cache.match(event.request);
+            return response;
+        } catch (err) {
+            // 4. Offline Fallback Terakhir: Coba temukan request asli (dengan query) di cache.
+            const response = await cache.match(event.request);
 
-			if (response) {
-				return response;
-			}
+            if (response) return response;
 
-			// if there's no cache, then just error out
-			// as there is nothing we can do to respond to this request
-			throw err;
-		}
-	}
+            // Jika tidak ada cache, lempar error browser (Page Not Reached)
+            throw err;
+        }
+    }
 
-	event.respondWith(respond());
+    event.respondWith(respond());
 });

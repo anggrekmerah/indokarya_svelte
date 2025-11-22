@@ -17,7 +17,7 @@ export async function load({ params, fetch, locals }) {
         // If the process is successful, redirect the user
             redirect(303, '/home');
     }     
-
+    console.log(detailTicket.data[0])
     return {
         detailTicket: detailTicket.data[0],
         mapsKey : GOOGLE_MAPS_API_KEY,

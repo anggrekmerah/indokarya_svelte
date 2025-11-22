@@ -9,8 +9,20 @@
     import { ioClient } from '$lib/stores/socket.js';
     import { tweened } from 'svelte/motion';
     import { cubicInOut } from 'svelte/easing';
+    import { db } from '$lib/stores/dexiedb.js'; 
+    import { page } from '$app/stores';
+    import { browser } from '$app/environment';
+    import { saveOfflineTask } from '$lib/stores/report.js'
     
     let { data, form } = $props();
+
+    let isOnline = $state(navigator.onLine);
+    let dataTicket = $state({});
+
+    const reportTable = 'report'
+    const checkinTable = 'checkin'
+    const lockedTable = 'ticketLocked'
+    const unlockTable = 'unlock'
 
     let report = $state({
         description: '',
@@ -91,14 +103,14 @@
     let userLocation = $state(null);
         // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
 
-    const centerMarker = { lat:parseFloat(data.detailTicket.cust_latitude), lng: parseFloat(data.detailTicket.cust_longtitude) }
+    let centerMarker = $state({}) 
     const mapID = data.mapsId
     const mapsKey = data.mapsKey
     const bikeIconSvg = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJpa2UtaWNvbiBsdWNpZGUtYmlrZSI+PGNpcmNsZSBjeD0iMTguNSIgY3k9IjE3LjUiIHI9IjMuNSIvPjxjaXJjbGUgY3g9IjUuNSIgY3k9IjE3LjUiIHI9IjMuNSIvPjxjaXJjbGUgY3g9IjE1IiBjeT0iNSIgcj0iMSIvPjxwYXRoIGQ9Ik0xMiAxNy41VjE0bC0zLTMgNC0zIDIgM2gyIi8+PC9zdmc+`
     const pinOpt = {
         background: "#00a2ff", // Red background
         borderColor: "#033552", // Black border
-        glyph: new URL(bikeIconSvg), // Star symbol
+        glyphSrc: new URL(bikeIconSvg), // Star symbol
         glyphColor: "#033552", // White glyph
         scale: 1 // Larger size
     };
@@ -124,11 +136,11 @@
     let in_capturedFile = null;
     let in_canvasElement; // Reference to the canvas element
     let in_stream = $state(null);
-    let in_checkin = $state(data.detailTicket.ticket_check_in);
+    let in_checkin = $state(null);
     let in_cameraFacingMode = $state('user');
 
 
-    $effect(() => {
+    $effect(async () => {
 
         console.log('isTicketLocked',isTicketLocked)
         const savableData = {
@@ -205,7 +217,23 @@
             wasNearDestination = isNearDestination
         }
 
-    });
+    }); // end $effect
+
+    // Fungsi untuk mendaftarkan Background Sync
+    async function registerBackgroundSync(tag) {
+        if (!('serviceWorker' in navigator) || !('SyncManager' in window)) {
+            console.warn("Background Sync API tidak didukung. Data hanya akan disimpan.");
+            return;
+        }
+
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.sync.register(tag);
+            console.log(`[OFFLINE] Tugas Background Sync berhasil didaftarkan: ${tag}`);
+        } catch (error) {
+            console.error('[OFFLINE] Gagal mendaftarkan Background Sync:', error);
+        }
+    }
 
     function saveState() {
         sessionStorage.setItem('generalReportData', JSON.stringify(generalReport));
@@ -230,7 +258,7 @@
     
     // The function to send the data
     async function sendLockTaskBeacon() {
-        const taskId = data.detailTicket.id_ticket;
+        const taskId = dataTicket.id_ticket;
         const payload = JSON.stringify({ id_ticket:taskId });
         console.log(payload)
         // Check if the browser supports sendBeacon before calling
@@ -249,6 +277,44 @@
                 console.error('Fetch request failed on page exit.', error);
             });
         }
+    }
+
+    async function sendLocation(latitude, longitude) {
+        const taskId = dataTicket.id_ticket;
+        const payload = JSON.stringify({ id_ticket:taskId, lat:latitude, lng:longitude });
+        console.log(payload)
+
+        if (navigator.onLine) {
+            
+            // Check if the browser supports sendBeacon before calling
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/api/location', new Blob([payload], { type: 'application/json' }));
+                console.log('Task lock beacon sent successfully.');
+            } else {
+                // Fallback for older browsers (less reliable)
+                console.warn('navigator.sendBeacon not supported. Using a less reliable fetch request.');
+                fetch('/api/location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true // keepalive hint for the browser
+                }).catch(error => {
+                    console.error('Fetch request failed on page exit.', error);
+                });
+            }
+            
+        } else {
+            await db.timelines.add(
+            {
+                id_ticket : dataTicket.id_ticket,
+                id_user : dataTicket.assignee_id, 
+                lat : latitude, 
+                lng : longitude,
+                timestamp : new Date()
+            })
+            await registerBackgroundSync('sync-timelines_'+dataTicket.id_ticket);
+        }
+        
     }
 
     async function closeAlertPopup() {
@@ -549,17 +615,37 @@
 
 
     onMount( async () => {
+        console.log($page.params.id)
 
+        try {
+            if(isOnline) {
+                await db.detailticket.put({id_ticket: $page.params.id, payload:JSON.stringify(data.detailTicket)})
+                dataTicket = data.detailTicket
+            } else {
+                var stringTicket = await db.detailticket.where('id_ticket').equals($page.params.id).toArray()
+                console.log(stringTicket)
+                dataTicket = JSON.parse(stringTicket[0].payload) 
+            }
+        } catch (error) {
+            var stringTicket = await db.detailticket.where('id_ticket').equals($page.params.id).toArray()
+            console.log(stringTicket)
+            dataTicket = JSON.parse(stringTicket[0].payload)
+        }
+        
         loadState(); // Load saved report data
 
+        centerMarker = { lat:parseFloat(dataTicket.cust_latitude), lng: parseFloat(dataTicket.cust_longtitude) }
+        in_checkin = dataTicket.ticket_check_in
+
         // Initialize machineReports based on ticket data
-        const machines = data.detailTicket.machines || [{ id: data.detailTicket.id_ticket, name: 'Main Ticket Service' }];
+        const machines = dataTicket.machines || [{ id: dataTicket.id_ticket, name: 'Main Ticket Service' }];
 
         // Initialize report objects for each machine if not loaded from session
         if (machineReports.length === 0 || machineReports.length !== machines.length) {
              machineReports = machines.map(machine => {
                 return {
                     id: String(machine.id_ticket_machine), // Ensure BIGINT is treated as a string
+                    id_machine : machine.id_machine,
                     name: machine.machine_name || `Machine #${String(machine.id_ticket_machine)}`,
                     description: '',
                     sparePart: [],
@@ -569,9 +655,9 @@
         }
         
         // Initialize the spare parts list from ticket data
-        sparePartsList = data.detailTicket.spareparts || [];
+        sparePartsList = dataTicket.spareparts || [];
 
-        isTicketLocked = (data.detailTicket.ticket_locked == 'N') ? false : true
+        isTicketLocked = (dataTicket.ticket_locked == 'N') ? false : true
 
         if (ioClient) {
             ioClient.on('ticketUnlocked', (newData) => {
@@ -612,7 +698,7 @@
             await new AdvancedMarkerElement({
                 map: defMap,
                 position: centerMarker,
-                title: data.detailTicket.cust_name,
+                title: dataTicket.cust_name,
             })
 
             directionsRenderer = new DirectionsRenderer({
@@ -627,6 +713,9 @@
                     console.log(position)
                     const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
                     userLocation = origin
+                    
+                    await sendLocation(position.coords.latitude, position.coords.longitude)
+                    
                     // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
                     await calculateAndDisplayRoute(origin, centerMarker);
                     // After the route is set up, start continuous tracking
@@ -717,13 +806,20 @@
     async function watchUserLocation() {
         if ('geolocation' in navigator) {
             watchID = navigator.geolocation.watchPosition(
-                (position) => {
+                async (position) => {
                     console.log('from watch function')
                     console.log(position)
                     userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+
+                    await sendLocation(position.coords.latitude, position.coords.longitude)
+                    
                 },
                 (error) => console.error('Geolocation watch error:', error),
-                { enableHighAccuracy: true, maximumAge: 0 }
+                {
+                    enableHighAccuracy: true,
+                    timeout: 60000, // Increase this significantly
+                    maximumAge: 30000
+                }
             );
         }
     }
@@ -772,11 +868,11 @@
         }
 
         console.log(1)
-        
+    
         // console.log(marker)
         // Update the marker's position
         marker.position = path[index];
-
+        // await sendLocation(path[index].lat, path[index].lng)
         index += speed
         // Recursively call the function on the next frame to continue the animation
         requestAnimationFrame(() => animateMarker(marker, path, index, speed));
@@ -976,7 +1072,7 @@
                     {$_('Unlock')}
                 </button>
             </section>
-        {:else if data.detailTicket.id_ticket_status == 8 && isTicketLocked} 
+        {:else if dataTicket.id_ticket_status == 8 && isTicketLocked} 
             <button
                 type="button"
                 class="w-full flex-1 bg-yellow-500 text-white rounded-lg p-3 font-semibold shadow-md flex items-center justify-center
@@ -1018,34 +1114,34 @@
             <div transition:slide class="p-5 pt-0 space-y-5">
                 <div class="space-y-3">
                     <span class="text-md font-bold text-gray-900">
-                        {data.detailTicket.ticket_title}
+                        {dataTicket.ticket_title}
                     </span>
                     
                 
                     <p class="text-sm text-gray-500 font-light">
-                        {$_('Task ID')}: <span class="font-medium text-gray-700">#{data.detailTicket.id_ticket}</span>
+                        {$_('Task ID')}: <span class="font-medium text-gray-700">#{dataTicket.id_ticket}</span>
                     </p>
                     <p class="text-sm text-gray-500 font-light">
                         {$_('Priority')}: 
                         <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/20">
-                            {$_(data.detailTicket.priority_name)}
+                            {$_(dataTicket.priority_name)}
                         </span>
                     </p>
                     <p class="text-sm text-gray-500 font-light">
                         {$_('Status')}: 
                         <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                            {$_(data.detailTicket.status_name)}
+                            {$_(dataTicket.status_name)}
                         </span>
                     </p>
 
-                    {#if data.detailTicket.id_sub_ticket}
+                    {#if dataTicket.id_sub_ticket}
                         <p class="text-sm text-gray-500 font-light">
-                            {$_('Parent')}: <a href="/ticket/{data.detailTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{data.detailTicket.id_sub_ticket}</span></a>
+                            {$_('Parent')}: <a href="/ticket/{dataTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{dataTicket.id_sub_ticket}</span></a>
                         </p>  
                     {/if}
                     
                     <p class="text-sm text-gray-600">
-                        <span class="font-bold font-medium">{$_('Description')}:</span> {data.detailTicket.ticket_description}
+                        <span class="font-bold font-medium">{$_('Description')}:</span> {dataTicket.ticket_description}
                     </p>
                 </div>
 
@@ -1054,13 +1150,13 @@
                 <div class="space-y-2 text-sm text-gray-600">
                     <h2 class="font-semibold text-gray-900">{$_('Customer')}</h2>
                     <p class="flex items-center font-semibold">
-                        {data.detailTicket.cust_name}
+                        {dataTicket.cust_name}
                     </p>
                     <p class="flex items-center">
-                        {data.detailTicket.cust_address}
+                        {dataTicket.cust_address}
                     </p>
-                    <a href={`tel:${data.detailTicket.cust_phone}`} class="flex items-center text-blue-600 hover:text-blue-500 transition-colors hover:underline">
-                        {data.detailTicket.cust_phone}
+                    <a href={`tel:${dataTicket.cust_phone}`} class="flex items-center text-blue-600 hover:text-blue-500 transition-colors hover:underline">
+                        {dataTicket.cust_phone}
                     </a>
                 </div>
 
@@ -1110,19 +1206,21 @@
                                 <label class="text-sm font-medium text-gray-700">{$_('Spare Parts Used on this Machine')}</label>
                                 <div class="mt-2 space-y-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg">
                                     {#each sparePartsList as part}
-                                        <div class="flex items-center">
-                                            <input 
-                                                id={`spare-part-${mReport.id}-${part.id_ticket_sparepart}`} 
-                                                type="checkbox" 
-                                                value={String(part.id_ticket_sparepart)} 
-                                                onchange={(e) => handleCheckboxChange(e, mReport.id)}
-                                                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" 
-                                                checked={mReport.sparePart.includes(String(part.id_ticket_sparepart))} 
-                                            />
-                                            <label for={`spare-part-${mReport.id}-${part.id_ticket_sparepart}`} class="ml-2 text-sm text-gray-700 cursor-pointer">
-                                                {part.sparepart_name} (P/N: {part.sparepart_part_number || 'N/A'})
-                                            </label>
-                                        </div>
+                                        {#if part.id_machine == mReport.id_machine}
+                                            <div class="flex items-center">
+                                                <input 
+                                                    id={`spare-part-${mReport.id}-${part.id_ticket_sparepart}`} 
+                                                    type="checkbox" 
+                                                    value={String(part.id_ticket_sparepart)} 
+                                                    onchange={(e) => handleCheckboxChange(e, mReport.id)}
+                                                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" 
+                                                    checked={mReport.sparePart.includes(String(part.id_ticket_sparepart))} 
+                                                />
+                                                <label for={`spare-part-${mReport.id}-${part.id_ticket_sparepart}`} class="ml-2 text-sm text-gray-700 cursor-pointer">
+                                                    {part.sparepart_name} (P/N: {part.sparepart_part_number || 'N/A'})
+                                                </label>
+                                            </div>
+                                        {/if}
                                     {/each}
                                 </div>
                             </div>
@@ -1178,7 +1276,7 @@
                     loadingCheckout = true;
 
                     // 1. Append general ticket data (Notes and final signature)
-                    formData.append('id_ticket', data.detailTicket.id_ticket);
+                    formData.append('id_ticket', dataTicket.id_ticket);
                     formData.append('generalNotes', generalReport.generalNotes); 
                     // formData.append('signature', report.signature);
                     formData.append('description', report.description); 
@@ -1219,6 +1317,41 @@
                         formData.append('signature', signatureFile);
                     }
                     
+                    const handleSuccessfulCheckOut = () => {
+                        sessionStorage.removeItem('generalReportData');
+                        sessionStorage.removeItem('machineReportsData');
+                        sessionStorage.removeItem('taskReportData');
+                    }
+
+                    if (!navigator.onLine) {
+                        console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
+
+                        // 1. Simpan Seluruh FormData ke IndexedDB
+                        const syncTag = await saveOfflineTask(
+                            reportTable, 
+                            {
+                                id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
+                                url: '/ticket/checkout',
+                                timestamp: new Date()
+                            },
+                            formData)
+
+                        // 2. Daftarkan tugas Background Sync
+                        await registerBackgroundSync('sync-checkout_'+dataTicket.id_ticket);
+
+                        // 3. Tampilkan pesan sukses offline dan batalkan pengiriman fetch
+                        loadingCheckout = false;
+                        alertPopup = false; // Atau gunakan state lain untuk pesan sukses offline
+                        alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
+                        handleSuccessfulCheckOut()
+                        // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
+                        return {
+                            result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
+                            update: async () => { /* Prevent UI update after local storage */ }
+                        };
+
+                    }
+                    
                     return async ({ result, update }) => {
                         loadingCheckout = false;
 
@@ -1226,9 +1359,7 @@
                             alertPopup = true
                         } else {
                             alertPopup = false
-                            sessionStorage.removeItem('generalReportData');
-                            sessionStorage.removeItem('machineReportsData');
-                            sessionStorage.removeItem('taskReportData');
+                            handleSuccessfulCheckOut()
                         }  
                         
                         // Use update() to handle potential server errors or form failures.
@@ -1240,7 +1371,7 @@
                     <FileText class="h-6 w-6 mr-2 text-green-500" />
                     {$_('Task Report')}
                 </h2>
-                <input type="hidden" name="ID" value="{data.detailTicket.id_task}">
+                <input type="hidden" name="ID" value="{dataTicket.id_task}">
                 <div class="space-y-4">
                     <div>
                         <label for="report-description" class="text-sm font-medium text-gray-700">{$_('Report Description')}</label>
@@ -1470,10 +1601,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
-            </div>
+            </div> 
 
             <form method="post" action="?/checkin" enctype="multipart/form-data" class="space-y-4" 
-            use:enhance={({formData}) => {
+            use:enhance={ async ({formData}) => {
                 
                 if (!in_capturedFile) {
                     alert('Please take a photo first.');
@@ -1481,7 +1612,43 @@
                 }
 
                 formData.append('photo', in_capturedFile);
-                formData.append('id_ticket', data.detailTicket.id_ticket)
+                formData.append('id_ticket', dataTicket.id_ticket)
+                
+                const handleSuccessfulCheckin = () => {
+                    // This is the logic that updates the UI state
+                    in_showPopup = false; 
+                    in_photoTaken = false
+                    in_stream = null
+                    in_checkin = true
+                    isTicketLocked = false
+                };
+                
+                if (!navigator.onLine) {
+                    console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
+
+                    // 1. Simpan Seluruh FormData ke IndexedDB
+                    const syncTag = await saveOfflineTask(
+                            checkinTable, 
+                            {
+                                id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
+                                url: '/ticket/checkin',
+                                timestamp: new Date()
+                            },
+                            formData)
+
+                    // 2. Daftarkan tugas Background Sync
+                    await registerBackgroundSync('sync-checkin_'+dataTicket.id_ticket);
+
+                    alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
+                    handleSuccessfulCheckin()
+                    // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
+                    return {
+                        result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
+                        update: async () => { /* Prevent UI update after local storage */ }
+                    };
+
+                }
+                
                 return async ({ result, update }) => {
                     
                     // Check the result type for success, not the status
@@ -1493,12 +1660,7 @@
                             console.log("This message appears after 2 seconds.");
                         }, 2000); // 2000 milliseconds = 2 seconds
                     
-                        // You can also hide the popup here
-                        in_showPopup = false; 
-                        in_photoTaken = false
-                        in_stream = null
-                        in_checkin = true
-                        isTicketLocked = false
+                        handleSuccessfulCheckin()
                     } else {
                         alertPopup = true    
                     }
@@ -1587,12 +1749,46 @@
     </div>
     <form method="post" action="?/unlock_report" class="w-full h-full max-w-lg flex-col flex space-y-4"
         use:enhance={ async ({formData}) => {
-            formData.append('id_ticket', data.detailTicket.id_ticket);
+            
+            formData.append('id_ticket', dataTicket.id_ticket);
+            
+            const handleSuccessfulUnlock = () => {
+                popUpReportLocked = false
+                RequestReportUnLocked = true
+            }
+
+            if (!navigator.onLine) {
+                console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
+
+                // 1. Simpan Seluruh FormData ke IndexedDB
+                const syncTag = await saveOfflineTask(
+                        unlockTable, 
+                        {
+                            id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
+                            url: '/ticket/unlock_report',
+                            timestamp: new Date()
+                        },
+                        formData)
+
+                // 2. Daftarkan tugas Background Sync
+                await registerBackgroundSync('sync-unlock_'+dataTicket.id_ticket);
+
+                alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
+                
+                handleSuccessfulUnlock()
+                alertPopup = false
+                // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
+                return {
+                    result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
+                    update: async () => { /* Prevent UI update after local storage */ }
+                };
+
+            }
             
             return async ({ result, update }) => {
                 console.log(result)
-                popUpReportLocked = false
-                RequestReportUnLocked = true
+
+                handleSuccessfulUnlock()
                 // Check the result type for success, not the status
                 if (result.type === 'failure') {
                     alertPopup = true

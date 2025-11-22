@@ -1,5 +1,6 @@
 <script>
 
+let {data} = $props();
 
 </script>
 
@@ -18,7 +19,8 @@
                         </svg>
                     </div>
                 </div>
-                <p class="mt-4 text-4xl font-extrabold text-gray-900">1,250</p>
+                <span class="mt-4 text-4xl font-extrabold text-gray-900">{data.data_totalClosed.total}</span>
+                <span class="text-gray-500">/ {data.data_totalClosed.last_month}</span>
             </div>
 
             <!-- Total Open Tickets Card -->
@@ -34,7 +36,8 @@
                         </svg>
                     </div>
                 </div>
-                <p class="mt-4 text-4xl font-extrabold text-gray-900">45</p>
+                <span class="mt-4 text-4xl font-extrabold text-gray-900">{data.data_totalOpen.total} </span>
+                <span class="text-gray-500">/ {data.data_totalOpen.last_month}</span>
             </div>
 
             <!-- Average Time to Done Card -->
@@ -47,7 +50,8 @@
                         </svg>
                     </div>
                 </div>
-                <p class="mt-4 text-4xl font-extrabold text-gray-900">4.5 Hrs</p>
+                <span class="mt-4 text-4xl font-extrabold text-gray-900">{data.data_avgClosed.average_total??0} </span>
+                <span class="text-gray-500">/ {data.data_avgClosed.last_month}</span>
             </div>
 
             <!-- Total by Category Card -->
@@ -63,15 +67,15 @@
                 <div class="mt-4 flex flex-col space-y-2 text-sm text-gray-800">
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-red-500">Urgent</span>
-                        <span class="font-bold">12</span>
+                        <span class="font-bold">{data.data_totalLow.total} / {data.data_totalLow.last_month}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-yellow-500">Medium</span>
-                        <span class="font-bold">25</span>
+                        <span class="font-bold">{data.data_totalMedium.total} / {data.data_totalMedium.last_month}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-blue-500">Low</span>
-                        <span class="font-bold">8</span>
+                        <span class="font-bold">{data.data_totalUrgent.total} / {data.data_totalUrgent.last_month}</span>
                     </div>
                 </div>
             </div>

@@ -7,6 +7,9 @@ import { redirect } from '@sveltejs/kit';
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ event, resolve }) {
+
+    const pathname = event.url.pathname;
+
     // 1. Get the cookies from the request headers
     const cookies = parse(event.request.headers.get('cookie') || '');
 
@@ -22,14 +25,16 @@ export async function handle({ event, resolve }) {
         
         if(!dataUser.error) {
             
-            const userMenu = await ClientMenuAPI({email:dataUser.data.email}, event.fetch)
-            const userLang = await LangAPI({id_user:dataUser.data.id }, event.fetch)
-            const userGroup = await userGroupAPI({ID:dataUser.data.id }, event.fetch)
+            const [userMenuResult, userLangResult, userGroupResult] = await Promise.all([
+                ClientMenuAPI({ email: dataUser.data.email }, event.fetch),
+                LangAPI({ id_user: dataUser.data.id }, event.fetch),
+                userGroupAPI({ ID: dataUser.data.id }, event.fetch),
+            ]);
 
             event.locals.user = dataUser.data
-            event.locals.userMenu = userMenu.data
-            event.locals.userLang = userLang.data
-            event.locals.userGroup = userGroup.data
+            event.locals.userMenu = userMenuResult.data
+            event.locals.userLang = userLangResult.data
+            event.locals.userGroup = userGroupResult.data
 
         } else {
 

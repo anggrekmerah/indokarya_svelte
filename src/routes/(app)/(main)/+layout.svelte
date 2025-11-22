@@ -10,19 +10,24 @@
     import { goto } from '$app/navigation';
     import { XCircle, Funnel, Calendar, Bell, List } from 'lucide-svelte';
     import { page } from '$app/stores';
+    import  Notif  from '$lib/components/Notif.svelte'
 
     // State variables for each menu's open/close state
     let openMenu = $state(null); // 'status', 'date', or 'category'
     let currentPath = $state(false);
-    let currentFilter = $state({
+
+    let defFilter = {
         "status" : null,
         "date" : null,
-        "category" : null
-    });
+        "category" : null,
+        "id_ticket" : null
+    }
+    let currentFilter = $state(defFilter);
 
     // Date menu state
     let fromDate = $state('');
     let toDate = $state('');
+    let ticket = $state('');
 
     /**
      * Toggles the state of the menus.
@@ -40,12 +45,45 @@
     }
 
     let totalTicket = $state(0);
-    
-    totalTicket = data.dataTicketTotal.total_task
+    let totalNotif = $state(0);
+    let messagesNotif = $state([]);
 
+    totalTicket = data.dataTicketTotal.total_task ?? 0
+    totalNotif = (data.dataTotalNotif[0] !== undefined) ? data.dataTotalNotif[0].total : 0
+
+    function hasActiveFilters() {
+        const searchParams = $page.url.searchParams;
+
+        // Check if any of the filter parameters exists and is not an empty string
+        const status = searchParams.get('status');
+        if (status && status !== '') {
+            return true;
+        }
+
+        const priority = searchParams.get('priority');
+        if (priority && priority !== '') {
+            return true;
+        }
+
+        const dateFrom = searchParams.get('from');
+        if (dateFrom && dateFrom !== '') {
+            return true;
+        }
+
+        const dateTo = searchParams.get('to');
+        if (dateTo && dateTo !== '') {
+            return true;
+        }
+
+        // If none of the checks returned true, then no active filters exist.
+        return false;
+    }
+    
     $effect(async () => {
         const newPath = $page.url.pathname;
-        if (newPath !== currentPath) {
+        console.log('newPath', newPath)
+        console.log('currentPath', currentPath)
+        if (newPath !== currentPath && !hasActiveFilters()) {
             console.log(`[PAGE CHANGE END] New path detected: ${newPath}`);
             await resetFilter()
             // Update the tracker
@@ -63,6 +101,17 @@
                 totalTicket = newData.total_task
                 console.log('New message total:', newData);
             });
+
+            ioClient.on('totalNotif', (newData) => {
+                totalNotif = newData.total
+                console.log('New message total:', newData);
+            });
+
+            ioClient.on('TicketCreated', (newData) => {
+                messagesNotif.push(newData)
+                console.log('New ticket received:', newData);
+            });
+
         }
 
         const persistedStatus = localStorage.getItem('currentFilterStatus');
@@ -74,18 +123,24 @@
         if (persistedDate) {
             currentFilter.date = JSON.parse(persistedDate);
         }
+
+        const persistedCategory = localStorage.getItem('currentFilterCategory');
+        if (persistedCategory) {
+            currentFilter.category = JSON.parse(persistedCategory);
+        }
+
+        const persistedTicket = localStorage.getItem('currentFilterTicket');
+        if (persistedTicket) {
+            currentFilter.id_ticket = JSON.parse(persistedTicket);
+        }
     });
 
     async function  resetFilter() {
-        currentFilter = {
-            "status" : null,
-            "date" : null,
-            "category" : null
-        }
-
+        currentFilter = defFilter
         localStorage.removeItem('currentFilterStatus')
         localStorage.removeItem('currentFilterDate')
         localStorage.removeItem('currentFilterCategory')
+        localStorage.removeItem('currentFilterTicket')
     }
 
     /**
@@ -132,12 +187,23 @@
             } catch(e) { console.error("Error parsing category filter:", e); }
         }
 
+        // 3. READ CATEGORY/PRIORITY FILTER
+        const ticketString = localStorage.getItem('currentFilterTicket');
+        if (ticketString) {
+            try {
+                const ticketObj = JSON.parse(ticketString);
+                // We assume 'priorityName' maps to a 'priority' URL param
+                params.set('id_ticket', ticketObj.id_ticket);
+                
+            } catch(e) { console.error("Error parsing ticket filter:", e); }
+        }
+
         // 4. CONSTRUCT and NAVIGATE
         const queryString = params.toString();
         
         const destination = `/${segment}${queryString ? '?' + queryString : ''}`;
         
-        await goto(destination);
+        await goto(destination, { keepFocus: true, replaceState: true });
     }
     
 </script>
@@ -146,8 +212,16 @@
 <header class="bg-blue-50 shadow p-4 md:p-6 sticky top-0 z-10">
     <div class="flex items-center justify-between gap-4">
     <div class="relative flex-1 max-w-lg mx-auto">
-      <input type="text" placeholder="Search tasks..." class="w-full pl-5 pr-16 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-400 shadow-sm transition-shadow duration-200">
-      <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+      <input type="text" placeholder="Search tasks..." bind:value={ticket} class="w-full pl-5 pr-16 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-400 shadow-sm transition-shadow duration-200">
+      <div class="absolute inset-y-0 right-0 flex items-center pr-3" role="presentation"
+        onclick={async ()=>{
+            const searchTicket = { id_ticket : ticket}
+            currentFilter.id_ticket = searchTicket;
+            localStorage.setItem('currentFilterTicket', JSON.stringify(searchTicket));
+            openMenu = null;
+            await generateAndGoToQuery(data.segment)
+        }} 
+      >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
           <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.197 5.197a7.5 7.5 0 0 0 10.607 10.607Z" />
         </svg>
@@ -157,11 +231,11 @@
       <div class="flex items-center text-xs font-semibold text-gray-600">
         <button onclick={ async () => {
                 await resetFilter()
-                await goto('/'+data.segment)
+                await goto('/'+data.segment, { keepFocus: true, replaceState: true })
             }} class="relative p-1 text-gray-600 hover:text-gray-800 transition-colors duration-200 focus:outline-none">
             <List class="h-6 w-6" />
             {#if totalTicket != 0}
-                <span class="absolute h-4 w-4 flex items-center justify-center -mt-8 -mr-1 text-xs font-bold text-red-100 bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/8">
+                <span class="absolute h-4 w-4 flex items-center justify-center -mt-8 -mr-1 text-[10px] font-bold text-red-100 bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/8">
                     {totalTicket}
                 </span>    
             {/if}
@@ -170,9 +244,12 @@
       </div>
       <button onclick={() => toggleMenu('notif')} class="relative p-1 text-gray-600 hover:text-gray-800 transition-colors duration-200 focus:outline-none">
         <Bell class="h-6 w-6" />
-        <span class="absolute h-4 w-4 flex items-center justify-center -mt-8 -mr-1 text-xs font-bold text-red-100 bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/8">
-            3
-        </span>
+        {#if totalNotif != 0}
+            <span class="absolute h-4 w-4 flex items-center justify-center -mt-8 -mr-1 text-[10px] font-bold text-red-100 bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/8">
+                {totalNotif}
+            </span>    
+        {/if}
+        
       </button>
     </div>
   </div>
@@ -231,7 +308,7 @@
         <div class="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-gray-100 text-gray-700">
             <button onclick={ async () => {
                 await resetFilter()
-                await goto('/'+data.segment)
+                await goto('/'+data.segment, { keepFocus: true, replaceState: true })
             }}>
                 <XCircle class="h-6 w-6" />
             </button>
@@ -250,94 +327,29 @@
 
     {#if openMenu === 'notif'}
         <div
-    class="fixed bottom-0 left-0 right-0 bg-white shadow-2xl rounded-t-xl z-20 
-           h-[85vh] flex flex-col" 
-    in:slide={{ duration: 300, easing: quintOut }}
-    out:slide={{ duration: 300 }}
->  
-    <div class="flex justify-between items-center px-4 pt-4 pb-2 border-b sticky top-0 bg-white z-10">
-        <h3 class="text-xl font-bold text-gray-800">{$_('Notifications')}</h3>
-        <button onclick={closeMenu} class="p-1">
-            <svg class="w-6 h-6 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-    </div>
-
-    <ul class="divide-y divide-gray-100 flex-grow overflow-y-auto px-4 pb-16">
-
-        <li class="py-3 hover:bg-gray-50 transition duration-150 cursor-pointer flex items-start space-x-3 bg-blue-50/50">
-            <div class="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <div class="flex-grow">
-                <p class="text-sm font-semibold text-gray-900">New Ticket Assigned: #TKT-893</p>
-                <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">A new critical maintenance job has been assigned to you for the downtown location.</p>
-                <p class="text-xs text-blue-500 mt-1">Just now</p>
+            class="fixed bottom-0 left-0 right-0 bg-white shadow-2xl rounded-t-xl z-20 
+                h-[85vh] flex flex-col" 
+            in:slide={{ duration: 300, easing: quintOut }}
+            out:slide={{ duration: 300 }}
+        >  
+            <div class="flex justify-between items-center px-4 pt-4 pb-2 border-b sticky top-0 bg-white z-10">
+                <h3 class="text-xl font-bold text-gray-800">{$_('Notifications')}</h3>
+                <button onclick={closeMenu} class="p-1">
+                    <svg class="w-6 h-6 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
-        </li>
 
-        <li class="py-3 px-4 hover:bg-gray-50 transition duration-150 cursor-pointer flex items-start space-x-3 bg-blue-50/50">
-            <div class="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <div class="flex-grow">
-                <p class="text-sm font-semibold text-gray-900">New Ticket Assigned: #TKT-893</p>
-                <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">A new critical maintenance job has been assigned to you for the downtown location.</p>
-                <p class="text-xs text-blue-500 mt-1">Just now</p>
-            </div>
-        </li>
+            <ul class="divide-y divide-gray-100 flex-grow overflow-y-auto px-4 pb-16">
 
-        <li class="py-3 px-4 hover:bg-gray-50 transition duration-150 cursor-pointer flex items-start space-x-3 bg-blue-50/50">
-            <div class="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <div class="flex-grow">
-                <p class="text-sm font-semibold text-gray-900">New Ticket Assigned: #TKT-893</p>
-                <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">A new critical maintenance job has been assigned to you for the downtown location.</p>
-                <p class="text-xs text-blue-500 mt-1">Just now</p>
-            </div>
-        </li>
-
-        <li class="py-3 px-4 hover:bg-gray-50 transition duration-150 cursor-pointer flex items-start space-x-3 bg-blue-50/50">
-            <div class="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <div class="flex-grow">
-                <p class="text-sm font-semibold text-gray-900">New Ticket Assigned: #TKT-893</p>
-                <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">A new critical maintenance job has been assigned to you for the downtown location.</p>
-                <p class="text-xs text-blue-500 mt-1">Just now</p>
-            </div>
-        </li>
-
-        <li class="py-3 px-4 hover:bg-gray-50 transition duration-150 cursor-pointer flex items-start space-x-3 bg-blue-50/50">
-            <div class="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <div class="flex-grow">
-                <p class="text-sm font-semibold text-gray-900">New Ticket Assigned: #TKT-893</p>
-                <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">A new critical maintenance job has been assigned to you for the downtown location.</p>
-                <p class="text-xs text-blue-500 mt-1">Just now</p>
-            </div>
-        </li>
-
-        <li class="py-3 px-4 hover:bg-gray-50 transition duration-150 cursor-pointer flex items-start space-x-3 bg-blue-50/50">
-            <div class="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <div class="flex-grow">
-                <p class="text-sm font-semibold text-gray-900">New Ticket Assigned: #TKT-893</p>
-                <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">A new critical maintenance job has been assigned to you for the downtown location.</p>
-                <p class="text-xs text-blue-500 mt-1">Just now</p>
-            </div>
-        </li>
-
-        <li class="py-3 px-4 hover:bg-gray-50 transition duration-150 cursor-pointer flex items-start space-x-3 bg-blue-50/50">
-            <div class="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <div class="flex-grow">
-                <p class="text-sm font-semibold text-gray-900">New Ticket Assigned: #TKT-893</p>
-                <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">A new critical maintenance job has been assigned to you for the downtown location.</p>
-                <p class="text-xs text-blue-500 mt-1">Just now</p>
-            </div>
-        </li>
-
-        <li class="py-3 px-4 hover:bg-gray-50 transition duration-150 cursor-pointer flex items-start space-x-3">
-            <div class="h-2 w-2 rounded-full mt-2 flex-shrink-0"></div> 
-            <div class="flex-grow">
-                <p class="text-sm font-medium text-gray-700">Signature Uploaded Successfully</p>
-                <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">The final report for job #TKT-892 has been successfully submitted to the server.</p>
-                <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
-            </div>
-        </li>
-        
-        </ul>
-</div>
+                {#each data.dataListNotif as notification}
+                    <Notif message={notification.content_payload} />    
+                {/each}
+                {#each messagesNotif as msg}
+                    <Notif message={msg} />    
+                {/each}
+                
+            </ul>
+        </div>
     {:else}
         <div
             class="fixed bottom-0 left-0 right-0 bg-white shadow-xl p-4 rounded-t-lg z-20 max-h-[150vh] overflow-y-auto h-100"

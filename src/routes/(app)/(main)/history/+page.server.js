@@ -22,8 +22,13 @@ export async function load({ url, fetch, locals }) {
     if(priority)
         payload.id_priority = priority
 
+
+    const ticket = url.searchParams.get('id_ticket')
+    if(ticket)
+        payload.id_ticket = ticket
+
     const listTicket = await getTicketHistory(payload, fetch)
-    console.log(listTicket)
+   console.log(listTicket)
     return {
         listTicket: listTicket.data
     };

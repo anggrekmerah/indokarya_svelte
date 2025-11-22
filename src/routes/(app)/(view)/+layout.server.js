@@ -4,5 +4,7 @@ export async function load({ locals }) {
     
     return {
         userLang : locals.userLang.lang
+        ,users : locals.user
+        ,group : locals.userGroup[0].group_name
     }
 }

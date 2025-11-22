@@ -45,14 +45,14 @@
                     <!-- <img class="w-full h-full object-cover" src="https://placehold.co/100x100/A5B4FC/FFFFFF?text=User" alt="Profile Photo"> -->
                     <img
                     class="w-full h-full object-cover rounded-full ring-2 ring-white transition-transform duration-300 hover:scale-110"
-                    src="https://placehold.co/32x32/1e40af/ffffff?text=JD"
+                    src="https://placehold.co/32x32/1e40af/ffffff?text={data.users.name.substring(0, 2).toUpperCase()}"
                     alt="User avatar"
                     />
                 </div>
                 <!-- Name -->
                 <div class="text-left">
-                    <h1 class="text-xl sm:text-3xl font-bold text-gray-800">John Doe</h1>
-                    <p class="text-xs sm:text-sm text-gray-500">Administrator</p>
+                    <h1 class="text-xl sm:text-3xl font-bold text-gray-800">{data.users.name}</h1>
+                    <p class="text-xs sm:text-sm text-gray-500">{data.group}</p>
                 </div>
             </div>
             <!-- Settings Icon -->
