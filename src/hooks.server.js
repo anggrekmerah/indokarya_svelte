@@ -28,7 +28,7 @@ export async function handle({ event, resolve }) {
             const [userMenuResult, userLangResult, userGroupResult] = await Promise.all([
                 ClientMenuAPI({ email: dataUser.data.email }, event.fetch),
                 LangAPI({ id_user: dataUser.data.id }, event.fetch),
-                userGroupAPI({ ID: dataUser.data.id }, event.fetch),
+                userGroupAPI({ id_user: dataUser.data.id }, event.fetch),
             ]);
 
             event.locals.user = dataUser.data
