@@ -318,7 +318,7 @@
 </div>
 {#if openMenu}
     <div
-        class="fixed inset-0 bg-black bg-opacity-50 z-10"
+        class="fixed inset-0 bg-black opacity-50 z-10"
         onclick={closeMenu}
         in:fade={{ duration: 300 }}
         out:fade={{ duration: 300 }}
