@@ -22,7 +22,7 @@ export async function load({ locals, fetch, url }) {
   const ticketTotal = await ticketTotalAPI({ID:locals.user.id}, fetch)
   const listNotif = await getUnreadNotif({ID:locals.user.id}, fetch)
   const totalNotif = await total({ID:locals.user.id}, fetch)
-  console.log(totalNotif)
+  
   return {
     dataTicketStatus : ticketStatus.data,
     dataTicketPriority : ticketPriority.data,
@@ -30,9 +30,10 @@ export async function load({ locals, fetch, url }) {
     segment : segments[0],
     dataTotalNotif : totalNotif.data ?? 0,
     dataListNotif: listNotif.data.map(n => {
+      
             // 1. Parse string JSON menjadi objek
-            const parsedPayload = JSON.parse(n.content_payload);
-            
+            const parsedPayload = n.content_payload;
+            console.log(parsedPayload)      
             // 2. Tambahkan (Inject) id_notif ke dalam objek payload
             parsedPayload.id_notif = n.id_notif;
 
