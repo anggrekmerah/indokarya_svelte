@@ -32,8 +32,8 @@ export async function load({ locals, fetch, url }) {
     dataListNotif: listNotif.data.map(n => {
       
             // 1. Parse string JSON menjadi objek
-            const parsedPayload = n.content_payload;
-            console.log(parsedPayload)      
+            const parsedPayload = JSON.parse(n.content_payload) ;
+            console.log(typeof parsedPayload)      
             // 2. Tambahkan (Inject) id_notif ke dalam objek payload
             parsedPayload.id_notif = n.id_notif;
 

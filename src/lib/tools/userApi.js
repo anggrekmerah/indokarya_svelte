@@ -8,3 +8,11 @@ export async function userChangePasswordAPI(body, fetch) {
     return responseAPI;
     
 }
+
+export async function userChangeFcmToken(body, fetch) {
+
+    const responseAPI = await requestAPI('PUT','/user/update', body, fetch) 
+
+    return responseAPI;
+    
+}

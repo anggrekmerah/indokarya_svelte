@@ -5,6 +5,7 @@
     import { onMount } from 'svelte';
     import { _ } from 'svelte-i18n';
     import { ioClient } from '$lib/stores/socket.js';
+    import FCMInitializer from '$lib/components/FCMInitializer.svelte';
 
 
     // The provided children prop for rendering content
@@ -32,6 +33,7 @@
 
 {@render children?.()}
       
+  <FCMInitializer />
   <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-3 z-20">
  
     

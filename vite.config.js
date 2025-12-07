@@ -14,7 +14,7 @@ export default defineConfig({
 	ssr:{
 		noExternal : ['@googlemaps/js-api-loader']
 	},
-	plugins: [tailwindcss(), sveltekit(), devtoolsJson()],
+	plugins: [tailwindcss(), sveltekit()],  // , devtoolsJson()
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

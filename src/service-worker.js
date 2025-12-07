@@ -1,3 +1,10 @@
+import { initializeApp } from 'firebase/app';
+import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw'; // PENTING: Import khusus untuk SW
+
+
+import { build, files, version } from '$service-worker';
+import { deleteOfflineTask, deserializeTask} from '$lib/stores/report'
+
 // Disables access to DOM typings like `HTMLElement` which are not available
 // inside a service worker and instantiates the correct globals
 /// <reference no-default-lib="true"/>
@@ -10,8 +17,18 @@
 // Only necessary if you have an import from `$env/static/public`
 /// <reference types="../.svelte-kit/ambient.d.ts" />
 
-import { build, files, version } from '$service-worker';
-import { deleteOfflineTask, deserializeTask} from '$lib/stores/report'
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBNM4KR8eS2Anq10jgl5rIAfkpxmEqGlc4",
+  authDomain: "teknisi-indokarya.firebaseapp.com",
+  projectId: "teknisi-indokarya",
+  storageBucket: "teknisi-indokarya.firebasestorage.app",
+  messagingSenderId: "756950734066",
+  appId: "1:756950734066:web:35b4ce6a6684a5b451ec6b"
+};
+
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
 // This gives `self` the correct types
 const self = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (globalThis.self));
@@ -25,6 +42,42 @@ const ASSETS = [
 	...build, // the app itself
 	...files  // everything in `static`
 ];
+
+// --- Handle Pesan Push Background ---
+onBackgroundMessage(messaging, (payload) => {
+    console.log('[SW] Pesan Background Diterima', payload);
+
+    const notificationTitle = payload.notification.title;
+    const notificationOptions = {
+        body: payload.notification.body,
+        icon: '/path/to/icon.png',
+        data: payload.data 
+    };
+
+    self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// --- Handle Klik Notifikasi (Opsional) ---
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+
+    // Ambil data URL dari payload
+    const url = event.notification.data.url || '/admin';
+    
+    event.waitUntil(
+        clients.matchAll({ type: 'window' }).then(windowClients => {
+            for (let i = 0; i < windowClients.length; i++) {
+                const client = windowClients[i];
+                if (client.url === url && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(url);
+            }
+        })
+    );
+});
 
 self.addEventListener('install', (event) => {
 	// Create a new cache and add all files to it
