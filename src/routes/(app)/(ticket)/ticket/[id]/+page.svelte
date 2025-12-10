@@ -899,9 +899,9 @@
                 console.log(response)
                 if (status === 'OK') {
                     directionsRenderer.setDirections(response);
-                    const overviewPath = response.routes[0].overview_path;
-                    const animatedPath = await interpolatePath(overviewPath, 10);
-                    await animateMarker(userMarker, animatedPath, 0, 1)
+                    // const overviewPath = response.routes[0].overview_path;
+                    // const animatedPath = await interpolatePath(overviewPath, 10);
+                    // await animateMarker(userMarker, animatedPath, 0, 1)
                 } else {
                     console.error('Directions request failed due to ' + status);
                 }
