@@ -62,7 +62,7 @@ self.addEventListener('notificationclick', event => {
     event.notification.close();
 
     // Ambil data URL dari payload
-    const url = event.notification.data.url || '/admin';
+    const url = event.notification.data.action_link || '/admin';
     
     event.waitUntil(
         clients.matchAll({ type: 'window' }).then(windowClients => {

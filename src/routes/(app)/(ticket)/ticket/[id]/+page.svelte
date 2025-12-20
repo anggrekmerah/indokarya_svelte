@@ -875,7 +875,8 @@
         // await sendLocation(path[index].lat, path[index].lng)
         index += speed
         // Recursively call the function on the next frame to continue the animation
-        requestAnimationFrame(() => animateMarker(marker, path, index, speed));
+        AnimationFrameID = requestAnimationFrame(() => animateMarker(marker, path, index, speed));
+        // requestAnimationFrame(() => animateMarker(marker, path, index, speed));
     }
 
     async function calculateAndDisplayRoute(origin, destination) {
@@ -899,9 +900,9 @@
                 console.log(response)
                 if (status === 'OK') {
                     directionsRenderer.setDirections(response);
-                    // const overviewPath = response.routes[0].overview_path;
-                    // const animatedPath = await interpolatePath(overviewPath, 10);
-                    // await animateMarker(userMarker, animatedPath, 0, 1)
+                    const overviewPath = response.routes[0].overview_path;
+                    const animatedPath = await interpolatePath(overviewPath, 10);
+                    await animateMarker(userMarker, animatedPath, 0, 1)
                 } else {
                     console.error('Directions request failed due to ' + status);
                 }
