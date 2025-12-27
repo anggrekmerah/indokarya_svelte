@@ -64,16 +64,16 @@
     let selectedCamera = $state('environment');
     let mediaType = $state('');
 
-    let videoElement;
-    let canvasElement;
+    let videoElement = $state(null);
+    let canvasElement = $state(null);
 
     let mediaRecorder;
     let recordedChunks = [];
     let isRecording = $state(false);
 
-    let canvas;
+    let canvas = $state(null);
     let formElement;
-    let fileInput;
+    let fileInput = $state(null);
 
     let ctx;
     let isDrawing = false;
@@ -83,7 +83,7 @@
     // New state for video playback popup
     let isVideoPlayerOpen = $state(false);
     let videoPlayerSrc = $state('');
-    let currentPlayingVideoElement;
+    let currentPlayingVideoElement = $state(null);
 
     // Google direction
     let directionsService
@@ -134,7 +134,7 @@
     let in_photoPreviewUrl = $state('https://placehold.co/150x150/e2e8f0/64748b?text=Photo');
     let in_videoElement = $state(false); // Reference to the video element
     let in_capturedFile = null;
-    let in_canvasElement; // Reference to the canvas element
+    let in_canvasElement = $state(null); // Reference to the canvas element
     let in_stream = $state(null);
     let in_checkin = $state(null);
     let in_cameraFacingMode = $state('user');

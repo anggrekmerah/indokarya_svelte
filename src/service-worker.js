@@ -19,12 +19,12 @@ import { deleteOfflineTask, deserializeTask} from '$lib/stores/report'
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBNM4KR8eS2Anq10jgl5rIAfkpxmEqGlc4",
-  authDomain: "teknisi-indokarya.firebaseapp.com",
-  projectId: "teknisi-indokarya",
-  storageBucket: "teknisi-indokarya.firebasestorage.app",
-  messagingSenderId: "756950734066",
-  appId: "1:756950734066:web:35b4ce6a6684a5b451ec6b"
+  apiKey: "AIzaSyBN4b7SsAEQC-G5_7CXYTcAeJkWE-feoPc",
+  authDomain: "teknisi-indokarya-2a652.firebaseapp.com",
+  projectId: "teknisi-indokarya-2a652",
+  storageBucket: "teknisi-indokarya-2a652.firebasestorage.app",
+  messagingSenderId: "621233711350",
+  appId: "1:621233711350:web:e79107b2862ae8c2f624d7"
 };
 
 const app = initializeApp(firebaseConfig);
