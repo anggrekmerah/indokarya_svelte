@@ -22,7 +22,8 @@ export async function load({ locals, fetch, url }) {
   const ticketTotal = await ticketTotalAPI({ID:locals.user.id}, fetch)
   const listNotif = await getUnreadNotif({ID:locals.user.id}, fetch)
   const totalNotif = await total({ID:locals.user.id}, fetch)
-  
+  console.log('listNotif')
+  console.log(listNotif)
   return {
     dataTicketStatus : ticketStatus.data,
     dataTicketPriority : ticketPriority.data,
@@ -31,9 +32,20 @@ export async function load({ locals, fetch, url }) {
     dataTotalNotif : totalNotif.data ?? 0,
     dataListNotif: listNotif.data.map(n => {
       
-            // 1. Parse string JSON menjadi objek
-            const parsedPayload = JSON.parse(n.content_payload) ;
-            console.log(typeof parsedPayload)      
+            let parsedPayload;
+
+            // Cek apakah content_payload perlu di-parse atau tidak
+            if (typeof n.content_payload === 'string') {
+                try {
+                    parsedPayload = JSON.parse(n.content_payload);
+                } catch (e) {
+                    console.error("Gagal parse JSON:", n.content_payload);
+                    parsedPayload = {}; // fallback jika string ternyata bukan JSON valid
+                }
+            } else {
+                // Jika sudah berupa object (ini yang terjadi sekarang)
+                parsedPayload = n.content_payload || {};
+            }    
             // 2. Tambahkan (Inject) id_notif ke dalam objek payload
             parsedPayload.id_notif = n.id_notif;
 
