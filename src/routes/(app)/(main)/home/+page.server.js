@@ -41,8 +41,8 @@ export async function load({ url, fetch, locals }) {
         listTicket.data = {items : [], search : isSearch, hasMore:false, offset:0}
     }
         
-    console.log('listTicket')
-    console.log(listTicket)
+    console.log('listTickets')
+    console.log(listTicket.data)
     return {
         listTicket: listTicket.data,
         search : isSearch,

@@ -78,7 +78,7 @@
 
                 structuredMachines.push({
                     machine_name: machine.machine_name,
-                    machine_type: machine.machine_type,
+                    machine_type: machine.brand + '-' + machine.serial_number,
                     id_ticket_machine: machine.id_ticket_machine,
                     media: [...photos, ...videos],
                     spareparts: spareparts
