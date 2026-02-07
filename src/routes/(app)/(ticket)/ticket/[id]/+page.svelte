@@ -885,35 +885,65 @@
     }
 
     async function calculateAndDisplayRoute(origin, destination) {
-        const { DirectionsService } = await google.maps.importLibrary("routes");
-        const directionsService = new DirectionsService();
+    // 1. Ambil DirectionsService DAN TravelMode dari library "routes"
+    const { DirectionsService, TravelMode } = await google.maps.importLibrary("routes");
+    const directionsService = new DirectionsService();
 
-        directionsService.route(
+    directionsService.route(
             { 
                 origin, 
                 destination, 
-                travelMode: google.maps.TravelMode.DRIVING ,
-                avoidTolls:true,
-                avoidHighways:true,
-                avoidFerries:true,
+                // 2. Gunakan TravelMode yang sudah di-import tadi
+                travelMode: TravelMode.DRIVING, 
+                avoidTolls: true,
+                avoidHighways: true,
+                avoidFerries: true,
                 drivingOptions: {
-                    departureTime: new Date(Date.now()), // One hour from now
+                    departureTime: new Date(Date.now()),
                     trafficModel: 'bestguess'
                 },
             },
-            async (response, status) => {
-                console.log(response)
+            (response, status) => { // Tidak perlu async di sini kecuali ada await di dalamnya
+                console.log(response);
                 if (status === 'OK') {
                     directionsRenderer.setDirections(response);
-                    const overviewPath = response.routes[0].overview_path;
-                    const animatedPath = await interpolatePath(overviewPath, 10);
-                    await animateMarker(userMarker, animatedPath, 0, 1)
                 } else {
                     console.error('Directions request failed due to ' + status);
                 }
             }
         );
     }
+
+    // async function calculateAndDisplayRoute(origin, destination) {
+    //     const { DirectionsService } = await google.maps.importLibrary("routes");
+    //     const directionsService = new DirectionsService();
+
+    //     directionsService.route(
+    //         { 
+    //             origin, 
+    //             destination, 
+    //             travelMode: google.maps.TravelMode.DRIVING ,
+    //             avoidTolls:true,
+    //             avoidHighways:true,
+    //             avoidFerries:true,
+    //             drivingOptions: {
+    //                 departureTime: new Date(Date.now()), // One hour from now
+    //                 trafficModel: 'bestguess'
+    //             },
+    //         },
+    //         async (response, status) => {
+    //             console.log(response)
+    //             if (status === 'OK') {
+    //                 directionsRenderer.setDirections(response);
+    //                 // const overviewPath = response.routes[0].overview_path;
+    //                 // const animatedPath = await interpolatePath(overviewPath, 10);
+    //                 // await animateMarker(userMarker, animatedPath, 0, 1)
+    //             } else {
+    //                 console.error('Directions request failed due to ' + status);
+    //             }
+    //         }
+    //     );
+    // }
 
 
     function handleLocationError(browserHasGeolocation, map, pos) {
