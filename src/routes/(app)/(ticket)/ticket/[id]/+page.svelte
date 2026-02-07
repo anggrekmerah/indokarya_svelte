@@ -47,13 +47,16 @@
     // Used to track which machine we are currently taking a photo/video for
     let currentMachineId = $state(null);
 
-    let sparePartsList = $state([]); // List of available parts for this ticket
+    let sparePartsList = $state([]); 
+    let picsList = $state([]); 
+    let lastVisit = $state([]);
 
     let isInfoExpanded = $state(true);
     let isMapExpanded = $state(false);
     let loadingCheckout = $state(false);
     let alertPopup = $state(false)
     let isTicketLocked = $state(false)
+    let isLastVisitModalOpen = $state(false);
     
     let popUpReportLocked = $state(false)
     let RequestReportUnLocked = $state(false)
@@ -656,6 +659,8 @@
         
         // Initialize the spare parts list from ticket data
         sparePartsList = dataTicket.spareparts || [];
+        picsList = dataTicket.pics || [];
+        lastVisit = dataTicket.lastVisit || [];
 
         isTicketLocked = (dataTicket.ticket_locked == 'N') ? false : true
 
@@ -1033,6 +1038,14 @@
     }
     // end checkIN
 
+    function openLastVisitModal() {
+        isLastVisitModalOpen = true;
+    }
+
+    function closeLastVisitModal() {
+        isLastVisitModalOpen = false;
+    }
+
 </script>
 
 <svelte:head>
@@ -1110,6 +1123,16 @@
                     <ChevronDown class="h-5 w-5 transition-transform text-gray-500" />
                 {/if}
             </button>
+
+            <div class="mt-4 pt-3 border-t border-dashed border-gray-200">
+                <button 
+                    onclick={openLastVisitModal}
+                    class="w-full flex items-center justify-center gap-2 py-2 px-4 bg-blue-50 text-[#407ad6] rounded-lg border border-blue-100 hover:bg-blue-100 transition-all text-sm font-semibold"
+                >
+                    <RefreshCcw class="w-4 h-4" />
+                    Lihat 5 Kunjungan Terakhir
+                </button>
+            </div>
         
         {#if isInfoExpanded}
             <div transition:slide class="p-5 pt-0 space-y-5">
@@ -1150,12 +1173,26 @@
 
                 <div class="space-y-2 text-sm text-gray-600">
                     <h2 class="font-semibold text-gray-900">{$_('Customer')}</h2>
+                    
                     <p class="flex items-center font-semibold">
                         {dataTicket.cust_name}
                     </p>
+
                     <p class="flex items-center">
                         {dataTicket.cust_address}
                     </p>
+
+                    {#if picsList && picsList.length > 0}
+                        <div class="space-y-1">
+                            <h2 class="font-semibold text-gray-900">{$_('PIC Names')}</h2>
+                            {#each picsList as pic}
+                                <p class="flex items-center italic">
+                                    <span class="mr-1">•</span> {pic['pic_name']}
+                                </p>
+                            {/each}
+                        </div>
+                    {/if}
+
                     <a href={`tel:${dataTicket.cust_phone}`} class="flex items-center text-blue-600 hover:text-blue-500 transition-colors hover:underline">
                         {dataTicket.cust_phone}
                     </a>
@@ -1856,6 +1893,73 @@
             >
                 Your browser does not support the video tag.
             </video>
+        </div>
+    </div>
+{/if}
+
+
+<!-- Last Visit Modal -->
+{#if isLastVisitModalOpen}
+    <div 
+        class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+        role="dialog"
+    >
+        <div 
+            transition:slide={{ axis: 'y' }}
+            class="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[85vh]"
+        >
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Riwayat Kunjungan</h3>
+                    <p class="text-xs text-gray-500">Menampilkan 5 aktivitas terakhir</p>
+                </div>
+                <button onclick={closeLastVisitModal} class="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                    <XCircle class="w-6 h-6 text-gray-400" />
+                </button>
+            </div>
+            
+            <div class="p-4 overflow-y-auto space-y-4 bg-white">
+                {#each lastVisit as visit, i}
+                    <div class="relative pl-6 border-l-2 border-blue-100 pb-2 last:pb-0 last:border-l-0">
+                        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white shadow-sm"></div>
+                        
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                    {visit['ticket_check_in'] || 'No Date'}
+                                </span>
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-green-600">
+                                    {visit['machine_req_type']}
+                                </span>
+                            </div>
+
+                            <h4 class="text-sm font-semibold text-gray-800 flex items-center">
+                                <User class="w-3 h-3 mr-1" /> {visit['assignee_name'] || 'Unassigned'}
+                            </h4>
+
+                            <p class="text-sm text-gray-600 mt-2 italic leading-relaxed">
+                                "{visit['all_notes_and_descriptions']}"
+                            </p>
+
+                            {#if visit['all_spareparts']}
+                                <div class="mt-3 pt-2 border-t border-dashed border-gray-200">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Spareparts:</p>
+                                    <p class="text-xs text-gray-700">{visit['all_spareparts']}</p>
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                {/each}
+            </div>
+
+            <div class="p-4 border-t bg-gray-50">
+                <button 
+                    onclick={closeLastVisitModal}
+                    class="w-full py-3 bg-[#407ad6] text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all"
+                >
+                    Tutup Riwayat
+                </button>
+            </div>
         </div>
     </div>
 {/if}
