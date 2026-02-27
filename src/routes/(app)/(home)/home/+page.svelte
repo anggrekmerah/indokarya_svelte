@@ -10,7 +10,9 @@
     TrendingUp, 
     PieChart ,
     ChevronRight ,
-    MapPin
+    MapPin,
+    Camera,
+    RefreshCcw
   } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { Loader } from '@googlemaps/js-api-loader';
