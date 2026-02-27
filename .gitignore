@@ -31,3 +31,6 @@ vite.config.ts.timestamp-*
 
 !/static/video/.gitkeep
 /static/video
+
+!/static/absen/.gitkeep
+/static/absen

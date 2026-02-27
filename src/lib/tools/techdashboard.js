@@ -23,3 +23,11 @@ export async function avgClosedTicket(body, fetch) {
     return responseAPI;
     
 }
+
+export async function attendance(body, fetch) {
+
+    const responseAPI = await requestAPI('POST','/tech-dashboard/get-dash-user', body, fetch) 
+
+    return responseAPI;
+    
+}

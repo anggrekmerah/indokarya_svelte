@@ -14,7 +14,7 @@ export async function load({ locals, fetch, url }) {
   console.log(segments);
   
   // Access session data or private APIs
- const ticketStatus = segments[0] === 'home' 
+ const ticketStatus = segments[0] === 'task' 
     ? await getTicketStatusActiveAPI({}, fetch) 
     : await getTicketStatusHistoryAPI({}, fetch);
 

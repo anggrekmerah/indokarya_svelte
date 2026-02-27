@@ -141,23 +141,27 @@
         scale: 1 // Larger size
     };
 
+    const mapsConf = {
+            apiKey:mapsKey,
+            mapIds:mapID,
+            version: 'weekly',
+            libraries: ['maps','marker','places','routes','geometry']
+        }
+        console.log('mapsConf history')
+        console.log(mapsConf)
+    let mapsLoader;
+    if (typeof window !== 'undefined') {
+        mapsLoader = new Loader(mapsConf);
+    }
+
     onMount( async () => {
         // Load google maps only if keys are provided
         if (mapsKey === 'YOUR_GOOGLE_MAPS_API_KEY') {
             console.error("Google Maps API Key is not set. Map will not load.");
             return;
         }
-
-        const mapsConf = {
-            apiKey:mapsKey,
-            mapIds:mapID,
-            version: 'weekly',
-            libraries: ['maps','marker','places','routes','geometry']
-        }
-        
+    
         try {
-            
-            const mapsLoader = new Loader(mapsConf);
 
             google = await mapsLoader.load();
 

@@ -3,20 +3,26 @@
     import { initializeApp } from "firebase/app";
     // Ambil fungsi spesifik untuk messaging (karena kita menggunakan module modern)
     import { getMessaging, getToken, onMessage } from "firebase/messaging";
-    
+    import {PUBLIC_APIKEY,
+            PUBLIC_AUTHDOMAIN,
+            PUBLIC_PROJECTID,
+            PUBLIC_STORAGEBUCKET,
+            PUBLIC_MESSAGINGSENDERID,
+            PUBLIC_APPID} from '$env/static/public';
+
     // Konfigurasi Firebase Anda (Disalin dari firebase-messaging-sw.js)
     const firebaseConfig = {
-    apiKey: "AIzaSyBN4b7SsAEQC-G5_7CXYTcAeJkWE-feoPc",
-    authDomain: "teknisi-indokarya-2a652.firebaseapp.com",
-    projectId: "teknisi-indokarya-2a652",
-    storageBucket: "teknisi-indokarya-2a652.firebasestorage.app",
-    messagingSenderId: "621233711350",
-    appId: "1:621233711350:web:e79107b2862ae8c2f624d7"
+    apiKey: PUBLIC_APIKEY,
+    authDomain: PUBLIC_AUTHDOMAIN,
+    projectId: PUBLIC_PROJECTID,
+    storageBucket: PUBLIC_STORAGEBUCKET,
+    messagingSenderId: PUBLIC_MESSAGINGSENDERID,
+    appId: PUBLIC_APPID
     };
 
     // Fungsi untuk mengirim token ke backend Express.js Anda
     async function sendTokenToServer(token) {
-        console.log("Mengirim token ke Express.js:", token);
+        // console.log("Mengirim token ke Express.js:", token);
         
         // Ganti URL ini dengan endpoint API Express.js Anda
         const API_ENDPOINT = '/api/notif/fcm'; 

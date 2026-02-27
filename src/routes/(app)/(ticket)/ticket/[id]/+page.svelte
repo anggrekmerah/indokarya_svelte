@@ -13,6 +13,8 @@
     import { page } from '$app/stores';
     import { browser } from '$app/environment';
     import { saveOfflineTask } from '$lib/stores/report.js'
+    import AttributeItem  from '$lib/components/AttributeItem.svelte'
+    import { PUBLIC_BASE_URL_LARAVEL } from '$env/static/public';
     
     let { data, form } = $props();
 
@@ -50,7 +52,10 @@
     let sparePartsList = $state([]); 
     let picsList = $state([]); 
     let lastVisit = $state([]);
+    let mediaList = $state([]); 
 
+    let showMediaModal = $state(false);
+    let selectedMedia = $state(null);;
     let isInfoExpanded = $state(true);
     let isMapExpanded = $state(false);
     let loadingCheckout = $state(false);
@@ -143,6 +148,18 @@
     let in_cameraFacingMode = $state('user');
 
 
+    // Load google maps
+    const mapsConf = {
+        apiKey:mapsKey,
+        mapIds:mapID,
+        version: 'weekly',
+        libraries: ['maps','marker','places','routes','geometry'] // 'places' is often needed for directions
+    }        
+    let mapsLoader;
+    if (typeof window !== 'undefined') {
+        mapsLoader = new Loader(mapsConf);
+    }
+
     $effect(async () => {
 
         console.log('isTicketLocked',isTicketLocked)
@@ -201,7 +218,7 @@
                 new google.maps.LatLng(centerMarker)
             );
 
-            isNearDestination = distance <= 100;
+            isNearDestination = distance <= 50;
             console.log(isNearDestination)
             console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
             console.log(wasNearDestination)
@@ -600,6 +617,7 @@
         sessionStorage.removeItem('taskReportData');
     }
 
+
     onDestroy( async () => {
 
         if (watchID !== null) {
@@ -649,10 +667,12 @@
                 return {
                     id: String(machine.id_ticket_machine), // Ensure BIGINT is treated as a string
                     id_machine : machine.id_machine,
-                    name: machine.machine_name || `Machine #${String(machine.id_ticket_machine)}`,
+                    name: `${machine.machine_name}` || `Machine #${String(machine.id_ticket_machine)}`,
                     description: '',
                     sparePart: [],
                     files: [],
+                    attrs: machine.attrs,
+                    label: `SN: ${machine.serial_number} - ${machine.brand} - ${machine.voltage}`
                 };
             });
         }
@@ -660,6 +680,7 @@
         // Initialize the spare parts list from ticket data
         sparePartsList = dataTicket.spareparts || [];
         picsList = dataTicket.pics || [];
+        mediaList = dataTicket.TicketPhotoEvidence || [];
         lastVisit = dataTicket.lastVisit || [];
 
         isTicketLocked = (dataTicket.ticket_locked == 'N') ? false : true
@@ -672,19 +693,7 @@
             });
         }
 
-        // Load google maps
-        const mapsConf = {
-            apiKey:mapsKey,
-            mapIds:mapID,
-            version: 'weekly',
-            libraries: ['maps','marker','places','routes','geometry'] // 'places' is often needed for directions
-        }
-        
-        
         try {
-            
-            const mapsLoader = new Loader(mapsConf);
-
             google = await mapsLoader.load();
 
             const { Map } = await google.maps.importLibrary("maps");
@@ -884,66 +893,68 @@
         // requestAnimationFrame(() => animateMarker(marker, path, index, speed));
     }
 
-    async function calculateAndDisplayRoute(origin, destination) {
-    // 1. Ambil DirectionsService DAN TravelMode dari library "routes"
-    const { DirectionsService, TravelMode } = await google.maps.importLibrary("routes");
-    const directionsService = new DirectionsService();
-
-    directionsService.route(
-            { 
-                origin, 
-                destination, 
-                // 2. Gunakan TravelMode yang sudah di-import tadi
-                travelMode: TravelMode.DRIVING, 
-                avoidTolls: true,
-                avoidHighways: true,
-                avoidFerries: true,
-                drivingOptions: {
-                    departureTime: new Date(Date.now()),
-                    trafficModel: 'bestguess'
-                },
-            },
-            (response, status) => { // Tidak perlu async di sini kecuali ada await di dalamnya
-                console.log(response);
-                if (status === 'OK') {
-                    directionsRenderer.setDirections(response);
-                } else {
-                    console.error('Directions request failed due to ' + status);
-                }
-            }
-        );
-    }
-
+    // yang asli
     // async function calculateAndDisplayRoute(origin, destination) {
-    //     const { DirectionsService } = await google.maps.importLibrary("routes");
-    //     const directionsService = new DirectionsService();
+    // // 1. Ambil DirectionsService DAN TravelMode dari library "routes"
+    // const { DirectionsService, TravelMode } = await google.maps.importLibrary("routes");
+    // const directionsService = new DirectionsService();
 
-    //     directionsService.route(
+    // directionsService.route(
     //         { 
     //             origin, 
     //             destination, 
-    //             travelMode: google.maps.TravelMode.DRIVING ,
-    //             avoidTolls:true,
-    //             avoidHighways:true,
-    //             avoidFerries:true,
+    //             // 2. Gunakan TravelMode yang sudah di-import tadi
+    //             travelMode: TravelMode.DRIVING, 
+    //             avoidTolls: true,
+    //             avoidHighways: true,
+    //             avoidFerries: true,
     //             drivingOptions: {
-    //                 departureTime: new Date(Date.now()), // One hour from now
+    //                 departureTime: new Date(Date.now()),
     //                 trafficModel: 'bestguess'
     //             },
     //         },
-    //         async (response, status) => {
-    //             console.log(response)
+    //         (response, status) => { // Tidak perlu async di sini kecuali ada await di dalamnya
+    //             console.log(response);
     //             if (status === 'OK') {
     //                 directionsRenderer.setDirections(response);
-    //                 // const overviewPath = response.routes[0].overview_path;
-    //                 // const animatedPath = await interpolatePath(overviewPath, 10);
-    //                 // await animateMarker(userMarker, animatedPath, 0, 1)
     //             } else {
     //                 console.error('Directions request failed due to ' + status);
     //             }
     //         }
     //     );
     // }
+
+    // untuk testing
+    async function calculateAndDisplayRoute(origin, destination) {
+        const { DirectionsService } = await google.maps.importLibrary("routes");
+        const directionsService = new DirectionsService();
+
+        directionsService.route(
+            { 
+                origin, 
+                destination, 
+                travelMode: google.maps.TravelMode.DRIVING ,
+                avoidTolls:true,
+                avoidHighways:true,
+                avoidFerries:true,
+                drivingOptions: {
+                    departureTime: new Date(Date.now()), // One hour from now
+                    trafficModel: 'bestguess'
+                },
+            },
+            async (response, status) => {
+                console.log(response)
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
+                    const overviewPath = response.routes[0].overview_path;
+                    const animatedPath = await interpolatePath(overviewPath, 10);
+                    await animateMarker(userMarker, animatedPath, 0, 1)
+                } else {
+                    console.error('Directions request failed due to ' + status);
+                }
+            }
+        );
+    }
 
 
     function handleLocationError(browserHasGeolocation, map, pos) {
@@ -1076,6 +1087,41 @@
         isLastVisitModalOpen = false;
     }
 
+    const imageExtensions = ['jpg','jpeg','png','webp','gif'];
+    const videoExtensions = ['mp4','mov','webm','ogg'];
+
+    function getExtension(url) {
+        return url.split('.').pop().toLowerCase();
+    }
+
+     function getFilename(url) {
+        return url.split('/').pop();
+    }
+
+    function isImage(url) {
+        return imageExtensions.includes(getExtension(url));
+    }
+
+    function isVideo(url) {
+        return videoExtensions.includes(getExtension(url));
+    }
+
+    function openPreview(media) {
+        selectedMedia = media;
+    }
+
+    function closePreview() {
+        selectedMedia = null;
+    }
+
+    function openMediaModal() {
+        showMediaModal = true;
+    }
+    
+    function closeMediaModal() {
+        showMediaModal = false;
+        selectedMedia = null;
+    }
 </script>
 
 <svelte:head>
@@ -1089,8 +1135,8 @@
       </div>
       <section class="flex flex-initial items-center justify-center">
         <button onclick={handleToggleMap}
-        class=" -translate-y-3
-               flex items-center justify-center w-10 h-10 rounded-full
+        class=" -translate-y-4
+               flex items-center justify-center w-8 h-8 rounded-full
                bg-[#407ad6] text-white font-semibold shadow-xl
                hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
         {#if !isMapExpanded}
@@ -1154,14 +1200,49 @@
                 {/if}
             </button>
 
-            <div class="mt-4 pt-3 border-t border-dashed border-gray-200">
-                <button 
-                    onclick={openLastVisitModal}
-                    class="w-full flex items-center justify-center gap-2 py-2 px-4 bg-blue-50 text-[#407ad6] rounded-lg border border-blue-100 hover:bg-blue-100 transition-all text-sm font-semibold"
-                >
-                    <RefreshCcw class="w-4 h-4" />
-                    Lihat 5 Kunjungan Terakhir
-                </button>
+            <div class="p-4 border-b bg-gray-50 rounded-t-2xl">
+
+                <!-- Top Section -->
+                <div class="flex justify-between items-start sm:items-center">
+                    
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-base sm:text-lg">
+                            Riwayat Kunjungan
+                        </h3>
+                        <p class="text-xs text-gray-500">
+                            Menampilkan 5 aktivitas terakhir
+                        </p>
+                    </div>
+
+                    <!-- Close (selalu kanan atas) -->
+                    <button 
+                        onclick={closeLastVisitModal}
+                        class="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                        <XCircle class="w-5 h-5 text-gray-400" />
+                    </button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-3 flex gap-2">
+                    
+                    <button 
+                        onclick={openLastVisitModal}
+                        class="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium 
+                            bg-blue-600 text-white rounded-lg 
+                            hover:bg-blue-700 transition-colors">
+                        Kunjungan
+                    </button>
+
+                    <button 
+                        onclick={openMediaModal}
+                        class="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium 
+                            bg-green-600 text-white rounded-lg 
+                            hover:bg-green-700 transition-colors">
+                        Foto / Video
+                    </button>
+
+                </div>
+
             </div>
         
         {#if isInfoExpanded}
@@ -1257,6 +1338,8 @@
                     <div class="space-y-4">
                         <!-- 1. Report Description (Binds to mReport.description) -->
                         <div>
+                            <label for={`report-description-${mReport.id}`} class="text-sm font-medium text-gray-700">{$_(mReport.label)}</label>
+                            <br>
                             <label for={`report-description-${mReport.id}`} class="text-sm font-medium text-gray-700">{$_('Work Performed / Description')}</label>
                             <textarea 
                                 id={`report-description-${mReport.id}`} 
@@ -1288,6 +1371,9 @@
                                                     {part.sparepart_name} (P/N: {part.sparepart_part_number || 'N/A'})
                                                 </label>
                                             </div>
+                                            {#each part.attrs as _, i}
+                                                <AttributeItem bind:attr={part.attrs[i]} />
+                                            {/each}
                                         {/if}
                                     {/each}
                                 </div>
@@ -1335,6 +1421,26 @@
                                 </div>
                             {/if}
                         </div>
+
+                        <!-- Attributes -->
+                        {#if mReport.attrs.length > 0}
+                            <div class="pt-2 border-t border-gray-100">
+                                <label class="text-sm font-medium text-gray-700">{$_('Kelengkapan')}</label>
+                                <div class="mt-2 space-y-2 p-2 bg-gray-50 rounded-lg">
+                                    <!-- <button
+                                        type="button"
+                                        onclick="{in_togglePopup}"
+                                        class="w-full bg-[#f8581a] text-white justify-center rounded-lg p-3 font-semibold shadow-md flex 
+                                            hover:bg-blue-700 transition-colors duration-200">
+                                        <FileText class="h-5 w-5 mr-2" />
+                                        {$_('Cek Kelengkapan Mesin')}
+                                    </button> -->
+                                    {#each mReport.attrs as _, i}
+                                        <AttributeItem bind:attr={mReport.attrs[i]} />
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
                     </div>
                 </section>
             {/each}
@@ -1377,6 +1483,39 @@
                             }
                         });
                     });
+
+                    machineReports.forEach(mReport => {
+                        if (mReport.attrs && Array.isArray(mReport.attrs)) {
+                            mReport.attrs.forEach(attr => {
+                                formData.append('attr_id', String(attr.id));
+                                formData.append('attr_real_id', String(attr.id_attr));
+                                formData.append('attr_value', String(attr.attribute_value ?? ''));
+                                formData.append('attr_source', String(attr.sources));
+                                formData.append('attr_id_cust_machine', String(attr.id_cust_machine));
+                                
+                                // Ambil langsung status manual yang sudah diupdate oleh event komponen
+                                // Jika undefined (tidak pernah disentuh), berikan nilai 'N'
+                                formData.append('is_manual', attr.is_manual === 'Y' ? 'Y' : 'N');
+                            });
+                        }
+                    });
+
+                    if (sparePartsList && sparePartsList.length > 0) {
+                        sparePartsList.forEach((listSpare) => {
+                            listSpare.attrs.forEach(attr => {
+                                formData.append('attr_id', String(attr.id));
+                                formData.append('attr_real_id', String(attr.id_attr));
+                                formData.append('attr_value', String(attr.attribute_value ?? ''));
+                                formData.append('attr_source', String(attr.sources));
+                                formData.append('attr_id_cust_machine', String(attr.id_cust_machine));
+                                
+                                // Ambil langsung status manual yang sudah diupdate oleh event komponen
+                                // Jika undefined (tidak pernah disentuh), berikan nilai 'N'
+                                formData.append('is_manual', attr.is_manual === 'Y' ? 'Y' : 'N');
+                            });
+                             
+                        });
+                    }
 
                     // 4. Append the signature (which remains ticket-wide)
                     if (report.signature) {
@@ -1992,6 +2131,111 @@
             </div>
         </div>
     </div>
+{/if}
+
+{#if showMediaModal}
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[85vh]">
+
+        <!-- Header -->
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="font-semibold text-gray-800 text-base sm:text-lg">
+                Dokumentasi Kunjungan
+            </h3>
+
+            <button 
+                onclick={closeMediaModal}
+                class="p-2 hover:bg-gray-100 rounded-full transition">
+                <XCircle class="w-5 h-5 text-gray-500" />
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-4 overflow-y-auto space-y-2">
+
+            {#if mediaList.length === 0}
+                <div class="text-center text-gray-400 py-10">
+                    Tidak ada dokumentasi
+                </div>
+            {:else}
+
+                {#each mediaList as media}
+                    <button
+                        onclick={() => openPreview(media)}
+                        class="w-full flex items-center justify-between px-4 py-3 
+                               rounded-xl border bg-gray-50 hover:bg-gray-100 
+                               transition text-left"
+                    >
+
+                        <div class="flex items-center gap-3">
+
+                            <!-- Badge Type -->
+                            {#if isImage(media.res_photo)}
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-600">
+                                    FOTO
+                                </span>
+                            {/if}
+
+                            {#if isVideo(media.res_photo)}
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-600">
+                                    VIDEO
+                                </span>
+                            {/if}
+
+                            <!-- Filename -->
+                            <span class="text-sm text-gray-700 truncate max-w-[150px] sm:max-w-xs">
+                                {getFilename(media.res_photo)}
+                            </span>
+
+                        </div>
+
+                        <span class="text-xs text-gray-400">
+                            Klik lihat
+                        </span>
+
+                    </button>
+                {/each}
+
+            {/if}
+
+        </div>
+
+    </div>
+</div>
+{/if}
+
+{#if selectedMedia}
+<div class="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
+
+    <button 
+        onclick={closePreview}
+        class="absolute top-4 right-4 text-white">
+        <XCircle class="w-7 h-7" />
+    </button>
+
+    <div class="max-w-5xl w-full">
+
+        {#if isImage(selectedMedia.res_photo)}
+            <img 
+                src={PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
+                alt="preview"
+                class="w-full max-h-[85vh] object-contain rounded-xl"
+            />
+        {/if}
+
+        {#if isVideo(selectedMedia.res_photo)}
+            <video 
+                src={PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
+                controls
+                autoplay
+                class="w-full max-h-[85vh] rounded-xl"
+            ></video>
+        {/if}
+
+    </div>
+
+</div>
 {/if}
 
 <style>

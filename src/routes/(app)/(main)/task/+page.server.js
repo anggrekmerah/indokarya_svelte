@@ -1,8 +1,19 @@
 import { getTicketAssign } from '$lib/tools/ticketApi';
+import { todayAttendance } from '$lib/tools/attendenceAPI'
+import { fail, redirect } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ url, fetch, locals }) {
   
+    const getTodayAttendance = await todayAttendance({user_id : locals.user.id}, fetch)
+    let hasCheckedIn = !!getTodayAttendance && getTodayAttendance.data !== null
+
+    if(!hasCheckedIn){
+        // If the process is successful, redirect the user
+        const message = encodeURIComponent("Anda belum absen masuk hari ini!");
+        throw redirect(302, `/home?error=${message}`);
+    }
+
     // You can use fetch to call APIs or access database here
     const idUser = locals.user.id
     let payload = {"ID" : idUser, from:'server'}

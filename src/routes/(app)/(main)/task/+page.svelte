@@ -30,7 +30,7 @@
     // 1. Logika pembaruan data utama ketika URL ($page.url.searchParams) berubah
     $effect( async () => {
         // Panggil fungsi terpusat, berikan URL params dan data awal dari server
-        await loadInitialData('homeMetadata',$page.url.searchParams, data.listTicket);
+        await loadInitialData('taskMetadata',$page.url.searchParams, data.listTicket);
     });
 
     // 2. Logika Infinite Scroll / Observer
@@ -83,7 +83,7 @@
     
     const debouncedLoadMore = debounce(async () => {
         // Panggil fungsi terpusat loadMoreItems
-        await loadMoreItems('homeMetadata','/api/ticket/assigned',$page.url.searchParams);
+        await loadMoreItems('taskMetadata','/api/ticket/assigned',$page.url.searchParams);
     }, 100);
 
 </script>

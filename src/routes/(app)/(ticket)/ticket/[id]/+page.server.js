@@ -5,23 +5,33 @@ import { v4 as uuidv4 } from 'uuid';
 import { fail, redirect } from '@sveltejs/kit';
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_ID } from '$env/static/private';
 import { mkdirSync } from 'fs';
+import { todayAttendance } from '$lib/tools/attendenceAPI'
 
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, fetch, locals }) {
   // You can use fetch to call APIs or access database here
     
+    const getTodayAttendance = await todayAttendance({user_id : locals.user.id}, fetch)
+    let hasCheckedIn = !!getTodayAttendance && getTodayAttendance.data !== null
+
+    if(!hasCheckedIn){
+        // If the process is successful, redirect the user
+        const message = encodeURIComponent("Anda belum absen masuk hari ini!");
+        throw redirect(302, `/home?error=${message}`);
+    }
+
     const detailTicket = await ticketDetailAPI({ID : locals.user.id, id_ticket: params.id}, fetch)
     
     if(detailTicket.error){
         // If the process is successful, redirect the user
             redirect(303, '/home');
     }     
-    console.log(detailTicket.data)
+    
     return {
         detailTicket: detailTicket.data[0],
         mapsKey : GOOGLE_MAPS_API_KEY,
-        mapsId : GOOGLE_MAPS_ID
+        mapsId : GOOGLE_MAPS_ID,
     };
 }
 
@@ -96,6 +106,21 @@ export const actions = {
         const generalNotes = data.get('generalNotes')
         const signature = data.get('signature')
         const files = data.getAll('files')
+        const attrIds = data.getAll('attr_id');
+        const attrValues = data.getAll('attr_value');
+        const attrSources = data.getAll('attr_source');
+        const isManual = data.getAll('is_manual');
+        const realAttrID = data.getAll('attr_real_id');
+        const attrIDCustMachine = data.getAll('attr_id_cust_machine')
+        const submittedAttributes = attrIds.map((id, index) => ({
+            id: id,
+            value: attrValues[index],
+            source: attrSources[index],
+            is_manual: isManual[index],
+            attr_real_id: realAttrID[index],
+            attr_id_cust_machine: attrIDCustMachine[index]
+        }));
+        
         const idUser = locals.user.id
         let errors ={}
         const directoryPath = './static/report/' + ticketId + '/';
@@ -154,7 +179,8 @@ export const actions = {
                     notes:generalNotes,
                     videos:pathVideo,
                     photos:pathImage,
-                    machineReports: machines
+                    machineReports: machines,
+                    attributes: submittedAttributes
                 }
             
             const updateTicket = await ticketCheckOutAPI(bodyUpdate, fetch);

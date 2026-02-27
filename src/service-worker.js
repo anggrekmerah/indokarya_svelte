@@ -1,7 +1,12 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw'; // PENTING: Import khusus untuk SW
 
-
+import {PUBLIC_APIKEY,
+            PUBLIC_AUTHDOMAIN,
+            PUBLIC_PROJECTID,
+            PUBLIC_STORAGEBUCKET,
+            PUBLIC_MESSAGINGSENDERID,
+            PUBLIC_APPID} from '$env/static/public';
 import { build, files, version } from '$service-worker';
 import { deleteOfflineTask, deserializeTask} from '$lib/stores/report'
 
@@ -18,14 +23,17 @@ import { deleteOfflineTask, deserializeTask} from '$lib/stores/report'
 /// <reference types="../.svelte-kit/ambient.d.ts" />
 
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBN4b7SsAEQC-G5_7CXYTcAeJkWE-feoPc",
-  authDomain: "teknisi-indokarya-2a652.firebaseapp.com",
-  projectId: "teknisi-indokarya-2a652",
-  storageBucket: "teknisi-indokarya-2a652.firebasestorage.app",
-  messagingSenderId: "621233711350",
-  appId: "1:621233711350:web:e79107b2862ae8c2f624d7"
-};
+
+
+    // Konfigurasi Firebase Anda (Disalin dari firebase-messaging-sw.js)
+    const firebaseConfig = {
+    apiKey: PUBLIC_APIKEY,
+    authDomain: PUBLIC_AUTHDOMAIN,
+    projectId: PUBLIC_PROJECTID,
+    storageBucket: PUBLIC_STORAGEBUCKET,
+    messagingSenderId: PUBLIC_MESSAGINGSENDERID,
+    appId: PUBLIC_APPID
+    };
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
@@ -149,64 +157,109 @@ self.addEventListener('sync', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    
-    // Abaikan permintaan yang bukan GET
-    if (event.request.method !== 'GET') return;
+    // Abaikan permintaan yang bukan GET dan API eksternal (seperti Firebase/Google Maps)
+    if (event.request.method !== 'GET' || event.request.url.startsWith('http')) {
+        return;
+    }
 
     async function respond() {
         const url = new URL(event.request.url);
         const cache = await caches.open(CACHE);
-        
-        // Cek apakah itu permintaan Navigasi (memuat halaman HTML)
         const isNavigationRequest = event.request.mode === 'navigate';
 
-        // 1. Prioritas tertinggi: Aset yang di-precache (`build` dan `files`)
-        // Ini memastikan aset JS/CSS aplikasi selalu tersedia.
-        if (ASSETS.includes(url.pathname)) {
-            const response = await cache.match(url.pathname);
-            if (response) return response;
+        // 1. Aset Statis (JS, CSS, Gambar di /static) -> Tetap Cache-First
+        // Kita cek apakah URL ada di build (JS/CSS Svelte) atau files (static folder)
+        if (build.includes(url.pathname) || files.includes(url.pathname)) {
+            return cache.match(event.request);
         }
 
-        // 2. Penanganan Halaman Navigasi (termasuk /home)
+        // 2. Halaman Navigasi (seperti /home, /profile) -> Network-First
+        // Ini memastikan data dari +page.server.js selalu terbaru.
         if (isNavigationRequest) {
-            
-            // ⭐ PENTING: Buat URL baru TANPA parameter kueri
-            // Ini mengubah '/home?id_status=1' menjadi '/home'
-            const cleanUrl = url.origin + url.pathname;
-            
-            // Coba temukan di cache dengan URL yang sudah dibersihkan
-            const cachedResponse = await cache.match(cleanUrl);
-
-            if (cachedResponse) {
-                console.log(`[SW] Melayani halaman dari cache: ${cleanUrl}`);
-                return cachedResponse;
+            try {
+                // Selalu coba jaringan terlebih dahulu
+                const response = await fetch(event.request);
+                
+                // Opsional: Update cache dengan versi terbaru dari jaringan
+                if (response.ok) {
+                    cache.put(event.request, response.clone());
+                }
+                return response;
+            } catch (err) {
+                // Jika OFFLINE, baru ambil dari cache
+                const cachedResponse = await cache.match(url.pathname);
+                if (cachedResponse) return cachedResponse;
+                throw err;
             }
         }
-        
-        // 3. Fallback: Coba dari Jaringan (dan cache jika respons OK)
-        try {
-            const response = await fetch(event.request);
 
-            if (!(response instanceof Response)) {
-                 throw new Error('invalid response from fetch');
-            }
-
-            // Jika status 200, Anda bisa memilih untuk menyimpan respons ini (Dynamic Cache)
-            // Namun, untuk halaman navigasi, biasanya ini dihindari untuk menghemat ruang.
-            // Biarkan baris cache.put di-comment jika Anda hanya ingin precache.
-            // if (response.status === 200) { cache.put(event.request, response.clone()); }
-
-            return response;
-        } catch (err) {
-            // 4. Offline Fallback Terakhir: Coba temukan request asli (dengan query) di cache.
-            const response = await cache.match(event.request);
-
-            if (response) return response;
-
-            // Jika tidak ada cache, lempar error browser (Page Not Reached)
-            throw err;
-        }
+        // 3. Permintaan lainnya (Default)
+        return fetch(event.request);
     }
 
     event.respondWith(respond());
 });
+
+// self.addEventListener('fetch', (event) => {
+    
+//     // Abaikan permintaan yang bukan GET
+//     if (event.request.method !== 'GET' || event.request.url.startsWith('http')) {
+//         return;
+//     }
+
+//     async function respond() {
+//         const url = new URL(event.request.url);
+//         const cache = await caches.open(CACHE);
+        
+//         // Cek apakah itu permintaan Navigasi (memuat halaman HTML)
+//         const isNavigationRequest = event.request.mode === 'navigate';
+
+//         // 1. Prioritas tertinggi: Aset yang di-precache (`build` dan `files`)
+//         // Ini memastikan aset JS/CSS aplikasi selalu tersedia.
+//         if (build.includes(url.pathname) || files.includes(url.pathname)) {
+//             return cache.match(event.request);
+//         }
+
+//         // 2. Penanganan Halaman Navigasi (termasuk /home)
+//         if (isNavigationRequest) {
+            
+//             // ⭐ PENTING: Buat URL baru TANPA parameter kueri
+//             // Ini mengubah '/home?id_status=1' menjadi '/home'
+//             const cleanUrl = url.origin + url.pathname;
+            
+//             // Coba temukan di cache dengan URL yang sudah dibersihkan
+//             const cachedResponse = await cache.match(cleanUrl);
+
+//             if (cachedResponse) {
+//                 console.log(`[SW] Melayani halaman dari cache: ${cleanUrl}`);
+//                 return cachedResponse;
+//             }
+//         }
+        
+//         // 3. Fallback: Coba dari Jaringan (dan cache jika respons OK)
+//         try {
+//             const response = await fetch(event.request);
+
+//             if (!(response instanceof Response)) {
+//                  throw new Error('invalid response from fetch');
+//             }
+
+//             // Jika status 200, Anda bisa memilih untuk menyimpan respons ini (Dynamic Cache)
+//             // Namun, untuk halaman navigasi, biasanya ini dihindari untuk menghemat ruang.
+//             // Biarkan baris cache.put di-comment jika Anda hanya ingin precache.
+//             // if (response.status === 200) { cache.put(event.request, response.clone()); }
+
+//             return response;
+//         } catch (err) {
+//             // 4. Offline Fallback Terakhir: Coba temukan request asli (dengan query) di cache.
+//             const response = await cache.match(event.request);
+
+//             if (response) return response;
+
+//             // Jika tidak ada cache, lempar error browser (Page Not Reached)
+//             throw err;
+//         }
+//     }
+
+//     event.respondWith(respond());
+// });
