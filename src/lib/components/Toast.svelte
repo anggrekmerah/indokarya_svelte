@@ -1,5 +1,5 @@
 <script>
-    import { notification } from './notificationStore.js';
+    import { notification } from '$lib/stores/notificationStore';
     import { fly } from 'svelte/transition';
 </script>
 
