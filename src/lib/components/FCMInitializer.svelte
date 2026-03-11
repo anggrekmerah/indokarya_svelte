@@ -9,6 +9,7 @@
             PUBLIC_STORAGEBUCKET,
             PUBLIC_MESSAGINGSENDERID,
             PUBLIC_APPID} from '$env/static/public';
+    import { showToast } from '$lib/stores/notificationStore';
 
     // Konfigurasi Firebase Anda (Disalin dari firebase-messaging-sw.js)
     const firebaseConfig = {
@@ -101,7 +102,16 @@
             
             // Logika untuk menampilkan notifikasi di UI Svelte
             // Gunakan Svelte store atau event dispatching untuk memperbarui UI
-            alert(`Notifikasi Baru: ${payload.notification.title} - ${payload.notification.body}`);
+            // alert(`Notifikasi Baru: ${payload.notification.title} - ${payload.notification.body}`);
+            const title = payload.notification.title;
+            const body = payload.notification.body;
+
+            // Logika sederhana menentukan warna
+            let type = 'info';
+            if (title.toLowerCase().includes('berhasil')) type = 'success';
+            if (title.toLowerCase().includes('gagal')) type = 'error';
+
+            showToast(title, body, type);
             
             // ATAU: Tampilkan notifikasi native (jika diinginkan)
             // const notificationTitle = payload.notification.title;

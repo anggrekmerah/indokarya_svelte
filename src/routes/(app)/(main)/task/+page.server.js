@@ -1,6 +1,7 @@
-import { getTicketAssign } from '$lib/tools/ticketApi';
+import { getTicketAssign, ticketDetailAPI } from '$lib/tools/ticketApi';
 import { todayAttendance } from '$lib/tools/attendenceAPI'
 import { fail, redirect } from '@sveltejs/kit';
+import { tick } from 'svelte';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ url, fetch, locals }) {
@@ -52,8 +53,23 @@ export async function load({ url, fetch, locals }) {
         listTicket.data = {items : [], search : isSearch, hasMore:false, offset:0}
     }
         
-    console.log('listTickets')
-    console.log(listTicket.data)
+    listTicket.data.items = await Promise.all(
+        listTicket.data.items.map(async (ticket) => {
+            const detailTicket = await ticketDetailAPI(
+                {
+                    ID: idUser,
+                    id_ticket: ticket.id_ticket
+                },
+                fetch
+            );
+
+            return {
+                ...ticket,
+                detail: detailTicket.data[0]
+            };
+        })
+    );
+
     return {
         listTicket: listTicket.data,
         search : isSearch,

@@ -5,7 +5,6 @@
     import TicketUnlock from '$lib/components/TicketUnlock.svelte';
     import TicketLock from '$lib/components/TicketLock.svelte';
     
-    // ⭐ Impor SEMUA state dan logic dari store
     import { 
         items, 
         hasMore, 
@@ -17,23 +16,17 @@
 
     import { debounce } from '$lib/tools/utils.js';
     
-    // Data dari SvelteKit load function
     let { data } = $props(); 
 
-    // State Lokal/Observer
     let loadingSentinel = $state(/** @type {HTMLElement | null} */(null)); 
     let messages = $state([]);
     let observerInstance = null;
     
-    // --- Lifecycle & Reactive Logic ---
-
-    // 1. Logika pembaruan data utama ketika URL ($page.url.searchParams) berubah
+    
     $effect( async () => {
-        // Panggil fungsi terpusat, berikan URL params dan data awal dari server
         await loadInitialData('taskMetadata',$page.url.searchParams, data.listTicket);
     });
 
-    // 2. Logika Infinite Scroll / Observer
     $effect( () => {
         cleanupObserver();
 
@@ -52,10 +45,6 @@
     });
 
     onMount( async () => {
-        // Panggil checkIsOnline di sini jika masih diperlukan untuk init
-        // (Atau pindahkan logika ini ke store.js)
-        
-        // Listener online/offline global
         window.addEventListener('online', () => { isOnline.set(true); });
         window.addEventListener('offline', () => { isOnline.set(false); });
         
@@ -72,8 +61,6 @@
          cleanupObserver();
     });
 
-    // --- Utility Functions ---
-
     function cleanupObserver() {
         if (observerInstance) {
             observerInstance.disconnect();
@@ -82,7 +69,6 @@
     }
     
     const debouncedLoadMore = debounce(async () => {
-        // Panggil fungsi terpusat loadMoreItems
         await loadMoreItems('taskMetadata','/api/ticket/assigned',$page.url.searchParams);
     }, 100);
 

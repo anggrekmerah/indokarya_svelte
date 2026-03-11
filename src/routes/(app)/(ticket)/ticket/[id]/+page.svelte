@@ -213,9 +213,13 @@
             smoothLocation.set(userLocation); 
 
             // Calculate and check the distance
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                new google.maps.LatLng(userLocation),
-                new google.maps.LatLng(centerMarker)
+            // const distance = google.maps.geometry.spherical.computeDistanceBetween(
+            //     new google.maps.LatLng(userLocation),
+            //     new google.maps.LatLng(centerMarker)
+            // );
+            const distance = getDistance(
+                { lat: userLocation.lat, lng: userLocation.lng },
+                { lat: centerMarker.lat, lng: centerMarker.lng }
             );
 
             isNearDestination = distance <= 50;
@@ -301,40 +305,54 @@
 
     async function sendLocation(latitude, longitude) {
         const taskId = dataTicket.id_ticket;
-        const payload = JSON.stringify({ id_ticket:taskId, lat:latitude, lng:longitude });
-        console.log(payload)
+        const payloadObj = { 
+            id_ticket: taskId, 
+            id_user: dataTicket.assignee_id,
+            lat: latitude, 
+            lng: longitude,
+            timestamp: new Date().toISOString()
+        };
+
+        // Fungsi pembantu untuk simpan offline agar tidak duplikasi kode
+        const saveToOffline = async () => {
+            const formData = new FormData();
+            Object.entries(payloadObj).forEach(([key, val]) => formData.append(key, val));
+            
+            await saveOfflineTask('timelines', {
+                                id_ticket: taskId, // Menggunakan kunci dinamis sebagai ID utama tabel
+                                url: '/api/location',
+                                timestamp: new Date()
+                            }, formData);
+            
+            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                const registration = await navigator.serviceWorker.ready;
+                await registration.sync.register(`sync-timelines-${taskId}`);
+            }
+        };
 
         if (navigator.onLine) {
-            
-            // Check if the browser supports sendBeacon before calling
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon('/api/location', new Blob([payload], { type: 'application/json' }));
-                console.log('Task lock beacon sent successfully.');
-            } else {
-                // Fallback for older browsers (less reliable)
-                console.warn('navigator.sendBeacon not supported. Using a less reliable fetch request.');
-                fetch('/api/location', {
+            try {
+                // Gunakan fetch dengan timeout atau keepalive
+                const response = await fetch('/api/location', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: payload,
-                    keepalive: true // keepalive hint for the browser
-                }).catch(error => {
-                    console.error('Fetch request failed on page exit.', error);
+                    body: JSON.stringify(payloadObj),
+                    keepalive: true 
                 });
+
+                if (!response.ok) {
+                    // Jika server merespon error (500/404), simpan offline sebagai cadangan
+                    await saveToOffline();
+                }
+            } catch (error) {
+                // JIKA FETCH GAGAL (Koneksi putus tiba-tiba/Timeout)
+                console.error('Koneksi bermasalah, menyimpan ke Dexie...', error);
+                await saveToOffline();
             }
-            
         } else {
-            await db.timelines.add(
-            {
-                id_ticket : dataTicket.id_ticket,
-                id_user : dataTicket.assignee_id, 
-                lat : latitude, 
-                lng : longitude,
-                timestamp : new Date()
-            })
-            await registerBackgroundSync('sync-timelines_'+dataTicket.id_ticket);
+            // Kondisi memang offline dari awal
+            await saveToOffline();
         }
-        
     }
 
     async function closeAlertPopup() {
@@ -1122,6 +1140,106 @@
         showMediaModal = false;
         selectedMedia = null;
     }
+
+    function manualInterpolate(p1, p2, fraction) {
+        return {
+            lat: p1.lat + (p2.lat - p1.lat) * fraction,
+            lng: p1.lng + (p2.lng - p1.lng) * fraction
+        };
+    }
+
+    // Gunakan fungsi ini di dalam logic testing Anda
+    async function startLocationSimulation(path) {
+        for (let i = 0; i < path.length - 1; i++) {
+            const start = path[i];
+            const end = path[i + 1];
+            
+            // Simulasi 10 langkah antara dua titik
+            for (let step = 0; step <= 10; step++) {
+                const fraction = step / 10;
+                const interpolatedPos = manualInterpolate(start, end, fraction);
+                
+                // Panggil fungsi sendLocation yang sudah kita buat sebelumnya
+                await sendLocation(interpolatedPos.lat, interpolatedPos.lng);
+                
+                // Beri jeda simulasi
+                await new Promise(r => setTimeout(r, 2000)); 
+            }
+        }
+    }
+
+    /**
+     * Menghitung jarak antara dua titik (lat/lng) dalam meter
+     * Pengganti google.maps.geometry.spherical.computeDistanceBetween
+     */
+    function calculateDistance(p1, p2) {
+        const R = 6371e3; // Radius bumi dalam meter
+        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+        const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+        
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Hasil dalam meter
+    }
+
+    /**
+     * Mengecek apakah teknisi berada di lokasi pelanggan (Geofencing)
+     * @param {Object} techPos - {lat, lng} teknisi
+     * @param {Object} custPos - {lat, lng} pelanggan
+     * @param {number} radius - Jarak maksimal dalam meter (default 100m)
+     * @returns {Object} { inside: boolean, distance: number }
+     */
+    function checkGeofence(techPos, custPos, radius = 100) {
+        const distance = calculateDistance(techPos, custPos); // Menggunakan fungsi Haversine sebelumnya
+        return {
+            inside: distance <= radius,
+            distance: distance
+        };
+    }
+
+    async function runOfflineTestSimulation(path) {
+        console.log("Memulai simulasi offline...");
+
+        for (let i = 0; i < path.length - 1; i++) {
+            const start = path[i];
+            const end = path[i + 1];
+            
+            // Hitung jarak antar titik utama (Opsional, untuk log)
+            const distance = calculateDistance(start, end);
+            console.log(`Jarak segmen ini: ${distance.toFixed(2)} meter`);
+
+            // Simulasi pergerakan halus (10 step per segmen)
+            for (let step = 0; step <= 10; step++) {
+                const fraction = step / 10;
+                const currentPos = manualInterpolate(start, end, fraction);
+                
+                // Kirim ke fungsi sendLocation yang sudah kita perbaiki sebelumnya
+                // (Akan otomatis masuk ke Dexie + Register Sync karena offline)
+                await sendLocation(currentPos.lat, currentPos.lng);
+                
+                // Delay simulasi 1-2 detik
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+        
+        console.log("Simulasi selesai. Cek IndexedDB untuk data yang tersimpan.");
+    }
+
+    // Fungsi untuk menghitung jarak dengan fallback offline
+    function getDistance(pos1, pos2) {
+        // Cek apakah library google maps tersedia dan modul geometry sudah dimuat
+        if (typeof google !== 'undefined' && google.maps && google.maps.geometry) {
+            const p1 = new google.maps.LatLng(pos1.lat, pos1.lng);
+            const p2 = new google.maps.LatLng(pos2.lat, pos2.lng);
+            return google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+        } else {
+            // Gunakan fungsi manual Haversine jika offline/google tidak ada
+            return calculateDistance(pos1, pos2);
+        }
+    }
 </script>
 
 <svelte:head>
@@ -1533,29 +1651,58 @@
                     if (!navigator.onLine) {
                         console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
 
-                        // 1. Simpan Seluruh FormData ke IndexedDB
-                        const syncTag = await saveOfflineTask(
+                        // 1. Definisikan tag unik
+                        const syncTag = `sync-report-${dataTicket.id_ticket}`;
+                        
+                        // 2. Gunakan URL dengan action SvelteKit
+                        const actionUrl = '?/checkout'; 
+
+                        // 3. Simpan ke IndexedDB (Tabel 'report')
+                        const resultReport = await saveOfflineTask(
                             reportTable, 
                             {
                                 id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
-                                url: '/ticket/checkout',
+                                url: actionUrl,
                                 timestamp: new Date()
-                            },
-                            formData)
+                            }, 
+                            formData
+                        );
 
-                        // 2. Daftarkan tugas Background Sync
-                        await registerBackgroundSync('sync-checkout_'+dataTicket.id_ticket);
-
-                        // 3. Tampilkan pesan sukses offline dan batalkan pengiriman fetch
-                        loadingCheckout = false;
-                        alertPopup = false; // Atau gunakan state lain untuk pesan sukses offline
-                        alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
-                        handleSuccessfulCheckOut()
-                        // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
+                        // 4. Daftarkan Sync
+                        if (resultReport && 'serviceWorker' in navigator && 'SyncManager' in window) {
+                            const registration = await navigator.serviceWorker.ready;
+                            await registration.sync.register(syncTag);
+                        }
+                        
+                        alert("Offline: Data checkout disimpan dan akan dikirim otomatis saat online.");
                         return {
                             result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
                             update: async () => { /* Prevent UI update after local storage */ }
                         };
+
+                        // // 1. Simpan Seluruh FormData ke IndexedDB
+                        // const syncTag = await saveOfflineTask(
+                        //     reportTable, 
+                        //     {
+                        //         id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
+                        //         url: '/ticket/checkout',
+                        //         timestamp: new Date()
+                        //     },
+                        //     formData)
+
+                        // // 2. Daftarkan tugas Background Sync
+                        // await registerBackgroundSync('sync-checkout_'+dataTicket.id_ticket);
+
+                        // // 3. Tampilkan pesan sukses offline dan batalkan pengiriman fetch
+                        // loadingCheckout = false;
+                        // alertPopup = false; // Atau gunakan state lain untuk pesan sukses offline
+                        // alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
+                        // handleSuccessfulCheckOut()
+                        // // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
+                        // return {
+                        //     result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
+                        //     update: async () => { /* Prevent UI update after local storage */ }
+                        // };
 
                     }
                     
@@ -1696,6 +1843,9 @@
                 </div>
             </form>
         {/if}
+    </div>
+
+    <div class="h-15 bg-slate-100/50 rounded-2xl border border-dashed border-slate-300 flex items-center justify-center italic text-slate-400">
     </div>
 </main>
 
@@ -1838,13 +1988,17 @@
                             checkinTable, 
                             {
                                 id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
-                                url: '/ticket/checkin',
+                                url: '?/checkin',
                                 timestamp: new Date()
                             },
                             formData)
 
                     // 2. Daftarkan tugas Background Sync
-                    await registerBackgroundSync('sync-checkin_'+dataTicket.id_ticket);
+                    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                        const registration = await navigator.serviceWorker.ready;
+                        // Format tag: sync-checkin-123
+                        await registration.sync.register(`sync-checkin-${dataTicket.id_ticket}`);
+                    }
 
                     alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
                     handleSuccessfulCheckin()
@@ -1972,13 +2126,17 @@
                         unlockTable, 
                         {
                             id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
-                            url: '/ticket/unlock_report',
+                            url: '?/unlock_report',
                             timestamp: new Date()
                         },
                         formData)
 
                 // 2. Daftarkan tugas Background Sync
-                await registerBackgroundSync('sync-unlock_'+dataTicket.id_ticket);
+                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    const registration = await navigator.serviceWorker.ready;
+                    // Format tag: sync-checkin-123
+                    await registration.sync.register(`sync-unlock-${dataTicket.id_ticket}`);
+                }
 
                 alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
                 

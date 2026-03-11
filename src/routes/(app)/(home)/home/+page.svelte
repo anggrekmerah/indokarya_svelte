@@ -12,11 +12,13 @@
     ChevronRight ,
     MapPin,
     Camera,
-    RefreshCcw
+    RefreshCcw,
+    X
   } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { Loader } from '@googlemaps/js-api-loader';
   import { onMount } from 'svelte';
+  import { attendanceStore } from '$lib/stores/attendanceStore.js'
 
   let { data } = $props();
   
@@ -51,6 +53,7 @@
   };
 
 
+  let isOnline = $state(true);
   let work_base = data.users.work_base;
   let google
   let isInOfficeArea = $state(true);
@@ -71,7 +74,7 @@
   let in_showPopup = $state(false);
   let in_photoTaken = $state(false);
   let in_photoPreviewUrl = $state('https://placehold.co/150x150/e2e8f0/64748b?text=Photo');
-  
+  let localAttendance  = $state(null)
   let in_videoElement = $state(null); 
   let in_canvasElement = $state(null); 
   let in_stream = $state(null);
@@ -79,6 +82,17 @@
   let in_cameraFacingMode = $state('user');
   let locationData = $state({ lat: null, long: null });
   let responseMessage = $state(null);
+  let currentAttendance = $derived(data.checkTodayAttendance?.data || localAttendance);
+  let hasCheckedInStatus = $derived(!!currentAttendance);
+  let displayCheckIn = $derived(currentAttendance?.check_in_time || '--:--');
+  let displayCheckOut = $derived(currentAttendance?.check_out_time || '--:--');
+
+  // Menentukan label status
+  let statusLabel = $derived.by(() => {
+    if (data.checkTodayAttendance?.data) return "Sudah Hadir (Online)";
+    if (localAttendance) return "Sudah Hadir (Offline)";
+    return "Belum Absen";
+  });
 
   const mapsConf = {
       apiKey:data.mapsKey,
@@ -94,9 +108,9 @@
     }
   
   $effect(() => {
-      if (hybridModeServer) {
-          hybridMode = hybridModeServer;
-      }
+      if (currentAttendance?.attendance_mode) {
+        hybridMode = currentAttendance.attendance_mode;
+        }
   });
 
   onMount(async () => {
@@ -107,6 +121,17 @@
       await googleInstance.maps.importLibrary('geometry'); 
       
       google = googleInstance;
+
+      if (typeof window !== 'undefined') {
+        isOnline = navigator.onLine;
+        window.addEventListener('online', () => isOnline = true);
+        window.addEventListener('offline', () => isOnline = false);
+
+        // Ambil data lokal hanya jika di server belum ada data
+        if (!data.checkTodayAttendance?.data) {
+            localAttendance = await attendanceStore.getTodayLocal(data.users.id);
+        }
+        }
   });
   
 
@@ -114,6 +139,7 @@
   let visible = $state(true);
   $effect(() => {
     if (errorMessage) {
+        responseMessage = errorMessage 
         // Tunggu 3 detik, lalu hilangkan pesan dari URL tanpa refresh halaman
         const timer = setTimeout(() => {
             goto('/', { replaceState: true, noScroll: true, keepFocus: true });
@@ -284,10 +310,10 @@
                     <p class="text-[10px] text-slate-400 font-medium">Jam Kerja: 08:00 - 17:00</p>
                 </div>
             </div>
-            {#if hasCheckedIn}
+            {#if hasCheckedInStatus}
                 <div class="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
                     <span class="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                    <span class="text-[10px] font-bold text-emerald-700 uppercase">Sudah Hadir</span>
+                    <span class="text-[10px] font-bold text-emerald-700 uppercase">{statusLabel}</span>
                 </div>
             {/if}
         </div>
@@ -295,11 +321,11 @@
         <div class="grid grid-cols-2 gap-4">
             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Jam Masuk</p>
-                <p class="text-lg font-bold text-slate-700">{data.todayAttendance?.data?.check_in_time || '--:--'}</p>
+                <p class="text-lg font-bold text-slate-700">{displayCheckIn}</p>
             </div>
             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Jam Keluar</p>
-                <p class="text-lg font-bold text-slate-700">{data.todayAttendance?.data?.check_out_time || '--:--'}</p>
+                <p class="text-lg font-bold text-slate-700">{displayCheckOut}</p>
             </div>
         </div>
 
@@ -313,13 +339,13 @@
             {#if work_base === 'office' || work_base === 'technician'}
                 <button 
                     onclick={in_togglePopup}
-                    class="w-full py-5 {hasCheckedIn ? 'bg-rose-600 shadow-rose-100' : 'bg-indigo-600 shadow-indigo-100'} text-white rounded-[1.5rem] font-bold text-sm shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                    class="w-full py-5 {hasCheckedInStatus ? 'bg-rose-600 shadow-rose-100' : 'bg-indigo-600 shadow-indigo-100'} text-white rounded-[1.5rem] font-bold text-sm shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
                 >
-                    {#if hasCheckedIn}<RefreshCcw size={18}/>{:else}<Camera size={18}/>{/if}
-                    {hasCheckedIn ? 'ABSEN KELUAR (CHECK OUT)' : 'ABSEN MASUK (CHECK IN)'}
+                    {#if hasCheckedInStatus}<RefreshCcw size={18}/>{:else}<Camera size={18}/>{/if}
+                    {hasCheckedInStatus ? 'ABSEN KELUAR (CHECK OUT)' : 'ABSEN MASUK (CHECK IN)'}
                 </button>
             {:else if work_base === 'hybrid'}
-                {#if !hasCheckedIn}
+                {#if !hasCheckedInStatus}
                     <div class="grid grid-cols-1 gap-3">
                         <button onclick={() => in_toggleHybridPopup('office')} class="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl hover:border-indigo-500 flex items-center justify-between group transition-all">
                             <div class="flex items-center gap-4">
@@ -531,36 +557,67 @@
             </button>
             <form 
               method="POST" 
-              action={hasCheckedIn ? "?/absenKeluar" : "?/absenMasuk"}
+              action={hasCheckedInStatus ? "?/absenKeluar" : "?/absenMasuk"}
               enctype="multipart/form-data"
               use:enhance={({ formData }) => {
                 if (!in_capturedFile) return;
+
                 formData.append('photo', in_capturedFile);
-                formData.append('latitude', locationData.lat);
-                formData.append('longitude', locationData.long);
-                formData.append('attendance_mode', work_base === 'hybrid' ? hybridMode : work_base);
-                isSubmitting = true;
-                return async ({ result }) => {
-                  if (result.type === 'success') {
-                      // Update status check-in berdasarkan aksi
-                      if (result.data.fromAction === 'checkin') {
-                          hasCheckedIn = true;
-                          // Simpan mode yang baru saja digunakan ke state agar UI konsisten
-                          hybridMode = formData.get('attendance_mode'); 
-                      } else {
-                          hasCheckedIn = false;
-                          hybridMode = null;
-                      }
-                    } else {
-                        responseMessage = result.data.message;
-                    }
-                  in_togglePopup();
-                  isSubmitting = false;
+                formData.append('attendance_mode', work_base === 'hybrid' ? hybridMode : work_base)
+
+                // Data yang akan disimpan jika offline
+                const offlineData = {
+                    user_id: data.users.id,
+                    date: new Date().toISOString().split('T')[0],
+                    check_in_time: new Date().toLocaleTimeString('it-IT'),
+                    check_in_location: `${locationData.lat}, ${locationData.long}`,
+                    status: 'present',
+                    attendance_mode: work_base === 'hybrid' ? hybridMode : work_base,
+                    // Konversi file ke base64 agar bisa disimpan di IndexedDB (Dexie)
+                    check_in_photo: in_photoPreviewUrl 
                 };
-              }}
+
+                isSubmitting = true;
+
+                return async ({ result }) => {
+                    console.log(result)
+                    if (result.type === 'success') {
+                        // Logika sukses online seperti biasa...
+                        hasCheckedInStatus = !hasCheckedInStatus;
+                        
+                        if(hasCheckedInStatus)
+                            displayCheckIn = result.data.absenTime
+                        else 
+                            displayCheckOut= result.data.absenTime
+
+                    } else {
+                        // JIKA OFFLINE ATAU SERVER ERROR
+                        console.log("Mencoba simpan secara offline...");
+                        const offlineResult = await attendanceStore.saveAttendanceOffline(offlineData);
+                        
+                        if (offlineResult.success) {
+                            responseMessage = "Absen disimpan secara lokal. Akan otomatis terkirim saat online.";
+                            hasCheckedInStatus = !hasCheckedInStatus; // Update UI Optimis
+
+                            // DAFTARKAN BACKGROUND SYNC
+                            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                                const registration = await navigator.serviceWorker.ready;
+                                try {
+                                    await registration.sync.register('sync-attendance');
+                                    console.log('Background sync terdaftar: sync-attendance');
+                                } catch (err) {
+                                    console.error('Gagal mendaftarkan sync:', err);
+                                }
+                            }
+                        }
+                    }
+                    in_togglePopup();
+                    isSubmitting = false;
+                };
+            }}
               class="flex-[2]"
             >
-              <button type="submit" disabled={isSubmitting || (work_base === 'office' && !isInOfficeArea)} class="w-full py-4 {hasCheckedIn ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300">
+              <button type="submit" disabled={isSubmitting || (work_base === 'office' && !isInOfficeArea)} class="w-full py-4 {hasCheckedInStatus ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300">
                 {isSubmitting ? 'MENGIRIM...' : 'KONFIRMASI'}
               </button>
             </form>

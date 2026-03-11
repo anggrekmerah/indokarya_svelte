@@ -45,7 +45,8 @@ export async function load({ params, fetch, locals }) {
     // const getTodayAttendance = await todayAttendance({user_id : locals.user.id}, fetch)
     const getcheckTodayAttendance = await checkTodayAttendance({user_id : locals.user.id}, fetch)
     const getattendance = await attendance({user_id : locals.user.id}, fetch)
-    console.log(getattendance.data.totalSisaCuti)
+    console.log('getcheckTodayAttendance')
+    console.log(getcheckTodayAttendance)
     return {
         ...returnData,
         // todayAttendance: getTodayAttendance || null, // Pastikan tidak undefined
@@ -95,9 +96,9 @@ export const actions = {
                 check_in_photo: filePath,
                 attendance_mode: data.get('attendance_mode')
             }, fetch);
-            
+            console.log(response)
             if (response.error) return fail(500, { message: response.message, fromAction:'checkin' });
-            return { success: true , fromAction:'checkin' };
+            return { success: true , fromAction:'checkin', absenTime: response.data.absenTime };
         } catch (error) {
             return fail(500, { message: 'Terjadi kesalahan sistem.' + error });
         }
@@ -120,7 +121,7 @@ export const actions = {
             }, fetch);
 
             if (response.error) return fail(500, { message: 'Gagal update absen di server.', fromAction:'checkout' });
-            return { success: true, fromAction:'checkout' };
+            return { success: true, fromAction:'checkout', absenTime: response.data.absenTime };
         } catch (error) {
             return fail(500, { message: 'Terjadi kesalahan sistem.' });
         }

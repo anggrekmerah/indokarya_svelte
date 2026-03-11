@@ -50,20 +50,22 @@ export async function saveOfflineTask(table, itemToStore, formData) {
 
 /**
  * Mengambil tugas offline secara dinamis dari tabel.
- * @param {string} table - Nama tabel Dexie.
- * @param {string | number} primaryKey - Kunci utama yang akan dicari.
- * @returns {Promise<{task: Object, formData: FormData} | null>}
+ * FIX: Menggunakan .first() dan menangani rekonsiliasi FormData dengan benar.
  */
 export async function deserializeTask(table, primaryKey) {
-    // Cari berdasarkan ID utama
-    const task = await db[table].where('id_ticket').equals(primaryKey).toArray();
+    // Gunakan .first() untuk mendapatkan objek tunggal, bukan array
+    const task = await db[table].where('id_ticket').equals(primaryKey).first();
 
-    if (!task) return null;
+    if (!task) {
+        console.error(`[DB] Data tidak ditemukan di tabel ${table} untuk ID ${primaryKey}`);
+        return null;
+    }
 
     const formData = new FormData();
     // Deserialisasi data kembali ke FormData
+    // Pastikan task.data (hasil serializeFormData) ada
     for (const [key, value] of Object.entries(task.data)) {
-        if (value.isFile) {
+        if (value && typeof value === 'object' && value.isFile) {
             // Konversi ArrayBuffer kembali menjadi File/Blob
             const file = new File([value.data], value.name, { type: value.type });
             formData.append(key, file, value.name);
@@ -71,6 +73,8 @@ export async function deserializeTask(table, primaryKey) {
             formData.append(key, value);
         }
     }
+    
+    // Kembalikan objek task asli (yang berisi URL) dan formData yang sudah dibangun
     return { task, formData };
 }
 

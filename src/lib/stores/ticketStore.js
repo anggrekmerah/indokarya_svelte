@@ -73,6 +73,32 @@ export async function loadInitialData(keyMetadata, urlSearchParams, initialData)
             // ONLINE: Simpan ke DB lokal & gunakan data dari server
             await storeTickets(keyMetadata, initialData);
             dataTicket = initialData;
+
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                // Ambil semua ID tiket dari initialData untuk di-prefetch
+                const ticketUrls = initialData.items.map(ticket => `/ticket/${ticket.id_ticket}`);
+                const historyUrls = initialData.items.map(ticket => `/history/${ticket.id_ticket}`);
+                // Kirim instruksi ke Service Worker
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'PREFETCH_TASKS',
+                    urls: ticketUrls
+                });
+                console.log(`[Store] Meminta SW prefetch ${ticketUrls.length} tiket.`);
+
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'PREFETCH_HISTORY',
+                    urls: historyUrls
+                });
+                console.log(`[Store] Meminta SW prefetch ${historyUrls.length} history.`);
+            }
+
+            for (let itemStore in initialData.items) {
+                await db.detailticket.put({
+                    id_ticket: initialData.items[itemStore].id_ticket, 
+                    payload: JSON.stringify(initialData.items[itemStore].detail)
+                })
+            }
+            
         } else {
             // OFFLINE: Ambil dari DB lokal
             const metadata = await db.metadata.get(keyMetadata);

@@ -6,6 +6,7 @@
     import { _ } from 'svelte-i18n';
     import { ioClient } from '$lib/stores/socket.js';
     import FCMInitializer from '$lib/components/FCMInitializer.svelte';
+    import SyncIndicator from '$lib/components/SyncIndicator.svelte';
 
 
     // The provided children prop for rendering content
@@ -36,7 +37,7 @@
   <FCMInitializer />
   <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-3 z-20">
  
-    
+    <SyncIndicator />
     <div class="flex justify-around text-center text-xs sm:text-sm">
       
       {#if data.userMenu}

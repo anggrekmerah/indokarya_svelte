@@ -65,6 +65,7 @@
             {#if attr.data_type === 'boolean'}
                 <button 
                     type="button"
+                    aria-label="yorn"
                     onclick={handleToggle}
                     class="relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none 
                     {attr.attribute_value === 'Y' ? 'bg-emerald-500' : 'bg-slate-200'} 
