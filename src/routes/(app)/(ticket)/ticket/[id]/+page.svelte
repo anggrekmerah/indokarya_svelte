@@ -1252,13 +1252,8 @@
         }
     }
 
-    async function compressMediaFiles(files) {
-        const options = {
-            maxSizeMB: 0.1,           // Target di bawah 1MB agar aman dari limit server
-            maxWidthOrHeight: 1024,  // Resolusi maksimal Full HD
-            useWebWorker: true
-        };
-
+    async function compressMediaFiles(files, options) {
+        
         return await Promise.all(
             files.map(async (file) => {
                 // Hanya kompres jika tipenya gambar (jpeg, png, dsb)
@@ -1681,10 +1676,26 @@
                     
                     const files = formData.getAll('files');
                     if (files.length > 0) {
-                    
-                        // 2. Jalankan proses kompresi
-                        const compressedFiles = await compressMediaFiles(files);
+                        
+                        const targetSizePerFile = Math.max(0.05, 0.4 / files.length)
 
+                        const options = {
+                            maxSizeMB: targetSizePerFile, 
+                            maxWidthOrHeight: 800, // Kecilkan resolusi untuk menghemat size
+                            useWebWorker: true
+                        };
+                        // 2. Jalankan proses kompresi
+                        const compressedFiles = await compressMediaFiles(files, options);
+
+                        let totalSize = 0;
+                        compressedFiles.forEach(f => totalSize += f.size);
+                        
+                        if (totalSize > 524288) { // 512KB
+                            alertMessage = "Total ukuran file terlalu besar. Silakan kurangi jumlah foto/video.";
+                            loadingCheckout = false;
+                            alertPopup = true;
+                            return cancel(); // Batalkan pengiriman
+                        }
                         // 3. Hapus data 'files' yang lama dari formData
                         formData.delete('files');
 
@@ -1756,23 +1767,6 @@
                         //     update: async () => { /* Prevent UI update after local storage */ }
                         // };
 
-                    }
-
-                    let totalSize = 0;
-                    for (let [key, value] of formData.entries()) {
-                        if (value instanceof File) {
-                            totalSize += value.size;
-                        } else {
-                            totalSize += String(value).length;
-                        }
-                    }
-
-                    const LIMIT = 524288; // 512KB
-                    if (totalSize > LIMIT) {
-                        alertMessage = `Ukuran data terlalu besar (${(totalSize/1024).toFixed(2)} KB). Mohon kurangi jumlah foto atau perkecil kualitas foto.`;
-                        loadingCheckout = false;
-                        alertPopup = true
-                        return cancel(); // Batalkan pengiriman jika melebihi limit
                     }
 
                     return async ({ result, update }) => {

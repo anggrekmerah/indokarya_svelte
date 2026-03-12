@@ -53,5 +53,7 @@ export async function handle({ event, resolve }) {
     }
 
     // 3. Resolve the request
-    return await resolve(event);
+    return await resolve(event, {
+        bodyParserLimit: 10 * 1024 * 1024
+    });
 }
