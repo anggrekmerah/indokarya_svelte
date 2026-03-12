@@ -32,7 +32,7 @@ export const actions = {
             cookies.set('session_id', dataLogin.data.remember_token, {
                 path: '/', // The cookie is available to all routes
                 httpOnly: true, // The cookie can't be accessed by client-side JavaScript
-                sameSite: 'strict', // Protects against CSRF attacks
+                sameSite: 'lax', // Protects against CSRF attacks
                 secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
                 maxAge: 60 * 60 * 24 // Cookie expires in 1 day
             });

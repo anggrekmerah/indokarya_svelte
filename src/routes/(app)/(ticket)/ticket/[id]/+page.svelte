@@ -55,6 +55,7 @@
     let lastVisit = $state([]);
     let mediaList = $state([]); 
     let isAnimating  = $state(false);
+    let alertMessage = $state('');
 
     let showMediaModal = $state(false);
     let selectedMedia = $state(null);;
@@ -1253,8 +1254,8 @@
 
     async function compressMediaFiles(files) {
         const options = {
-            maxSizeMB: 0.8,           // Target di bawah 1MB agar aman dari limit server
-            maxWidthOrHeight: 1920,  // Resolusi maksimal Full HD
+            maxSizeMB: 0.1,           // Target di bawah 1MB agar aman dari limit server
+            maxWidthOrHeight: 1024,  // Resolusi maksimal Full HD
             useWebWorker: true
         };
 
@@ -1756,7 +1757,24 @@
                         // };
 
                     }
-                    
+
+                    let totalSize = 0;
+                    for (let [key, value] of formData.entries()) {
+                        if (value instanceof File) {
+                            totalSize += value.size;
+                        } else {
+                            totalSize += String(value).length;
+                        }
+                    }
+
+                    const LIMIT = 524288; // 512KB
+                    if (totalSize > LIMIT) {
+                        alertMessage = `Ukuran data terlalu besar (${(totalSize/1024).toFixed(2)} KB). Mohon kurangi jumlah foto atau perkecil kualitas foto.`;
+                        loadingCheckout = false;
+                        alertPopup = true
+                        return cancel(); // Batalkan pengiriman jika melebihi limit
+                    }
+
                     return async ({ result, update }) => {
                         loadingCheckout = false;
 
@@ -2136,6 +2154,10 @@
                 <ul class="list-disc list-inside text-red-500">
                         <li>{form.message}</li>
                 </ul>
+            {:else}
+                <ul class="list-disc list-inside text-red-500">
+                        <li>{alertMessage}</li>
+                </ul>
             {/if}
             <div class="flex justify-end">
                 <button onclick={closeAlertPopup} type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
@@ -2188,7 +2210,7 @@
                     await registration.sync.register(`sync-unlock-${dataTicket.id_ticket}`);
                 }
 
-                alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
+                alertMessage = "Berhasil disimpan secara lokal. Data akan dikirim saat online.";
                 
                 handleSuccessfulUnlock()
                 alertPopup = false
