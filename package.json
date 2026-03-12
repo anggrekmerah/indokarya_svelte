@@ -41,6 +41,7 @@
 	},
 	"dependencies": {
 		"@googlemaps/js-api-loader": "^1.16.10",
+		"browser-image-compression": "^2.0.2",
 		"dexie": "^4.2.1",
 		"dotenv": "^17.2.1",
 		"firebase": "^12.6.0",

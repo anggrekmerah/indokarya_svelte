@@ -15,6 +15,7 @@
     import { saveOfflineTask } from '$lib/stores/report.js'
     import AttributeItem  from '$lib/components/AttributeItem.svelte'
     import { PUBLIC_BASE_URL_LARAVEL } from '$env/static/public';
+    import imageCompression from 'browser-image-compression';
     
     let { data, form } = $props();
 
@@ -53,6 +54,7 @@
     let picsList = $state([]); 
     let lastVisit = $state([]);
     let mediaList = $state([]); 
+    let isAnimating  = $state(false);
 
     let showMediaModal = $state(false);
     let selectedMedia = $state(null);;
@@ -109,7 +111,6 @@
     let startMarker = $state(null);
     let isNearDestination = $state(false);
     let userLocation = $state(null);
-        // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
 
     let centerMarker = $state({}) 
     const mapID = data.mapsId
@@ -200,17 +201,17 @@
 
         if (userLocation) {
             // Create or update the user's marker
-            if (!userMarker) {
+           if (!userMarker) {
                 userMarker = new google.maps.marker.AdvancedMarkerElement({
                     map: defMap,
                     position: userLocation,
                     content: pinElement.element
                 });
-            } else {
-                userMarker.position = userLocation;
             }
 
-            smoothLocation.set(userLocation); 
+            if (!isAnimating) {
+                smoothLocation.set(userLocation);
+            }
 
             // Calculate and check the distance
             // const distance = google.maps.geometry.spherical.computeDistanceBetween(
@@ -223,7 +224,7 @@
             );
 
             isNearDestination = distance <= 50;
-            console.log(isNearDestination)
+            console.log('isNearDestination', distance)
             console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
             console.log(wasNearDestination)
 
@@ -746,9 +747,14 @@
                     const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
                     userLocation = origin
                     
+                    userMarker = new google.maps.marker.AdvancedMarkerElement({
+                        map: defMap,
+                        position: origin,
+                        content: pinElement.element
+                    });
+
                     await sendLocation(position.coords.latitude, position.coords.longitude)
                     
-                    // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
                     await calculateAndDisplayRoute(origin, centerMarker);
                     // After the route is set up, start continuous tracking
                     // await watchUserLocation();
@@ -889,26 +895,30 @@
     }
 
     async function animateMarker(marker, path, index, speed) {
-        // Check if we've reached the end of the path
-        if (index >= path.length) {
-            // in range 
-            userLocation = { lat: -6.293884346171741, lng: 106.79672640071097 };
 
-            // out of range
-            // userLocation = { lat: -6.293923670298381, lng: 106.79680552494052 };
-            return; 
+        isAnimating = true;
+
+        if (index >= path.length) {
+            isAnimating = false;
+            cancelAnimationFrame(AnimationFrameID);
+            const lastIndex = path.length - 1;
+            const lastPoint = path[lastIndex];
+
+            // KONVERSI KE LITERAL OBJECT
+            // Ini memastikan fungsi jarak bisa membaca properti lat dan lng
+            userLocation = {
+                lat: typeof lastPoint.lat === 'function' ? lastPoint.lat() : lastPoint.lat,
+                lng: typeof lastPoint.lng === 'function' ? lastPoint.lng() : lastPoint.lng
+            };
+            console.log('userLocation', userLocation)
+            return;
         }
 
-        console.log(1)
-    
-        // console.log(marker)
-        // Update the marker's position
         marker.position = path[index];
-        // await sendLocation(path[index].lat, path[index].lng)
-        index += speed
-        // Recursively call the function on the next frame to continue the animation
-        AnimationFrameID = requestAnimationFrame(() => animateMarker(marker, path, index, speed));
-        // requestAnimationFrame(() => animateMarker(marker, path, index, speed));
+
+        AnimationFrameID = requestAnimationFrame(() =>
+            animateMarker(marker, path, index + speed, speed)
+        );
     }
 
     // yang asli
@@ -1239,6 +1249,32 @@
             // Gunakan fungsi manual Haversine jika offline/google tidak ada
             return calculateDistance(pos1, pos2);
         }
+    }
+
+    async function compressMediaFiles(files) {
+        const options = {
+            maxSizeMB: 0.8,           // Target di bawah 1MB agar aman dari limit server
+            maxWidthOrHeight: 1920,  // Resolusi maksimal Full HD
+            useWebWorker: true
+        };
+
+        return await Promise.all(
+            files.map(async (file) => {
+                // Hanya kompres jika tipenya gambar (jpeg, png, dsb)
+                if (file.type.startsWith('image/')) {
+                    try {
+                        const compressedBlob = await imageCompression(file, options);
+                        // Kembalikan sebagai objek File baru
+                        return new File([compressedBlob], file.name, { type: file.type });
+                    } catch (e) {
+                        console.error("Gagal kompres gambar:", e);
+                        return file;
+                    }
+                }
+                // Jika video atau dokumen lain, biarkan apa adanya
+                return file;
+            })
+        );
     }
 </script>
 
@@ -1642,6 +1678,21 @@
                         formData.append('signature', signatureFile);
                     }
                     
+                    const files = formData.getAll('files');
+                    if (files.length > 0) {
+                    
+                        // 2. Jalankan proses kompresi
+                        const compressedFiles = await compressMediaFiles(files);
+
+                        // 3. Hapus data 'files' yang lama dari formData
+                        formData.delete('files');
+
+                        // 4. Masukkan kembali file yang sudah dikompres ke formData
+                        compressedFiles.forEach(file => {
+                            formData.append('files', file);
+                        });
+                    }
+
                     const handleSuccessfulCheckOut = () => {
                         sessionStorage.removeItem('generalReportData');
                         sessionStorage.removeItem('machineReportsData');
@@ -2017,7 +2068,6 @@
                         
                         // untuk test
                         setTimeout(function() {
-                            // userLocation = { lat: -6.294097629517158, lng: 106.79894726866495 };
                             console.log("This message appears after 2 seconds.");
                         }, 2000); // 2000 milliseconds = 2 seconds
                     
