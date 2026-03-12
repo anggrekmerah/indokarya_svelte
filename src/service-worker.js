@@ -38,6 +38,7 @@ const CACHE = `cache-${version}`;
 const ASSETS = [
     '/',
     '/home',
+    '/login',
     '/task',
     '/history',
     ...build,
@@ -53,6 +54,9 @@ self.addEventListener('install', (event) => {
                 await cache.add(url);
             } catch (e) {
                 console.warn(`[SW] Gagal meng-cache: ${url}`, e);
+                for (const url of ASSETS) {
+                    try { await cache.add(url); } catch (err) { console.error(`Gagal: ${url}`); }
+                }
             }
         }
     }
