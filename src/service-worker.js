@@ -1,3 +1,8 @@
+/// <reference no-default-lib="true"/>
+/// <reference lib="esnext" />
+/// <reference lib="webworker" />
+/// <reference types="@sveltejs/kit" />
+
 import { initializeApp } from 'firebase/app';
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
 
@@ -11,16 +16,15 @@ import {
 } from '$env/static/public';
 
 import { build, files, version } from '$service-worker';
+
 import { deleteOfflineTask, deserializeTask } from '$lib/stores/report';
 import { attendanceStore } from '$lib/stores/attendanceStore';
 
-// --- Type Definitions ---
-/// <reference no-default-lib="true"/>
-/// <reference lib="esnext" />
-/// <reference lib="webworker" />
-/// <reference types="@sveltejs/kit" />
 
-// --- Firebase Setup ---
+// ============================
+// FIREBASE
+// ============================
+
 const firebaseConfig = {
     apiKey: PUBLIC_APIKEY,
     authDomain: PUBLIC_AUTHDOMAIN,
@@ -33,8 +37,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-// --- Cache Configuration ---
+
+// ============================
+// CACHE CONFIG
+// ============================
+
 const CACHE = `cache-${version}`;
+
 const ASSETS = [
     '/',
     '/home',
@@ -45,92 +54,266 @@ const ASSETS = [
     ...files.filter(file => !file.includes('.gitkeep') && !file.includes('.DS_Store'))
 ];
 
-// --- Lifecycle Events ---
+
+// ============================
+// INSTALL
+// ============================
+
 self.addEventListener('install', (event) => {
-    async function addFilesToCache() {
+
+    event.waitUntil((async () => {
+
         const cache = await caches.open(CACHE);
+
         for (const url of ASSETS) {
+
             try {
+
                 await cache.add(url);
-            } catch (e) {
-                console.warn(`[SW] Gagal meng-cache: ${url}`, e);
-                for (const url of ASSETS) {
-                    try { await cache.add(url); } catch (err) { console.error(`Gagal: ${url}`); }
-                }
+
+            } catch (err) {
+
+                console.warn('[SW] gagal cache:', url);
+
             }
+
         }
-    }
-    event.waitUntil(addFilesToCache());
-    self.skipWaiting(); 
+
+    })());
+
+    self.skipWaiting();
+
 });
+
+
+// ============================
+// ACTIVATE
+// ============================
 
 self.addEventListener('activate', (event) => {
-    async function deleteOldCaches() {
+
+    event.waitUntil((async () => {
+
         const keys = await caches.keys();
-        for (const key of keys) {
-            if (key !== CACHE) await caches.delete(key);
-        }
-    }
-    event.waitUntil(deleteOldCaches());
-    self.clients.claim(); 
+
+        await Promise.all(
+
+            keys.map(key => {
+
+                if (key !== CACHE) {
+
+                    return caches.delete(key);
+
+                }
+
+            })
+
+        );
+
+    })());
+
+    self.clients.claim();
+
 });
 
-// --- Push Notifications ---
+
+// ============================
+// PUSH NOTIFICATION
+// ============================
+
 onBackgroundMessage(messaging, (payload) => {
-    console.log('[SW] Pesan Background Diterima', payload);
+
     const data = payload.data;
-    
+
     self.registration.showNotification(data.title, {
         body: data.body,
         icon: data.icon,
         data: { action_link: data.action_link }
     });
+
 });
 
-self.addEventListener('notificationclick', event => {
+self.addEventListener('notificationclick', (event) => {
+
     event.notification.close();
-    const url = event.notification.data.action_link || '/home';
-    
+
+    const url = event.notification.data?.action_link || '/home';
+
     event.waitUntil(
-        self.clients.matchAll({ type: 'window' }).then(windowClients => {
-            for (const client of windowClients) {
-                if (client.url === url && 'focus' in client) return client.focus();
+
+        self.clients.matchAll({ type: 'window' }).then((clients) => {
+
+            for (const client of clients) {
+
+                if (client.url === url && 'focus' in client) {
+
+                    return client.focus();
+
+                }
+
             }
-            if (self.clients.openWindow) return self.clients.openWindow(url);
+
+            if (self.clients.openWindow) {
+
+                return self.clients.openWindow(url);
+
+            }
+
         })
+
     );
+
 });
 
-// --- Helper Functions ---
-function base64ToBlob(base64, type = 'image/jpeg') {
-    const byteString = atob(base64.split(',')[1]);
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
+
+// ============================
+// FETCH
+// ============================
+
+self.addEventListener('fetch', (event) => {
+
+    const request = event.request;
+    const url = new URL(request.url);
+
+    if (url.pathname.startsWith('/@fs/') ||
+        url.pathname.startsWith('/@vite/') ||
+        url.pathname.includes('hot-update')) return;
+
+    if (url.origin !== location.origin) return;
+
+    const accept = request.headers.get('accept') || '';
+
+
+
+    // ============================
+    // HTML REQUEST (LOGIN SAFE)
+    // ============================
+
+    if (accept.includes('text/html')) {
+
+        event.respondWith((async () => {
+
+            try {
+
+                const controller = new AbortController();
+
+                const timeout = setTimeout(() => controller.abort(), 6000);
+
+                const network = await fetch(request, {
+                    signal: controller.signal,
+                    credentials: 'include'
+                });
+
+                clearTimeout(timeout);
+
+                return network;
+
+            } catch {
+
+                const cache = await caches.open(CACHE);
+
+                const cached = await cache.match(request);
+
+                return cached ||
+                       await cache.match('/') ||
+                       new Response("Offline", { status: 503 });
+
+            }
+
+        })());
+
+        return;
+
     }
+
+
+
+    // ============================
+    // STATIC ASSET CACHE
+    // ============================
+
+    if (build.includes(url.pathname) || files.includes(url.pathname)) {
+
+        event.respondWith((async () => {
+
+            const cache = await caches.open(CACHE);
+
+            const cached = await cache.match(request);
+
+            if (cached) return cached;
+
+            const response = await fetch(request);
+
+            if (response.ok) {
+
+                await cache.put(request, response.clone());
+
+            }
+
+            return response;
+
+        })());
+
+        return;
+
+    }
+
+});
+
+
+// ============================
+// HELPER
+// ============================
+
+function base64ToBlob(base64, type = 'image/jpeg') {
+
+    const byteString = atob(base64.split(',')[1]);
+
+    const ab = new ArrayBuffer(byteString.length);
+
+    const ia = new Uint8Array(ab);
+
+    for (let i = 0; i < byteString.length; i++) {
+
+        ia[i] = byteString.charCodeAt(i);
+
+    }
+
     return new Blob([ab], { type });
+
 }
 
+
+
+// ============================
+// SYNC ATTENDANCE
+// ============================
+
 async function syncAttendanceRecords() {
-    console.log('[SW] Memulai sinkronisasi absen...');
+
     const records = await attendanceStore.getUnsynced();
 
-    if (records.length === 0) return;
+    if (!records.length) return;
 
     for (const record of records) {
+
         try {
+
             const formData = new FormData();
+
             const [lat, long] = record.check_in_location.split(',');
 
             formData.append('latitude', lat.trim());
             formData.append('longitude', long.trim());
             formData.append('attendance_mode', record.attendance_mode);
             formData.append('is_offline_sync', 'true');
-            
-            if (record.check_in_photo && record.check_in_photo.startsWith('data:image')) {
-                const photoBlob = base64ToBlob(record.check_in_photo);
-                formData.append('photo', photoBlob, `offline_photo_${record.id}.jpg`);
+
+            if (record.check_in_photo?.startsWith('data:image')) {
+
+                const blob = base64ToBlob(record.check_in_photo);
+
+                formData.append('photo', blob, `offline_photo_${record.id}.jpg`);
+
             }
 
             const response = await fetch('/home?/absenMasuk', {
@@ -140,131 +323,149 @@ async function syncAttendanceRecords() {
             });
 
             if (response.ok) {
+
                 await attendanceStore.deleteSynced(record.id);
+
                 self.registration.showNotification("Absen Terkirim", {
-                    body: "Data absen offline Anda berhasil disinkronkan.",
+                    body: "Data absen offline berhasil disinkronkan.",
                     icon: "/favicon.png"
                 });
-                const clients = await self.clients.matchAll();
-                clients.forEach(client => client.postMessage({ type: 'SYNC_COMPLETE' }));
+
             }
+
         } catch (error) {
-            console.error(`[SW] Gagal sinkronisasi ID ${record.id}:`, error);
+
+            console.error('[SW] gagal sync attendance', error);
+
         }
+
     }
+
 }
+
+
+
+// ============================
+// TASK SYNC
+// ============================
 
 async function handleDynamicSync(tableName, ticketId) {
-    try {
-        const result = await deserializeTask(tableName, ticketId);
-        if (!result) return;
 
-        const { task, formData } = result;
-        const isJson = tableName === 'timelines';
-        let fetchOptions = { method: 'POST', headers: {} };
+    const result = await deserializeTask(tableName, ticketId);
 
-        if (isJson) {
-            const jsonBody = {};
-            formData.forEach((value, key) => { jsonBody[key] = value; });
-            fetchOptions.body = JSON.stringify(jsonBody);
-            fetchOptions.headers['Content-Type'] = 'application/json';
-        } else {
-            fetchOptions.body = formData;
-        }
+    if (!result) return;
 
-        if (task.headers) {
-            fetchOptions.headers = { ...fetchOptions.headers, ...task.headers };
-        }
-        
-        const response = await fetch(task.url, { ...fetchOptions });
+    const { task, formData } = result;
 
-        if (response.ok) {
-            await deleteOfflineTask(tableName, ticketId);
-            self.registration.showNotification("Update Berjaya", {
-                body: `Data ${tableName} untuk tiket #${ticketId} telah dihantar.`,
-                icon: "/favicon.png"
-            });
-            const clients = await self.clients.matchAll();
-            clients.forEach(client => client.postMessage({ type: 'SYNC_COMPLETE' }));
-        }
-    } catch (error) {
-        console.error(`[SW] Gagal sinkronisasi ${tableName}:`, error);
-        throw error; 
+    let fetchOptions = { method: 'POST', headers: {} };
+
+    if (tableName === 'timelines') {
+
+        const json = {};
+
+        formData.forEach((v, k) => json[k] = v);
+
+        fetchOptions.body = JSON.stringify(json);
+
+        fetchOptions.headers['Content-Type'] = 'application/json';
+
+    } else {
+
+        fetchOptions.body = formData;
+
     }
+
+    if (task.headers) {
+
+        fetchOptions.headers = { ...fetchOptions.headers, ...task.headers };
+
+    }
+
+    const response = await fetch(task.url, fetchOptions);
+
+    if (response.ok) {
+
+        await deleteOfflineTask(tableName, ticketId);
+
+    }
+
 }
 
-// --- Fetch Handler (Core Logic) ---
-self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
 
-    if (url.pathname.startsWith('/@fs/') || url.pathname.startsWith('/@vite/') || url.pathname.includes('hot-update')) return;
-    if (event.request.method !== 'GET' || url.origin !== location.origin) return;
 
-    event.respondWith((async () => {
-        const cache = await caches.open(CACHE);
-
-        // Strategi Navigasi (Mencegah ERR_FAILED)
-        if (event.request.mode === 'navigate') {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 detik limit
-
-                const networkResponse = await fetch(event.request, {
-                    signal: controller.signal,
-                    mode: 'navigate',
-                    redirect: 'follow'
-                });
-                clearTimeout(timeoutId);
-
-                if (networkResponse.ok) {
-                    cache.put(event.request, networkResponse.clone());
-                    return networkResponse;
-                }
-            } catch (err) {
-                console.warn('[SW] Navigasi gagal/timeout, beralih ke cache.');
-            }
-
-            const cached = await cache.match(event.request);
-            return cached || await cache.match('/') || new Response("Offline", { status: 503 });
-        }
-
-        // Strategi Aset Statis (Cache-First)
-        if (build.includes(url.pathname) || files.includes(url.pathname)) {
-            const matched = await cache.match(event.request);
-            if (matched) return matched;
-        }
-
-        // Strategi Standar (Network-First Fallback Cache)
-        try {
-            const response = await fetch(event.request);
-            return response;
-        } catch (err) {
-            const cached = await cache.match(event.request);
-            return cached || new Response(null, { status: 404 });
-        }
-    })());
-});
-
-// --- Other Event Listeners ---
-self.addEventListener('message', (event) => {
-    if (event.data && (event.data.type === 'PREFETCH_TASKS' || event.data.type === 'PREFETCH_HISTORY')) {
-        event.waitUntil(
-            caches.open(CACHE).then((cache) => {
-                return Promise.allSettled(
-                    event.data.urls.map(url => fetch(url).then(res => res.ok ? cache.put(url, res) : null))
-                );
-            })
-        );
-    }
-});
+// ============================
+// BACKGROUND SYNC
+// ============================
 
 self.addEventListener('sync', (event) => {
+
     if (event.tag === 'sync-attendance') {
+
         event.waitUntil(syncAttendanceRecords());
+
     }
-    const dynamicSync = event.tag.match(/^sync-(report|checkin|unlock|timelines)-(.+)$/);
-    if (dynamicSync) {
-        const [, tableName, ticketId] = dynamicSync;
+
+    const dynamic = event.tag.match(/^sync-(report|checkin|unlock|timelines)-(.+)$/);
+
+    if (dynamic) {
+
+        const [, tableName, ticketId] = dynamic;
+
         event.waitUntil(handleDynamicSync(tableName, ticketId));
+
     }
+
+});
+
+
+// ============================
+// PREFETCH
+// ============================
+
+self.addEventListener('message', (event) => {
+
+    if (!event.data) return;
+
+    const type = event.data.type;
+
+    if (type === 'PREFETCH_TASKS' || type === 'PREFETCH_HISTORY') {
+
+        event.waitUntil(
+
+            caches.open(CACHE).then(async (cache) => {
+
+                const urls = event.data.urls || [];
+
+                await Promise.allSettled(
+
+                    urls.map(async (url) => {
+
+                        try {
+
+                            const res = await fetch(url, {
+                                credentials: 'include'
+                            });
+
+                            if (res.ok) {
+
+                                await cache.put(url, res.clone());
+
+                            }
+
+                        } catch (err) {
+
+                            console.warn('[SW] prefetch gagal:', url);
+
+                        }
+
+                    })
+
+                );
+
+            })
+
+        );
+
+    }
+
 });
