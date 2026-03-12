@@ -58,14 +58,22 @@ const ASSETS = [
 onBackgroundMessage(messaging, (payload) => {
     console.log('[SW] Pesan Background Diterima', payload);
 
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-        icon: '/path/to/icon.png',
-        data: payload.data 
-    };
+    const data = payload.data; // Data sekarang ada di root payload.data
+    
+    self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: data.icon,
+        data: { action_link: data.action_link } // Kirim link ke event notificationclick
+    });
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    // const notificationTitle = payload.notification.title;
+    // const notificationOptions = {
+    //     body: payload.notification.body,
+    //     icon: '/path/to/icon.png',
+    //     data: payload.data 
+    // };
+
+    // self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 function base64ToBlob(base64, type = 'image/jpeg') {
