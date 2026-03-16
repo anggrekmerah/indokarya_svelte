@@ -1,10 +1,12 @@
 
 /** @type {import('./$types').LayoutServerLoad} */
-export async function load({locals}) {
+export async function load({locals, fetch, parent}) {
+
+	const parentData = await parent()
 
 	return {
-		userMenu: locals.userMenu,
-		userID: locals.user.id
+		userMenu: parentData.menu,
+		userID: parentData.user.id
 	};
 }
 

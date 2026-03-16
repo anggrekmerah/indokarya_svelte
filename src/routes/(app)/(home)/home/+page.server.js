@@ -9,9 +9,11 @@ import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_ID, OFFICELAT, OFFICELONG } from '$env
 
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ params, fetch, locals }) {
+export async function load({ params, fetch, locals, parent }) {
   // You can use fetch to call APIs or access database here
     
+    const parentData = await parent()
+
     let returnData = {
         data_totalClosed    :null
         ,data_avgClosed     :null
@@ -22,16 +24,16 @@ export async function load({ params, fetch, locals }) {
         ,data_attendance    :null
     };
 
-    if(locals.user.work_base == 'office') {
+    if(parentData.user.work_base == 'office') {
         returnData = {}
     } else {
         
-      const totalClosed = await totalTicket({ID : locals.user.id, id_status: 3}, fetch)
-      const avgClosed = await avgClosedTicket({ID : locals.user.id, id_status: 3}, fetch)
-      const totalOpen = await totalTicket({ID : locals.user.id, id_status: 1}, fetch)
-      const totalLow = await totalTicketPriority({ID : locals.user.id, id_priority: 1}, fetch)
-      const totalMedium = await totalTicketPriority({ID : locals.user.id, id_priority: 2}, fetch)
-      const totalUrgent = await totalTicketPriority({ID : locals.user.id, id_priority: 3}, fetch)
+      const totalClosed = await totalTicket({ID : parentData.user.id, id_status: 3}, fetch)
+      const avgClosed = await avgClosedTicket({ID : parentData.user.id, id_status: 3}, fetch)
+      const totalOpen = await totalTicket({ID : parentData.user.id, id_status: 1}, fetch)
+      const totalLow = await totalTicketPriority({ID : parentData.user.id, id_priority: 1}, fetch)
+      const totalMedium = await totalTicketPriority({ID : parentData.user.id, id_priority: 2}, fetch)
+      const totalUrgent = await totalTicketPriority({ID : parentData.user.id, id_priority: 3}, fetch)
       returnData = {
           data_totalClosed : totalClosed.data[0]
         ,data_avgClosed : avgClosed.data[0]
@@ -43,8 +45,8 @@ export async function load({ params, fetch, locals }) {
     } 
 
     // const getTodayAttendance = await todayAttendance({user_id : locals.user.id}, fetch)
-    const getcheckTodayAttendance = await checkTodayAttendance({user_id : locals.user.id}, fetch)
-    const getattendance = await attendance({user_id : locals.user.id}, fetch)
+    const getcheckTodayAttendance = await checkTodayAttendance({user_id : parentData.user.id}, fetch)
+    const getattendance = await attendance({user_id : parentData.user.id}, fetch)
     console.log('getcheckTodayAttendance')
     console.log(getcheckTodayAttendance)
     return {

@@ -4,9 +4,11 @@ import { fail, redirect } from '@sveltejs/kit';
 import { tick } from 'svelte';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ url, fetch, locals }) {
+export async function load({ url, fetch, locals, parent }) {
   
-    const getTodayAttendance = await todayAttendance({user_id : locals.user.id}, fetch)
+    const parentData = await parent()
+
+    const getTodayAttendance = await todayAttendance({user_id : parentData.user.id}, fetch)
     let hasCheckedIn = !!getTodayAttendance && getTodayAttendance.data !== null
 
     if(!hasCheckedIn){
@@ -16,7 +18,7 @@ export async function load({ url, fetch, locals }) {
     }
 
     // You can use fetch to call APIs or access database here
-    const idUser = locals.user.id
+    const idUser = parentData.user.id
     let payload = {"ID" : idUser, from:'server'}
     let isSearch = false
 

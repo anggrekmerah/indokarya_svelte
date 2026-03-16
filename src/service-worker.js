@@ -50,6 +50,7 @@ const ASSETS = [
     '/login',
     '/task',
     '/history',
+    '/forgot-password',
     ...build,
     ...files.filter(file => !file.includes('.gitkeep') && !file.includes('.DS_Store'))
 ];

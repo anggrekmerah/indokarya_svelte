@@ -1,10 +1,12 @@
 import { getTicketHistory } from '$lib/tools/ticketApi';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ url, fetch, locals }) {
+export async function load({ url, fetch, locals, parent }) {
   
+    const parentData = await parent()
+
     // You can use fetch to call APIs or access database here
-    const idUser = locals.user.id
+    const idUser = parentData.user.id
     let payload = {"ID" : idUser}
 
     const status = url.searchParams.get('status')

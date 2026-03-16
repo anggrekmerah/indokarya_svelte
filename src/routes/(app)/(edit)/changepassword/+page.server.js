@@ -4,11 +4,13 @@ import { userChangePasswordAPI } from '$lib/tools/userApi';
 /**
  * @type {import('@sveltejs/kit').PageServerLoad}
  */
-export async function load({ locals }) {
+export async function load({ locals, fetch, parent }) {
+
+    const parentData = await parent()
     // Accessing the authenticated user's email from the locals object,
     // which is typically populated by a server hook (src/hooks.server.js).
     // We assume 'locals' has a 'user' object with an 'email' property.
-    const userEmail = locals.user?.email || null;
+    const userEmail = parentData.user?.email || null;
     
     // Return the email along with any other data needed by the page.
     return {

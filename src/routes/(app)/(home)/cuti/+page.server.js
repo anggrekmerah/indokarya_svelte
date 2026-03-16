@@ -3,16 +3,16 @@ import { all, leaveRequest, listPagination } from '$lib/tools/leaveAPI'
 import { fail, redirect } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ params, fetch, locals }) {
+export async function load({ params, fetch, locals, parent }) {
     // You can use fetch to call APIs or access database here
-    
+    const parentData = await parent()
     let returnData = {}
 
     const allLeaves = await all({}, fetch)
     console.log(allLeaves)
     returnData.allLeaves = allLeaves.data
 
-    const initialSubmissions = await listPagination({user_id:locals.user.id}, fetch);
+    const initialSubmissions = await listPagination({user_id:parentData.user.id}, fetch);
     returnData.initialSubmissions = initialSubmissions.data;
 
     console.log(returnData)
@@ -22,7 +22,8 @@ export async function load({ params, fetch, locals }) {
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-    ajukanCuti: async ({ request, fetch, locals }) => {
+    ajukanCuti: async ({ request, fetch, locals, parent }) => {
+        const parentData = await parent()
         const data = await request.formData();
 
         const jenis_cuti_id = data.get('jenis_cuti_id');
@@ -39,7 +40,7 @@ export const actions = {
 
         try {
             const response = await leaveRequest({
-                user_id : locals.user.id,
+                user_id : parentData.user.id,
                 leave_type : jenis_cuti_id,
                 start_date : tanggal_mulai,
                 end_date : tanggal_selesai,

@@ -9,10 +9,11 @@ import { todayAttendance } from '$lib/tools/attendenceAPI'
 
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ params, fetch, locals }) {
+export async function load({ params, fetch, locals, parent }) {
   // You can use fetch to call APIs or access database here
     
-    const getTodayAttendance = await todayAttendance({user_id : locals.user.id}, fetch)
+    const parentData = await parent()
+    const getTodayAttendance = await todayAttendance({user_id : parentData.user.id}, fetch)
     let hasCheckedIn = !!getTodayAttendance && getTodayAttendance.data !== null
 
     if(!hasCheckedIn){
@@ -21,7 +22,7 @@ export async function load({ params, fetch, locals }) {
         throw redirect(302, `/home?error=${message}`);
     }
 
-    const detailTicket = await ticketDetailAPI({ID : locals.user.id, id_ticket: params.id}, fetch)
+    const detailTicket = await ticketDetailAPI({ID : parentData.user.id, id_ticket: params.id}, fetch)
     
     if(detailTicket.error){
         // If the process is successful, redirect the user
@@ -99,6 +100,7 @@ export const actions = {
 
     checkout: async ({request, fetch, locals, params}) => {
         const data = await request.formData();
+        console.log('CHECKOUT')
         console.log(data)
         const reportDescription = data.get('description')
         const ticketId = data.get('id_ticket')
@@ -106,14 +108,14 @@ export const actions = {
         const generalNotes = data.get('generalNotes')
         const signature = data.get('signature')
         const files = data.getAll('files')
-        const attrIds = data.getAll('attr_id');
+        // const attrIds = data.getAll('attr_id');
         const attrValues = data.getAll('attr_value');
         const attrSources = data.getAll('attr_source');
         const isManual = data.getAll('is_manual');
         const realAttrID = data.getAll('attr_real_id');
         const attrIDCustMachine = data.getAll('attr_id_cust_machine')
-        const submittedAttributes = attrIds.map((id, index) => ({
-            id: id,
+        const submittedAttributes = realAttrID.map((id, index) => ({
+            // id: id,
             value: attrValues[index],
             source: attrSources[index],
             is_manual: isManual[index],
@@ -190,7 +192,7 @@ export const actions = {
                 return fail(500, { message: 'Server error during update ticket.' });
             }
 
-            return {
+           return {
                 status: 200,
                 success: true
             };

@@ -3,7 +3,9 @@ import { getTicketPriorityAPI } from '$lib/tools/priorityApi'
 import { readNotif, getUnreadNotif, total } from '$lib/tools/notifAPI.js'
 import { fail } from '@sveltejs/kit';
 
-export async function load({ locals, fetch, url }) {
+export async function load({ locals, fetch, url , parent}) {
+
+    const parentData = await parent()
 
   // The full path is available on the url object
   const fullPath = url.pathname;
@@ -19,16 +21,16 @@ export async function load({ locals, fetch, url }) {
     : await getTicketStatusHistoryAPI({}, fetch);
 
   const ticketPriority = await getTicketPriorityAPI({}, fetch);
-  const ticketTotal = await ticketTotalAPI({ID:locals.user.id}, fetch)
-  const listNotif = await getUnreadNotif({ID:locals.user.id}, fetch)
-  const totalNotif = await total({ID:locals.user.id}, fetch)
+  const ticketTotal = await ticketTotalAPI({ID:parentData.user.id}, fetch)
+  const listNotif = await getUnreadNotif({ID:parentData.user.id}, fetch)
+  const totalNotif = await total({ID:parentData.user.id}, fetch)
   console.log('listNotif')
   console.log(listNotif)
   return {
     dataTicketStatus : ticketStatus.data,
     dataTicketPriority : ticketPriority.data,
-    dataTicketTotal : ticketTotal.data,
     segment : segments[0],
+    dataTicketTotal : ticketTotal.data,
     dataTotalNotif : totalNotif.data ?? 0,
     dataListNotif: listNotif.data.map(n => {
       

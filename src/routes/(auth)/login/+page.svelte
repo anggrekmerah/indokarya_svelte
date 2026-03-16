@@ -86,7 +86,7 @@
               class="w-full py-3 px-4 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 dark:placeholder-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
             />
             <button type="reset" class="w-max mt-2 p-1">
-              <span class="text-xs tracking-wide text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition">{$_('Forgot Password')}?</span>
+              <a href="/forgot-password" data-sveltekit-preload-data class="text-xs tracking-wide text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition">{$_('Forgot Password')}?</a>
             </button>
           </div>
 

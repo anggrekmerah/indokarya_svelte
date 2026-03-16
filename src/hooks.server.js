@@ -1,59 +1,103 @@
-import { parse } from 'cookie';
-import {userByTokenAPI} from '$lib/tools/tokenApi'
-import {ClientMenuAPI} from '$lib/tools/menuApi'
-import {userGroupAPI} from '$lib/tools/userGroupAPI'
-import {LangAPI} from '$lib/tools/langApi'
 import { redirect } from '@sveltejs/kit';
+import { userByTokenAPI } from '$lib/tools/tokenApi';
+// import { ClientMenuAPI } from '$lib/tools/menuApi';
+// import { userGroupAPI } from '$lib/tools/userGroupAPI';
+// import { LangAPI } from '$lib/tools/langApi';
+import {getUserCache, setUserCache} from '$lib/server/userCache'
+
+const publicRoutes = [
+	'/login',
+	'/forgot-password',
+	'/reset-password'
+];
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ event, resolve }) {
 
-    const pathname = event.url.pathname;
+	const pathname = event.url.pathname;
+	const sessionId = event.cookies.get('session_id');
 
-    // 1. Get the cookies from the request headers
-    const cookies = parse(event.request.headers.get('cookie') || '');
+	const isPublic = publicRoutes.some(route => pathname.startsWith(route));
+    const isApiRoute = pathname.startsWith('/api');
 
-    // 2. Check for a session ID or token
-    const sessionId = cookies.session_id;
+	// ✅ jika route public dan tidak login → langsung lanjut
+	if (!sessionId && isPublic) {
+		return resolve(event);
+	}
 
-    if (sessionId) {
-        // In a real application, you would validate the session ID against a database
-        // and fetch the corresponding user data. For this example, we'll use a mock user.
-        console.log(`User with session ID ${sessionId} is logged in.`);
-        
-        const dataUser = await userByTokenAPI({token: sessionId},event.fetch)
-        
-        if(!dataUser.error) {
-            
-            const [userMenuResult, userLangResult, userGroupResult] = await Promise.all([
-                ClientMenuAPI({ email: dataUser.data.email }, event.fetch),
-                LangAPI({ id_user: dataUser.data.id }, event.fetch),
-                userGroupAPI({ id_user: dataUser.data.id }, event.fetch),
-            ]);
+	// ❌ jika bukan public dan tidak login → redirect
+	if (!sessionId && !isPublic) {
 
-            event.locals.user = dataUser.data
-            event.locals.userMenu = userMenuResult.data
-            event.locals.userLang = userLangResult.data
-            event.locals.userGroup = userGroupResult.data
+		// jika request API
+		if (isApiRoute) {
+			return new Response(
+				JSON.stringify({ error: 'Unauthorized' }),
+				{
+					status: 401,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
+		}
 
-        } else {
+		// jika request page
+		throw redirect(303, '/login');
+	}
 
-            event.cookies.delete('session_id', { path: '/' });
-            
-            // Redirect to the login page with a success message in the URL
-            throw redirect(303, '/login?loggedOut=true');
-                       
-        }
-        
+	let isLoggedIn = false;
 
-    } else {
-        event.locals.user = null;
-        event.locals.userMenu = null;
-        event.locals.userLang = null
-    }
+	if (sessionId) {
 
-    // 3. Resolve the request
-    return await resolve(event, {
-        bodyParserLimit: 10 * 1024 * 1024
-    });
+        let user = getUserCache(sessionId);
+
+        if (!user) {
+
+			const dataUser = await userByTokenAPI(
+				{ token: sessionId },
+				event.fetch
+			);
+
+			if (dataUser.error) {
+
+				event.cookies.delete('session_id', { path: '/' });
+
+				throw redirect(303, '/login');
+			}
+
+			user = dataUser.data;
+
+			setUserCache(sessionId, user);
+		}
+
+        event.locals.user = user;
+
+		// const dataUser = await userByTokenAPI({ token: sessionId }, event.fetch);
+
+		// if (!dataUser.error) {
+
+		// 	const [userMenuResult, userLangResult, userGroupResult] = await Promise.all([
+		// 		ClientMenuAPI({ email: dataUser.data.email }, event.fetch),
+		// 		LangAPI({ id_user: dataUser.data.id }, event.fetch),
+		// 		userGroupAPI({ id_user: dataUser.data.id }, event.fetch),
+		// 	]);
+
+		// 	event.locals.user = dataUser.data;
+		// 	event.locals.userMenu = userMenuResult.data;
+		// 	event.locals.userLang = userLangResult.data;
+		// 	event.locals.userGroup = userGroupResult.data;
+
+		// 	isLoggedIn = true;
+
+		// } else {
+
+		// 	event.cookies.delete('session_id', { path: '/' });
+
+		// 	if (!isPublic) {
+		// 		throw redirect(303, '/login');
+		// 	}
+
+		// 	return resolve(event);
+		// }
+	}
+
+	return resolve(event);
 }

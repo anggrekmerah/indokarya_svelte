@@ -1,9 +1,11 @@
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ locals }) {
+export async function load({ locals , parent}) {
+
+    const parentData = await parent()
     // You can use fetch to call APIs or access database here
-    console.log(locals.userLang)
+    console.log(parentData.userLang)
     return {
-        user : locals.user,
-        userGroup : locals.userGroup
+        user : parentData.user,
+        userGroup : parentData.group
     }
 }

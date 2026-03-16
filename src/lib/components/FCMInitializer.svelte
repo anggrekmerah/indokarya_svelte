@@ -103,8 +103,8 @@
             // Logika untuk menampilkan notifikasi di UI Svelte
             // Gunakan Svelte store atau event dispatching untuk memperbarui UI
             // alert(`Notifikasi Baru: ${payload.notification.title} - ${payload.notification.body}`);
-            const title = payload.notification.title;
-            const body = payload.notification.body;
+            const title = payload.data.title;
+            const body = payload.data.body;
 
             // Logika sederhana menentukan warna
             let type = 'info';

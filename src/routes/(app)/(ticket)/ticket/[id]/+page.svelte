@@ -36,7 +36,7 @@
     
     // General ticket data (Notes and final signature, applies to the whole ticket)
     let generalReport = $state({
-        generalNotes: '',
+        generalNotes: 'Default auto',
         signature: ''
     });
 
@@ -684,6 +684,8 @@
         // Initialize report objects for each machine if not loaded from session
         if (machineReports.length === 0 || machineReports.length !== machines.length) {
              machineReports = machines.map(machine => {
+                console.log('machine')
+                console.log(machine)
                 return {
                     id: String(machine.id_ticket_machine), // Ensure BIGINT is treated as a string
                     id_machine : machine.id_machine,
@@ -691,7 +693,7 @@
                     description: '',
                     sparePart: [],
                     files: [],
-                    attrs: machine.attrs,
+                    attrsGrouped: machine.attrsGrouped,
                     label: `SN: ${machine.serial_number} - ${machine.brand} - ${machine.voltage}`
                 };
             });
@@ -1467,7 +1469,7 @@
         {#if in_checkin && isNearDestination && !isTicketLocked }
             
             <!-- General Notes Section -->
-            <div class="bg-white rounded-xl shadow-lg p-5 space-y-4 border border-gray-100">
+            <!-- <div class="bg-white rounded-xl shadow-lg p-5 space-y-4 border border-gray-100">
                 <h2 class="flex items-center text-lg font-bold text-gray-900">
                     <MessageSquare class="h-5 w-5 mr-2 text-blue-500" /> 
                     {$_('General Ticket Notes')}
@@ -1475,7 +1477,13 @@
                 <textarea id="general-notes" bind:value={generalReport.generalNotes} rows="2" class="w-full mt-1 rounded-md border-gray-300 shadow-sm bg-gray-50 p-3 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors" placeholder="Enter notes or observations for the entire site/ticket (e.g., access issues, overall environment)."
                 oninput={saveState}
                 ></textarea>
-            </div>
+            </div> -->
+            <input 
+                type="hidden" 
+                id="general-notes" 
+                bind:value={generalReport.generalNotes}
+                onchange={saveState}
+            >
 
             <!-- START OF MACHINE REPORTS LOOP -->
             {#each machineReports as mReport (mReport.id)}
@@ -1573,7 +1581,7 @@
                         </div>
 
                         <!-- Attributes -->
-                        {#if mReport.attrs.length > 0}
+                        {#if mReport.attrsGrouped.length > 0}
                             <div class="pt-2 border-t border-gray-100">
                                 <label class="text-sm font-medium text-gray-700">{$_('Kelengkapan')}</label>
                                 <div class="mt-2 space-y-2 p-2 bg-gray-50 rounded-lg">
@@ -1585,8 +1593,29 @@
                                         <FileText class="h-5 w-5 mr-2" />
                                         {$_('Cek Kelengkapan Mesin')}
                                     </button> -->
-                                    {#each mReport.attrs as _, i}
-                                        <AttributeItem bind:attr={mReport.attrs[i]} />
+                                    {#each mReport.attrsGrouped as group}
+                                        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+
+                                            <!-- GROUP HEADER -->
+                                            <button
+                                                type="button"
+                                                class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200 text-sm font-semibold"
+                                                onclick={() => group.open = !group.open}
+                                            >
+                                                <span>{group.group_name}</span>
+                                                <span class="text-xs">{group.open ? '▼' : '▶'}</span>
+                                            </button>
+
+                                            <!-- GROUP CONTENT -->
+                                            {#if group.open}
+                                                <div class="p-2 space-y-1">
+                                                    {#each group.attrs as _, i}
+                                                        <AttributeItem bind:attr={group.attrs[i]} />
+                                                    {/each}
+                                                </div>
+                                            {/if}
+
+                                        </div>
                                     {/each}
                                 </div>
                             </div>
@@ -1595,7 +1624,7 @@
                 </section>
             {/each}
             <!-- END OF MACHINE REPORTS LOOP -->
-            <form method="post" enctype="multipart/form-data" action="?/checkout" class="bg-white rounded-xl shadow-lg p-5 space-y-6 border border-gray-100"
+            <form method="post" enctype="multipart/form-data" action="?/checkout" class="mb-4 bg-white rounded-xl shadow-lg p-5 space-y-6 border border-gray-100"
                 use:enhance={ async ({formData}) => {
                     loadingCheckout = true;
 
@@ -1635,17 +1664,19 @@
                     });
 
                     machineReports.forEach(mReport => {
-                        if (mReport.attrs && Array.isArray(mReport.attrs)) {
-                            mReport.attrs.forEach(attr => {
-                                formData.append('attr_id', String(attr.id));
-                                formData.append('attr_real_id', String(attr.id_attr));
-                                formData.append('attr_value', String(attr.attribute_value ?? ''));
-                                formData.append('attr_source', String(attr.sources));
-                                formData.append('attr_id_cust_machine', String(attr.id_cust_machine));
-                                
-                                // Ambil langsung status manual yang sudah diupdate oleh event komponen
-                                // Jika undefined (tidak pernah disentuh), berikan nilai 'N'
-                                formData.append('is_manual', attr.is_manual === 'Y' ? 'Y' : 'N');
+                        if (mReport.attrsGrouped && Array.isArray(mReport.attrsGrouped)) {
+                            mReport.attrsGrouped.forEach(group => {
+                                group.attrs.forEach(attr => {
+                                    // formData.append('attr_id', String(attr.id));
+                                    formData.append('attr_real_id', String(attr.id_attr));
+                                    formData.append('attr_value', String(attr.attribute_value ?? ''));
+                                    formData.append('attr_source', String(attr.attribute_source));
+                                    formData.append('attr_id_cust_machine', String(attr.id_cust_machine));
+                                    
+                                    // Ambil langsung status manual yang sudah diupdate oleh event komponen
+                                    // Jika undefined (tidak pernah disentuh), berikan nilai 'N'
+                                    formData.append('is_manual', attr.is_manual === 'Y' ? 'Y' : 'N');
+                                })
                             });
                         }
                     });
@@ -1653,10 +1684,10 @@
                     if (sparePartsList && sparePartsList.length > 0) {
                         sparePartsList.forEach((listSpare) => {
                             listSpare.attrs.forEach(attr => {
-                                formData.append('attr_id', String(attr.id));
+                                // formData.append('attr_id', String(attr.id));
                                 formData.append('attr_real_id', String(attr.id_attr));
                                 formData.append('attr_value', String(attr.attribute_value ?? ''));
-                                formData.append('attr_source', String(attr.sources));
+                                formData.append('attr_source', String(attr.attribute_source));
                                 formData.append('attr_id_cust_machine', String(attr.id_cust_machine));
                                 
                                 // Ambil langsung status manual yang sudah diupdate oleh event komponen
@@ -1691,7 +1722,7 @@
                         compressedFiles.forEach(f => totalSize += f.size);
                         
                         if (totalSize > 524288) { // 512KB
-                            alertMessage = "Total ukuran file terlalu besar. Silakan kurangi jumlah foto/video.";
+                            alertMessage = `Total ukuran file terlalu besar(${(totalSize).toFixed(2)} KB). Silakan kurangi jumlah foto/video.`;
                             loadingCheckout = false;
                             alertPopup = true;
                             return cancel(); // Batalkan pengiriman
@@ -1771,16 +1802,16 @@
 
                     return async ({ result, update }) => {
                         loadingCheckout = false;
+                        console.log(result)
+                        if (result.type === 'success') {
+                            handleSuccessfulCheckOut();
+                            alertPopup = false;
+                        } else if (result.type === 'failure') {
+                            alertPopup = true;
+                        }
 
-                        if (result.type === 'failure') {
-                            alertPopup = true
-                        } else {
-                            alertPopup = false
-                            handleSuccessfulCheckOut()
-                        }  
-                        
-                        // Use update() to handle potential server errors or form failures.
-                        update();
+                        // Panggil update() agar SvelteKit melakukan navigasi/invalidation data
+                        await update(); 
                     };
                 }}
             >
@@ -1906,9 +1937,6 @@
                 </div>
             </form>
         {/if}
-    </div>
-
-    <div class="h-15 bg-slate-100/50 rounded-2xl border border-dashed border-slate-300 flex items-center justify-center italic text-slate-400">
     </div>
 </main>
 

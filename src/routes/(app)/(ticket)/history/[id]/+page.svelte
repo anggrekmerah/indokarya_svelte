@@ -59,13 +59,13 @@
             detailTicket.TicketMachine.forEach(machine => {
                 const photos = (machine.Photos || []).map(p => ({
                     type: 'photo',
-                    url: p.res_photo.replace(/^\.\/static/, ''),
+                    url: p.res_photo.replace(/^\.\/static/, '/static-files'),
                     caption: `Photo: ${machine.machine_name}`
                 }));
 
                 const videos = (machine.Videos || []).map(v => ({
                     type: 'video',
-                    url: v.res_video.replace(/^\.\/static/, ''),
+                    url: v.res_video.replace(/^\.\/static/, '/static-files'),
                     caption: `Video: ${machine.machine_name}`,
                     // Use the first photo as a generic preview if available
                     preview: photos.length > 0 ? photos[0].url : null 
@@ -99,7 +99,7 @@
 
         // 3. Customer Acceptance Signature
         const signature = detailTicket.TicketSignature && detailTicket.TicketSignature.length > 0 ? {
-            url: detailTicket.TicketSignature[0].path_signature.replace(/^\.\/static/, ''),
+            url: detailTicket.TicketSignature[0].path_signature.replace(/^\.\/static/, '/static-files'),
             signer_name: 'Customer Signature', // Placeholder
             timestamp: new Date(detailTicket.TicketAction.find(a => a.status_name === 'Closed')?.created_datetime || new Date()).toLocaleString('id-ID', {
                 year: 'numeric', month: 'short', day: 'numeric',
