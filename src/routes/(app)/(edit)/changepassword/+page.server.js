@@ -77,7 +77,7 @@ export const actions = {
                     });
                 }
                 console.log({ID:userID,password:newPassword})    
-                const changepass = await userChangePasswordAPI({ID:userID,password:newPassword}, fetch)
+                const changepass = await userChangePasswordAPI({ID:userID, id_user: userID, password:newPassword}, fetch)
                 console.log(changepass)
                 if(changepass.error){
                     return fail(401, { 
