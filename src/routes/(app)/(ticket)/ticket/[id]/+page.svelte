@@ -16,6 +16,7 @@
     import AttributeItem  from '$lib/components/AttributeItem.svelte'
     import { PUBLIC_BASE_URL_LARAVEL } from '$env/static/public';
     import imageCompression from 'browser-image-compression';
+    import { goto } from '$app/navigation';
     
     let { data, form } = $props();
 
@@ -1749,7 +1750,7 @@
                         const syncTag = `sync-report-${dataTicket.id_ticket}`;
                         
                         // 2. Gunakan URL dengan action SvelteKit
-                        const actionUrl = '?/checkout'; 
+                        const actionUrl = window.location.pathname + '?/checkout'; 
 
                         // 3. Simpan ke IndexedDB (Tabel 'report')
                         const resultReport = await saveOfflineTask(
@@ -1769,34 +1770,11 @@
                         }
                         
                         alert("Offline: Data checkout disimpan dan akan dikirim otomatis saat online.");
+                        goto('/task');
                         return {
                             result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
                             update: async () => { /* Prevent UI update after local storage */ }
                         };
-
-                        // // 1. Simpan Seluruh FormData ke IndexedDB
-                        // const syncTag = await saveOfflineTask(
-                        //     reportTable, 
-                        //     {
-                        //         id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
-                        //         url: '/ticket/checkout',
-                        //         timestamp: new Date()
-                        //     },
-                        //     formData)
-
-                        // // 2. Daftarkan tugas Background Sync
-                        // await registerBackgroundSync('sync-checkout_'+dataTicket.id_ticket);
-
-                        // // 3. Tampilkan pesan sukses offline dan batalkan pengiriman fetch
-                        // loadingCheckout = false;
-                        // alertPopup = false; // Atau gunakan state lain untuk pesan sukses offline
-                        // alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
-                        // handleSuccessfulCheckOut()
-                        // // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
-                        // return {
-                        //     result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
-                        //     update: async () => { /* Prevent UI update after local storage */ }
-                        // };
 
                     }
 
