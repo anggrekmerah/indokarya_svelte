@@ -559,13 +559,14 @@
               method="POST" 
               action={hasCheckedInStatus ? "?/absenKeluar" : "?/absenMasuk"}
               enctype="multipart/form-data"
-              use:enhance={({ formData }) => {
-                if (!in_capturedFile) return;
+              use:enhance={({ formData, cancel }) => {
+                if (!in_capturedFile) return cancel();
 
+                // 1. Tambahkan data ke form untuk pengiriman online
                 formData.append('photo', in_capturedFile);
-                formData.append('attendance_mode', work_base === 'hybrid' ? hybridMode : work_base)
+                formData.append('attendance_mode', work_base === 'hybrid' ? hybridMode : work_base);
 
-                // Data yang akan disimpan jika offline
+                // 2. Siapkan objek data untuk penyimpanan offline
                 const offlineData = {
                     user_id: data.users.id,
                     date: new Date().toISOString().split('T')[0],
@@ -573,53 +574,61 @@
                     check_in_location: `${locationData.lat}, ${locationData.long}`,
                     status: 'present',
                     attendance_mode: work_base === 'hybrid' ? hybridMode : work_base,
-                    // Konversi file ke base64 agar bisa disimpan di IndexedDB (Dexie)
                     check_in_photo: in_photoPreviewUrl 
                 };
+
+                // 3. LOGIKA OFFLINE: Jika tidak ada internet, langsung simpan lokal
+                if (!navigator.onLine) {
+                    console.log("Browser offline. Menyimpan secara lokal...");
+                    saveLocally(offlineData);
+                    cancel(); // Menghentikan request ke server agar tidak error 404/timeout
+                    return;
+                }
 
                 isSubmitting = true;
 
                 return async ({ result }) => {
-                    console.log(result)
                     if (result.type === 'success') {
-                        // Logika sukses online seperti biasa...
-                        hasCheckedInStatus = !hasCheckedInStatus;
-                        
-                        if(hasCheckedInStatus)
-                            displayCheckIn = result.data.absenTime
-                        else 
-                            displayCheckOut= result.data.absenTime
-
+                        updateUI(result.data.absenTime);
                     } else {
-                        // JIKA OFFLINE ATAU SERVER ERROR
-                        console.log("Mencoba simpan secara offline...");
-                        const offlineResult = await attendanceStore.saveAttendanceOffline(offlineData);
-                        
-                        if (offlineResult.success) {
-                            responseMessage = "Absen disimpan secara lokal. Akan otomatis terkirim saat online.";
-                            hasCheckedInStatus = !hasCheckedInStatus; // Update UI Optimis
-
-                            // DAFTARKAN BACKGROUND SYNC
-                            if ('serviceWorker' in navigator && 'SyncManager' in window) {
-                                const registration = await navigator.serviceWorker.ready;
-                                try {
-                                    await registration.sync.register('sync-attendance');
-                                    console.log('Background sync terdaftar: sync-attendance');
-                                } catch (err) {
-                                    console.error('Gagal mendaftarkan sync:', err);
-                                }
-                            }
-                        }
+                        // Jika online tapi server bermasalah (500/503), tetap backup ke lokal
+                        console.log("Server error. Mencoba backup ke lokal...");
+                        saveLocally(offlineData);
                     }
                     in_togglePopup();
                     isSubmitting = false;
                 };
+
+                // Fungsi pembantu di dalam scope enhance untuk merapikan kode
+                async function saveLocally(payload) {
+                    const offlineResult = await attendanceStore.saveAttendanceOffline(payload);
+                    if (offlineResult.success) {
+                        responseMessage = "Absen disimpan secara lokal (Offline). Akan tersinkron otomatis saat internet kembali.";
+                        hasCheckedInStatus = !hasCheckedInStatus; // Update UI optimis
+                        
+                        // Registrasi Background Sync jika didukung
+                        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                            const reg = await navigator.serviceWorker.ready;
+                            try { await reg.sync.register('sync-attendance'); } catch (e) {}
+                        }
+                    }
+                    in_togglePopup();
+                }
+
+                function updateUI(time) {
+                    hasCheckedInStatus = !hasCheckedInStatus;
+                    if (hasCheckedInStatus) displayCheckIn = time;
+                    else displayCheckOut = time;
+                }
             }}
               class="flex-[2]"
             >
-              <button type="submit" disabled={isSubmitting || (work_base === 'office' && !isInOfficeArea)} class="w-full py-4 {hasCheckedInStatus ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300">
+                <button 
+                type="submit" 
+                disabled={isSubmitting || !locationData.lat || (work_base === 'office' && !isInOfficeArea)} 
+                class="...">
                 {isSubmitting ? 'MENGIRIM...' : 'KONFIRMASI'}
-              </button>
+                </button>
             </form>
           </div>
         {/if}

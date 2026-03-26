@@ -14,11 +14,25 @@ const publicRoutes = [
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ event, resolve }) {
 
+	const userAgent = event.request.headers.get('user-agent') || '';
 	const pathname = event.url.pathname;
 	const sessionId = event.cookies.get('session_id');
 
+	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+	const isAsset = event.url.pathname.startsWith('/_app') || event.url.pathname.startsWith('/favicon.ico');
 	const isPublic = publicRoutes.some(route => pathname.startsWith(route));
     const isApiRoute = pathname.startsWith('/api');
+
+	if (!isMobile && !isAsset) {
+        // Opsi A: Lempar ke halaman khusus "Mobile Only"
+        // throw redirect(307, '/mobile-only'); 
+
+        // Opsi B: Berikan respon teks sederhana
+        return new Response('Akses ditolak. Aplikasi ini hanya dapat diakses melalui perangkat mobile.', {
+            status: 403,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+    }
 
 	// ✅ jika route public dan tidak login → langsung lanjut
 	if (!sessionId && isPublic) {
@@ -70,33 +84,6 @@ export async function handle({ event, resolve }) {
 
         event.locals.user = user;
 
-		// const dataUser = await userByTokenAPI({ token: sessionId }, event.fetch);
-
-		// if (!dataUser.error) {
-
-		// 	const [userMenuResult, userLangResult, userGroupResult] = await Promise.all([
-		// 		ClientMenuAPI({ email: dataUser.data.email }, event.fetch),
-		// 		LangAPI({ id_user: dataUser.data.id }, event.fetch),
-		// 		userGroupAPI({ id_user: dataUser.data.id }, event.fetch),
-		// 	]);
-
-		// 	event.locals.user = dataUser.data;
-		// 	event.locals.userMenu = userMenuResult.data;
-		// 	event.locals.userLang = userLangResult.data;
-		// 	event.locals.userGroup = userGroupResult.data;
-
-		// 	isLoggedIn = true;
-
-		// } else {
-
-		// 	event.cookies.delete('session_id', { path: '/' });
-
-		// 	if (!isPublic) {
-		// 		throw redirect(303, '/login');
-		// 	}
-
-		// 	return resolve(event);
-		// }
 	}
 
 	return resolve(event);

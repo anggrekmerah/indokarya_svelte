@@ -85,24 +85,41 @@ export const actions = {
     absenMasuk: async ({ request, fetch, locals }) => {
         const data = await request.formData();
         const photo = data.get('photo');
+        const lat = data.get('latitude');
+        const long = data.get('longitude');
         
         if (!photo || photo.size === 0) {
             return fail(400, { message: 'Foto tidak ditemukan.' });
+        }
+
+        if (!lat || !long || lat === 'null' || long === 'null') {
+            return fail(400, { message: 'Koordinat lokasi tidak valid. Pastikan GPS aktif.' });
         }
 
         try {
             const filePath = await saveAttendancePhoto(photo);
             const response = await checkIn({
                 user_id: locals.user.id, 
-                check_in_location: `${data.get('latitude')} ${data.get('longitude')}`,
+                check_in_location: `${lat} ${long}`,
                 check_in_photo: filePath,
                 attendance_mode: data.get('attendance_mode')
             }, fetch);
-            console.log(response)
-            if (response.error) return fail(500, { message: response.message, fromAction:'checkin' });
-            return { success: true , fromAction:'checkin', absenTime: response.data.absenTime };
+
+            if (response.error) {
+                return fail(500, { 
+                    message: response.message || 'Gagal menyimpan absensi ke server.', 
+                    fromAction: 'checkin' 
+                });
+            }
+
+            return { 
+                success: true, 
+                fromAction: 'checkin', 
+                absenTime: response.data.absenTime 
+            };
         } catch (error) {
-            return fail(500, { message: 'Terjadi kesalahan sistem.' + error });
+            console.error("Server Error:", error);
+            return fail(500, { message: 'Terjadi kesalahan sistem saat memproses absensi.' });
         }
     },
 
