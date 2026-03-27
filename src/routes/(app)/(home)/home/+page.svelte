@@ -197,47 +197,50 @@
   }
 
   // new google.maps.LatLng(-6.19110210798804, 106.65742604634274),
-  function in_getLocation() {
-      if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition(
-              // Parameter 1: Success Callback (Fungsi)
-              (position) => {
-                  locationData = {
-                      lat: position.coords.latitude,
-                      long: position.coords.longitude
-                  }; 
+    // Di dalam +page.svelte
+    function in_getLocation() {
+        if ("geolocation" in navigator) {
+            // Gunakan High Accuracy agar koordinat lebih presisi
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    locationData = {
+                        lat: position.coords.latitude,
+                        long: position.coords.longitude
+                    }; 
 
-                  if (work_base === 'office' || (work_base === 'hybrid' && hybridMode === 'office')) {
-                      const officeLat = parseFloat(data.officelat); 
-                      const officeLong = parseFloat(data.officelong); 
-                      
-                      const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                          new google.maps.LatLng(locationData.lat, locationData.long),
-                          new google.maps.LatLng(officeLat, officeLong)
-                      ); 
+                    if (work_base === 'office' || (work_base === 'hybrid' && hybridMode === 'office')) { 
+                        const officeLat = parseFloat(data.officelat); 
+                        const officeLong = parseFloat(data.officelong); 
+                        
+                        const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                            new google.maps.LatLng(locationData.lat, locationData.long), 
+                            new google.maps.LatLng(officeLat, officeLong) 
+                        ); 
 
-                      if (distance > 20) {
-                          isInOfficeArea = false; 
-                          responseMessage = `ANDA DI LUAR AREA KANTOR (${Math.round(distance)}m). ABSEN DITOLAK.`; 
-                      } else {
-                          isInOfficeArea = true; 
-                          responseMessage = null; 
-                      }
-                  }
-              },
-              // Parameter 2: Error Callback (Fungsi) - INI YANG TADI BERMASALAH
-              (err) => {
-                  console.error("Gagal mendapatkan lokasi:", err); 
-                  responseMessage = "GAGAL MENDAPATKAN LOKASI. PASTIKAN GPS AKTIF.";
-              },
-              // Parameter 3: Options (Object)
-              { 
-                  enableHighAccuracy: true, 
-                  timeout: 10000 
-              } 
-          );
-      }
-  }
+                        // Ubah radius dari 20m ke 100m agar lebih toleran terhadap gangguan sinyal
+                        if (distance > 100) { 
+                            isInOfficeArea = false; 
+                            responseMessage = `DI LUAR AREA (${Math.round(distance)}m). JARAK MAKS: 100m.`; 
+                        } else {
+                            isInOfficeArea = true; 
+                            responseMessage = null; 
+                        }
+                    }
+                },
+                (err) => {
+                    console.error("Gagal mendapatkan lokasi:", err); 
+                    // JIKA ERROR, set ke false agar tidak bisa absen tanpa lokasi
+                    isInOfficeArea = false; 
+                    responseMessage = "GPS GAGAL/TIDAK AKTIF. HARAP REFRESH HALAMAN."; 
+                },
+                { 
+                    enableHighAccuracy: true, 
+                    timeout: 10000,
+                    maximumAge: 0 // Memaksa browser mengambil lokasi terbaru, bukan cache
+                } 
+            );
+        }
+    }
 
   function in_handleTakePhoto() {
       if (!in_videoElement || !in_canvasElement) return;
@@ -624,10 +627,17 @@
               class="flex-[2]"
             >
                 <button 
-                type="submit" 
-                disabled={isSubmitting || !locationData.lat || (work_base === 'office' && !isInOfficeArea)} 
-                class="...">
-                {isSubmitting ? 'MENGIRIM...' : 'KONFIRMASI'}
+                    type="submit" 
+                    disabled={isSubmitting || !locationData.lat || (work_base === 'office' && !isInOfficeArea)} 
+                    class="w-full py-4 {hasCheckedInStatus ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300 transition-all"
+                >
+                    {#if isSubmitting}
+                        MENGIRIM... 
+                    {:else if !locationData.lat}
+                        MENCARI LOKASI...
+                    {:else}
+                        KONFIRMASI 
+                    {/if}
                 </button>
             </form>
           </div>
