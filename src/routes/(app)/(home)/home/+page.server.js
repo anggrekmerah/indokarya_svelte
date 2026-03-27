@@ -87,7 +87,7 @@ export const actions = {
         const photo = data.get('photo');
         const lat = data.get('latitude');
         const long = data.get('longitude');
-        
+        console.log(data)
         if (!photo || photo.size === 0) {
             return fail(400, { message: 'Foto tidak ditemukan.' });
         }

@@ -83,7 +83,8 @@
   let locationData = $state({ lat: null, long: null });
   let responseMessage = $state(null);
   let currentAttendance = $derived(data.checkTodayAttendance?.data || localAttendance);
-  let hasCheckedInStatus = $derived(!!currentAttendance);
+//   let hasCheckedInStatus = $derived(!!currentAttendance);
+  let hasCheckedInStatus = $state(!!data.checkTodayAttendance?.data || localAttendance);
   let displayCheckIn = $derived(currentAttendance?.check_in_time || '--:--');
   let displayCheckOut = $derived(currentAttendance?.check_out_time || '--:--');
 
@@ -108,8 +109,10 @@
     }
   
   $effect(() => {
-      if (currentAttendance?.attendance_mode) {
-        hybridMode = currentAttendance.attendance_mode;
+        hasCheckedInStatus = !!data.checkTodayAttendance?.data;
+
+        if (currentAttendance?.attendance_mode) {
+            hybridMode = currentAttendance.attendance_mode;
         }
   });
 
@@ -197,50 +200,47 @@
   }
 
   // new google.maps.LatLng(-6.19110210798804, 106.65742604634274),
-    // Di dalam +page.svelte
-    function in_getLocation() {
-        if ("geolocation" in navigator) {
-            // Gunakan High Accuracy agar koordinat lebih presisi
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    locationData = {
-                        lat: position.coords.latitude,
-                        long: position.coords.longitude
-                    }; 
+  function in_getLocation() {
+      if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+              // Parameter 1: Success Callback (Fungsi)
+              (position) => {
+                  locationData = {
+                      lat: position.coords.latitude,
+                      long: position.coords.longitude
+                  }; 
 
-                    if (work_base === 'office' || (work_base === 'hybrid' && hybridMode === 'office')) { 
-                        const officeLat = parseFloat(data.officelat); 
-                        const officeLong = parseFloat(data.officelong); 
-                        
-                        const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                            new google.maps.LatLng(locationData.lat, locationData.long), 
-                            new google.maps.LatLng(officeLat, officeLong) 
-                        ); 
+                  if (work_base === 'office' || (work_base === 'hybrid' && hybridMode === 'office')) {
+                      const officeLat = parseFloat(data.officelat); 
+                      const officeLong = parseFloat(data.officelong); 
+                      
+                      const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                          new google.maps.LatLng(locationData.lat, locationData.long),
+                          new google.maps.LatLng(officeLat, officeLong)
+                      ); 
 
-                        // Ubah radius dari 20m ke 100m agar lebih toleran terhadap gangguan sinyal
-                        if (distance > 100) { 
-                            isInOfficeArea = false; 
-                            responseMessage = `DI LUAR AREA (${Math.round(distance)}m). JARAK MAKS: 100m.`; 
-                        } else {
-                            isInOfficeArea = true; 
-                            responseMessage = null; 
-                        }
-                    }
-                },
-                (err) => {
-                    console.error("Gagal mendapatkan lokasi:", err); 
-                    // JIKA ERROR, set ke false agar tidak bisa absen tanpa lokasi
-                    isInOfficeArea = false; 
-                    responseMessage = "GPS GAGAL/TIDAK AKTIF. HARAP REFRESH HALAMAN."; 
-                },
-                { 
-                    enableHighAccuracy: true, 
-                    timeout: 10000,
-                    maximumAge: 0 // Memaksa browser mengambil lokasi terbaru, bukan cache
-                } 
-            );
-        }
-    }
+                      if (distance > 20) {
+                          isInOfficeArea = false; 
+                          responseMessage = `ANDA DI LUAR AREA KANTOR (${Math.round(distance)}m). ABSEN DITOLAK.`; 
+                      } else {
+                          isInOfficeArea = true; 
+                          responseMessage = null; 
+                      }
+                  }
+              },
+              // Parameter 2: Error Callback (Fungsi) - INI YANG TADI BERMASALAH
+              (err) => {
+                  console.error("Gagal mendapatkan lokasi:", err); 
+                  responseMessage = "GAGAL MENDAPATKAN LOKASI. PASTIKAN GPS AKTIF.";
+              },
+              // Parameter 3: Options (Object)
+              { 
+                  enableHighAccuracy: true, 
+                  timeout: 10000 
+              } 
+          );
+      }
+  }
 
   function in_handleTakePhoto() {
       if (!in_videoElement || !in_canvasElement) return;
@@ -562,14 +562,15 @@
               method="POST" 
               action={hasCheckedInStatus ? "?/absenKeluar" : "?/absenMasuk"}
               enctype="multipart/form-data"
-              use:enhance={({ formData, cancel }) => {
-                if (!in_capturedFile) return cancel();
+              use:enhance={({ formData }) => {
+                if (!in_capturedFile) return;
 
-                // 1. Tambahkan data ke form untuk pengiriman online
                 formData.append('photo', in_capturedFile);
-                formData.append('attendance_mode', work_base === 'hybrid' ? hybridMode : work_base);
+                formData.append('attendance_mode', work_base === 'hybrid' ? hybridMode : work_base)
+                formData.append('latitude', locationData.lat);
+                formData.append('longitude', locationData.long);
 
-                // 2. Siapkan objek data untuk penyimpanan offline
+                // Data yang akan disimpan jika offline
                 const offlineData = {
                     user_id: data.users.id,
                     date: new Date().toISOString().split('T')[0],
@@ -577,13 +578,14 @@
                     check_in_location: `${locationData.lat}, ${locationData.long}`,
                     status: 'present',
                     attendance_mode: work_base === 'hybrid' ? hybridMode : work_base,
+                    // Konversi file ke base64 agar bisa disimpan di IndexedDB (Dexie)
                     check_in_photo: in_photoPreviewUrl 
                 };
 
-                // 3. LOGIKA OFFLINE: Jika tidak ada internet, langsung simpan lokal
                 if (!navigator.onLine) {
                     console.log("Browser offline. Menyimpan secara lokal...");
                     saveLocally(offlineData);
+                    hasCheckedInStatus = true; 
                     cancel(); // Menghentikan request ke server agar tidak error 404/timeout
                     return;
                 }
@@ -591,18 +593,25 @@
                 isSubmitting = true;
 
                 return async ({ result }) => {
+                    console.log(result)
                     if (result.type === 'success') {
-                        updateUI(result.data.absenTime);
+                        // Berhasil Online
+                        hasCheckedInStatus = true; // Langsung set true
+                        
+                        if (result.data.fromAction === 'checkin') {
+                            displayCheckIn = result.data.absenTime;
+                        } else {
+                            // Jika ini aksi logout/checkout
+                            // hasCheckedInStatus = false; 
+                            displayCheckOut = result.data.absenTime;
+                        }
                     } else {
-                        // Jika online tapi server bermasalah (500/503), tetap backup ke lokal
-                        console.log("Server error. Mencoba backup ke lokal...");
-                        saveLocally(offlineData);
+                        responseMessage = result.data.message
                     }
                     in_togglePopup();
                     isSubmitting = false;
                 };
 
-                // Fungsi pembantu di dalam scope enhance untuk merapikan kode
                 async function saveLocally(payload) {
                     const offlineResult = await attendanceStore.saveAttendanceOffline(payload);
                     if (offlineResult.success) {
@@ -617,28 +626,12 @@
                     }
                     in_togglePopup();
                 }
-
-                function updateUI(time) {
-                    hasCheckedInStatus = !hasCheckedInStatus;
-                    if (hasCheckedInStatus) displayCheckIn = time;
-                    else displayCheckOut = time;
-                }
             }}
               class="flex-[2]"
             >
-                <button 
-                    type="submit" 
-                    disabled={isSubmitting || !locationData.lat || (work_base === 'office' && !isInOfficeArea)} 
-                    class="w-full py-4 {hasCheckedInStatus ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300 transition-all"
-                >
-                    {#if isSubmitting}
-                        MENGIRIM... 
-                    {:else if !locationData.lat}
-                        MENCARI LOKASI...
-                    {:else}
-                        KONFIRMASI 
-                    {/if}
-                </button>
+              <button type="submit" disabled={isSubmitting || (work_base === 'office' && !isInOfficeArea)} class="w-full py-4 {hasCheckedInStatus ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300">
+                {isSubmitting ? 'MENGIRIM...' : 'KONFIRMASI'}
+              </button>
             </form>
           </div>
         {/if}
