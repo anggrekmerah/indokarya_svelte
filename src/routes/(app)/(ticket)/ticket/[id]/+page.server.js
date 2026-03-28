@@ -3,7 +3,7 @@ import { writeFile } from 'fs/promises';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { fail, redirect } from '@sveltejs/kit';
-import { env } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { mkdirSync } from 'fs';
 import { todayAttendance } from '$lib/tools/attendenceAPI'
 
