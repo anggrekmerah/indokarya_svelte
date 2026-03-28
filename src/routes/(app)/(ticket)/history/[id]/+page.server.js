@@ -1,6 +1,6 @@
 import { ticketDetailHistoryAPI } from '$lib/tools/ticketApi';
 import { fail, redirect } from '@sveltejs/kit';
-import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_ID } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 
 /** @type {import('./$types').PageServerLoad} */
@@ -16,7 +16,7 @@ export async function load({ params, fetch, locals, parent }) {
 
     return {
         detailTicket: detailTicket.data[0],
-        mapsKey : GOOGLE_MAPS_API_KEY,
-        mapsId : GOOGLE_MAPS_ID
+        mapsKey : env.GOOGLE_MAPS_API_KEY,
+        mapsId : env.GOOGLE_MAPS_ID
     };
 }

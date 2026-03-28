@@ -14,7 +14,7 @@
     import { browser } from '$app/environment';
     import { saveOfflineTask } from '$lib/stores/report.js'
     import AttributeItem  from '$lib/components/AttributeItem.svelte'
-    import { PUBLIC_BASE_URL_LARAVEL } from '$env/static/public';
+    import { env } from '$env/dynamic/public';
     import imageCompression from 'browser-image-compression';
     import { goto } from '$app/navigation';
     
@@ -2448,7 +2448,7 @@
 
         {#if isImage(selectedMedia.res_photo)}
             <img 
-                src={PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
+                src={env.PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
                 alt="preview"
                 class="w-full max-h-[85vh] object-contain rounded-xl"
             />
@@ -2456,7 +2456,7 @@
 
         {#if isVideo(selectedMedia.res_photo)}
             <video 
-                src={PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
+                src={env.PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
                 controls
                 autoplay
                 class="w-full max-h-[85vh] rounded-xl"

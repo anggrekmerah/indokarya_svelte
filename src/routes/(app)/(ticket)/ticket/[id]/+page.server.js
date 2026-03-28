@@ -3,7 +3,7 @@ import { writeFile } from 'fs/promises';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { fail, redirect } from '@sveltejs/kit';
-import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_ID } from '$env/static/private';
+import { env } from '$env/static/private';
 import { mkdirSync } from 'fs';
 import { todayAttendance } from '$lib/tools/attendenceAPI'
 
@@ -31,8 +31,8 @@ export async function load({ params, fetch, locals, parent }) {
     
     return {
         detailTicket: detailTicket.data[0],
-        mapsKey : GOOGLE_MAPS_API_KEY,
-        mapsId : GOOGLE_MAPS_ID,
+        mapsKey : env.GOOGLE_MAPS_API_KEY,
+        mapsId : env.GOOGLE_MAPS_ID,
     };
 }
 

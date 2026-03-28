@@ -5,7 +5,7 @@ import { writeFile } from 'fs/promises';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { fail, redirect } from '@sveltejs/kit';
-import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_ID, OFFICELAT, OFFICELONG } from '$env/dynamic/private';
+import { env } from '$env/dynamic/private';
 
 
 /** @type {import('./$types').PageServerLoad} */
@@ -53,10 +53,10 @@ export async function load({ params, fetch, locals, parent }) {
         ...returnData,
         // todayAttendance: getTodayAttendance || null, // Pastikan tidak undefined
         checkTodayAttendance: getcheckTodayAttendance || null,
-        mapsKey: GOOGLE_MAPS_API_KEY,
-        mapsId: GOOGLE_MAPS_ID,
-        officelat: OFFICELAT,
-        officelong: OFFICELONG,
+        mapsKey: env.GOOGLE_MAPS_API_KEY,
+        mapsId: env.GOOGLE_MAPS_ID,
+        officelat: env.OFFICELAT,
+        officelong: env.OFFICELONG,
         attendances: getattendance || null
     };
 }
