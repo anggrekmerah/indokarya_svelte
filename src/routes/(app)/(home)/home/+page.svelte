@@ -17,7 +17,7 @@
   } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { Loader } from '@googlemaps/js-api-loader';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { attendanceStore } from '$lib/stores/attendanceStore.js'
 
   let { data } = $props();
@@ -53,40 +53,44 @@
   };
 
 
-  let isOnline = $state(true);
-  let work_base = data.users.work_base;
-  let google
-  let isInOfficeArea = $state(true);
-  let hybridMode = $state(null);
-  let isInRange = $state(true);
-  
-  let hasCheckedIn = $derived(!!data.checkTodayAttendance?.data); 
-  let totalAtt = $derived(data.attendances?.data); 
-  
+    let isOnline = $state(true);
+    let work_base = data.users.work_base;
+    let google
+    let isInOfficeArea = $state(true);
+    let hybridMode = $state(null);
+    let isInRange = $state(true);
+    
+    let hasCheckedIn = $derived(!!data.checkTodayAttendance?.data); 
+    let totalAtt = $derived(data.attendances?.data); 
+    
   // Gunakan $derived untuk mode hybrid agar konsisten dengan data server
-  let hybridModeServer = $derived(data.checkTodayAttendance?.data?.attendance_mode || null);
+    let hybridModeServer = $derived(data.checkTodayAttendance?.data?.attendance_mode || null);
   
-  console.log('hybridModeServer', hybridModeServer)
-  const currentStats = baseStats[work_base] || [];
+    const currentStats = baseStats[work_base] || [];
   
-  // State variables
-  let isSubmitting = $state(false);
-  let in_showPopup = $state(false);
-  let in_photoTaken = $state(false);
-  let in_photoPreviewUrl = $state('https://placehold.co/150x150/e2e8f0/64748b?text=Photo');
-  let localAttendance  = $state(null)
-  let in_videoElement = $state(null); 
-  let in_canvasElement = $state(null); 
-  let in_stream = $state(null);
-  let in_capturedFile = $state(null); // Menyimpan objek File
-  let in_cameraFacingMode = $state('user');
-  let locationData = $state({ lat: null, long: null });
-  let responseMessage = $state(null);
-  let currentAttendance = $derived(data.checkTodayAttendance?.data || localAttendance);
-//   let hasCheckedInStatus = $derived(!!currentAttendance);
-  let hasCheckedInStatus = $state(!!data.checkTodayAttendance?.data || localAttendance);
-  let displayCheckIn = $derived(currentAttendance?.check_in_time || '--:--');
-  let displayCheckOut = $derived(currentAttendance?.check_out_time || '--:--');
+    // State variables
+    let isSubmitting = $state(false);
+    let in_showPopup = $state(false);
+    let in_photoTaken = $state(false);
+    let in_photoPreviewUrl = $state('https://placehold.co/150x150/e2e8f0/64748b?text=Photo');
+    let localAttendance  = $state(null)
+    let in_videoElement = $state(null); 
+    let in_canvasElement = $state(null); 
+    let in_stream = $state(null);
+    let in_capturedFile = $state(null); // Menyimpan objek File
+    let in_cameraFacingMode = $state('user');
+    let locationData = $state({ lat: null, long: null });
+    let responseMessage = $state(null);
+    let currentAttendance = $derived(data.checkTodayAttendance?.data || localAttendance);
+    //   let hasCheckedInStatus = $derived(!!currentAttendance);
+    let hasCheckedInStatus = $state(!!data.checkTodayAttendance?.data || localAttendance);
+    let displayCheckIn = $derived(currentAttendance?.check_in_time || '--:--');
+    let displayCheckOut = $derived(currentAttendance?.check_out_time || '--:--');
+
+    let watchId = null;
+    let accuracy = 0;
+    let distance = 0;
+    let isLocating = false;
 
   // Menentukan label status
   let statusLabel = $derived.by(() => {
@@ -131,6 +135,9 @@
             hybridMode = currentAttendance.attendance_mode;
         }
   });
+
+  onDestroy(() => stopWatching());
+
 
   onMount(async () => {
       // Tunggu core SDK selesai
@@ -217,49 +224,76 @@
 
   // new google.maps.LatLng(-6.19110210798804, 106.65742604634274),
   function in_getLocation() {
-      if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition(
-              // Parameter 1: Success Callback (Fungsi)
-              (position) => {
-                  locationData = {
-                      lat: position.coords.latitude,
-                      long: position.coords.longitude
-                  }; 
+        // 1. Reset state & bersihkan watch sebelumnya jika ada
+        stopWatching();
+        isLocating = true;
+        responseMessage = "Mencari sinyal GPS akurat...";
 
-                  if (work_base === 'office' || (work_base === 'hybrid' && hybridMode === 'office')) {
-                      const officeLat = parseFloat(data.officelat); 
-                      const officeLong = parseFloat(data.officelong); 
-                      console.log(officeLat)
-                      console.log(position.coords.latitude)
-                      const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                          new google.maps.LatLng(locationData.lat, locationData.long),
-                          new google.maps.LatLng(officeLat, officeLong)
-                      ); 
+        // 2. Pasang Timeout (Pintu Keluar)
+        // Jika dalam 15 detik akurasi tidak kunjung ideal, gunakan yang ada atau stop.
+        const timeoutId = setTimeout(() => {
+            if (isLocating) {
+                stopWatching();
+                if (accuracy > 100) {
+                    responseMessage = `Gagal mendapatkan sinyal akurat (Akurasi: ${Math.round(accuracy)}m). Coba dekat jendela.`;
+                }
+            }
+        }, 15000); // 15 detik batas tunggu
 
-                      if (distance > 100) {
-                          isInOfficeArea = false; 
-                          responseMessage = `ANDA DI LUAR AREA KANTOR (${Math.round(distance)}m). ABSEN DITOLAK.`; 
-                            in_togglePopup()
-                        } else {
-                          isInOfficeArea = true; 
-                          responseMessage = null; 
-                      }
-                  }
-              },
-              // Parameter 2: Error Callback (Fungsi) - INI YANG TADI BERMASALAH
-              (err) => {
-                  console.error("Gagal mendapatkan lokasi:", err); 
-                  responseMessage = "GAGAL MENDAPATKAN LOKASI. PASTIKAN GPS AKTIF.";
-              },
-              // Parameter 3: Options (Object)
-              { 
-                  enableHighAccuracy: true, 
-                  timeout: 15000 ,
-                  maximumAge: 0
-              } 
-          );
-      }
-  }
+        // 3. Mulai Memantau Lokasi
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                accuracy = position.coords.accuracy;
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                // Hitung jarak (Gmaps API)
+                const officelat = parseFloat(data.officelat); 
+                const officelong = parseFloat(data.officelong)
+                const officeLatLng = new google.maps.LatLng(officelat, officelong);
+                const userLatLng = new google.maps.LatLng(lat, lng);
+                distance = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, officeLatLng);
+
+                // LOGIKA: Jika akurasi sudah sangat bagus (misal < 20m), langsung kunci & stop
+                if (accuracy <= 20) {
+                    clearTimeout(timeoutId);
+                    finalizeLocation();
+                }
+            },
+            (err) => {
+                clearTimeout(timeoutId);
+                stopWatching();
+                responseMessage = "Gagal akses GPS. Pastikan izin lokasi aktif.";
+            },
+            { 
+                enableHighAccuracy: true, 
+                maximumAge: 0 
+            }
+        );
+    }
+
+    function finalizeLocation() {
+    stopWatching();
+    isLocating = false;
+    
+    if (distance <= 100) {
+        responseMessage = "Lokasi terkunci! Silahkan absen.";
+        isInOfficeArea = true;
+    } else {
+        responseMessage = `Anda di luar area (${Math.round(distance)}m).`;
+        isInOfficeArea = false;
+        in_togglePopup();
+    }
+}
+
+function stopWatching() {
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+    }
+    isLocating = false;
+}
+
 
   function in_handleTakePhoto() {
       if (!in_videoElement || !in_canvasElement) return;
