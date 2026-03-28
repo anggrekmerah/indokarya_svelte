@@ -243,6 +243,11 @@
         // 3. Mulai Memantau Lokasi
         watchId = navigator.geolocation.watchPosition(
             (position) => {
+                 locationData = {
+                      lat: position.coords.latitude,
+                      long: position.coords.longitude
+                  }; 
+                  console.log(locationData)
                 accuracy = position.coords.accuracy;
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
@@ -255,7 +260,7 @@
                 distance = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, officeLatLng);
 
                 // LOGIKA: Jika akurasi sudah sangat bagus (misal < 20m), langsung kunci & stop
-                if (accuracy <= 20) {
+                if (accuracy <= 50) {
                     clearTimeout(timeoutId);
                     finalizeLocation();
                 }
@@ -273,26 +278,26 @@
     }
 
     function finalizeLocation() {
-    stopWatching();
-    isLocating = false;
-    
-    if (distance <= 100) {
-        responseMessage = "Lokasi terkunci! Silahkan absen.";
-        isInOfficeArea = true;
-    } else {
-        responseMessage = `Anda di luar area (${Math.round(distance)}m).`;
-        isInOfficeArea = false;
-        in_togglePopup();
+        stopWatching();
+        isLocating = false;
+        
+        if (distance <= 100) {
+            responseMessage = "Lokasi terkunci! Silahkan absen.";
+            isInOfficeArea = true;
+        } else {
+            responseMessage = `Anda di luar area (${Math.round(distance)}m).`;
+            isInOfficeArea = false;
+            in_togglePopup();
+        }
     }
-}
 
-function stopWatching() {
-    if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
+    function stopWatching() {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+        isLocating = false;
     }
-    isLocating = false;
-}
 
 
   function in_handleTakePhoto() {
