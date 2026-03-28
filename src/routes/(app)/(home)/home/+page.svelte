@@ -90,10 +90,26 @@
 
   // Menentukan label status
   let statusLabel = $derived.by(() => {
-    if (data.checkTodayAttendance?.data) return "Sudah Hadir (Online)";
-    if (localAttendance) return "Sudah Hadir (Offline)";
+    const attendanceData = data.checkTodayAttendance?.data;
+
+    // 1. Cek apakah data ada dan check_out_time sudah terisi
+    if (attendanceData?.check_out_time) {
+        return "Sudah Absen Keluar";
+    }
+
+    // 2. Jika belum check-out, cek apakah sudah absen masuk secara online
+    if (attendanceData) {
+        return "Sudah Hadir (Online)";
+    }
+
+    // 3. Cek kehadiran offline
+    if (localAttendance) {
+        return "Sudah Hadir (Offline)";
+    }
+
+    // 4. Default jika tidak ada data sama sekali
     return "Belum Absen";
-  });
+    });
 
   const mapsConf = {
       apiKey:data.mapsKey,
@@ -213,16 +229,18 @@
                   if (work_base === 'office' || (work_base === 'hybrid' && hybridMode === 'office')) {
                       const officeLat = parseFloat(data.officelat); 
                       const officeLong = parseFloat(data.officelong); 
-                      
+                      console.log(officeLat)
+                      console.log(position.coords.latitude)
                       const distance = google.maps.geometry.spherical.computeDistanceBetween(
                           new google.maps.LatLng(locationData.lat, locationData.long),
                           new google.maps.LatLng(officeLat, officeLong)
                       ); 
 
-                      if (distance > 20) {
+                      if (distance > 100) {
                           isInOfficeArea = false; 
                           responseMessage = `ANDA DI LUAR AREA KANTOR (${Math.round(distance)}m). ABSEN DITOLAK.`; 
-                      } else {
+                            in_togglePopup()
+                        } else {
                           isInOfficeArea = true; 
                           responseMessage = null; 
                       }
@@ -236,7 +254,8 @@
               // Parameter 3: Options (Object)
               { 
                   enableHighAccuracy: true, 
-                  timeout: 10000 
+                  timeout: 15000 ,
+                  maximumAge: 0
               } 
           );
       }
@@ -340,13 +359,20 @@
 
         <div class="pt-2">
             {#if work_base === 'office' || work_base === 'technician'}
-                <button 
-                    onclick={in_togglePopup}
-                    class="w-full py-5 {hasCheckedInStatus ? 'bg-rose-600 shadow-rose-100' : 'bg-indigo-600 shadow-indigo-100'} text-white rounded-[1.5rem] font-bold text-sm shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
-                >
-                    {#if hasCheckedInStatus}<RefreshCcw size={18}/>{:else}<Camera size={18}/>{/if}
-                    {hasCheckedInStatus ? 'ABSEN KELUAR (CHECK OUT)' : 'ABSEN MASUK (CHECK IN)'}
-                </button>
+                {#if displayCheckOut !== '--:--'}
+                    <div class="p-3 bg-rose-50 text-rose-700 rounded-xl border border-rose-100 text-[10px] font-bold text-center" transition:slide>
+                        ⚠️ ANDA SUDAH ABSEN KELUAR
+                    </div>
+                {:else}
+                    <button 
+                        onclick={in_togglePopup}
+                        class="w-full py-5 {hasCheckedInStatus ? 'bg-rose-600 shadow-rose-100' : 'bg-indigo-600 shadow-indigo-100'} text-white rounded-[1.5rem] font-bold text-sm shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                    >
+                        {#if hasCheckedInStatus}<RefreshCcw size={18}/>{:else}<Camera size={18}/>{/if}
+                        {hasCheckedInStatus ? 'ABSEN KELUAR (CHECK OUT)' : 'ABSEN MASUK (CHECK IN)'}
+                    </button>
+                {/if}    
+                
             {:else if work_base === 'hybrid'}
                 {#if !hasCheckedInStatus}
                     <div class="grid grid-cols-1 gap-3">

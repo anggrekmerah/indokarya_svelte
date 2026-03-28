@@ -225,7 +225,7 @@
                 { lat: centerMarker.lat, lng: centerMarker.lng }
             );
 
-            isNearDestination = distance <= 50;
+            isNearDestination = distance <= 100;
             console.log('isNearDestination', distance)
             console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
             console.log(wasNearDestination)
