@@ -5,7 +5,7 @@ import { writeFile } from 'fs/promises';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { fail, redirect } from '@sveltejs/kit';
-import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_ID, OFFICELAT, OFFICELONG } from '$env/static/private';
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_ID, OFFICELAT, OFFICELONG } from '$env/dynamic/private';
 
 
 /** @type {import('./$types').PageServerLoad} */
