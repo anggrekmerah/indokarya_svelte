@@ -257,6 +257,12 @@
                 const officelong = parseFloat(data.officelong)
                 const officeLatLng = new google.maps.LatLng(officelat, officelong);
                 const userLatLng = new google.maps.LatLng(lat, lng);
+
+                console.log("DEBUG DATA:");
+                console.log("Data Office Raw:", data.officelat, data.officelong);
+                console.log("Parsed Office:", officelat, officelong);
+                console.log("User Pos:", lat, lng);
+
                 distance = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, officeLatLng);
 
                 // LOGIKA: Jika akurasi sudah sangat bagus (misal < 20m), langsung kunci & stop
