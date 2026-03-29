@@ -56,12 +56,13 @@
     let isOnline = $state(true);
     let work_base = data.users.work_base;
     let google
-    let isInOfficeArea = $state(true);
+    let isInOfficeArea = $state(false);
     let hybridMode = $state(null);
     let isInRange = $state(true);
     
     let hasCheckedIn = $derived(!!data.checkTodayAttendance?.data); 
     let totalAtt = $derived(data.attendances?.data); 
+    let activeMode = $derived(work_base === 'hybrid' ? hybridMode : work_base);
     
   // Gunakan $derived untuk mode hybrid agar konsisten dengan data server
     let hybridModeServer = $derived(data.checkTodayAttendance?.data?.attendance_mode || null);
@@ -90,7 +91,7 @@
     let watchId = null;
     let accuracy = 0;
     let distance = 0;
-    let isLocating = false;
+    let isLocating = $state(false);
 
   // Menentukan label status
   let statusLabel = $derived.by(() => {
@@ -227,18 +228,22 @@
         // 1. Reset state & bersihkan watch sebelumnya jika ada
         stopWatching();
         isLocating = true;
-        responseMessage = "Mencari sinyal GPS akurat...";
+        responseMessage = "Mencari sinyal GPS...";
+
+        isInOfficeArea = (activeMode !== 'office');
 
         // 2. Pasang Timeout (Pintu Keluar)
         // Jika dalam 15 detik akurasi tidak kunjung ideal, gunakan yang ada atau stop.
         const timeoutId = setTimeout(() => {
             if (isLocating) {
-                stopWatching();
-                if (accuracy > 100) {
-                    responseMessage = `Gagal mendapatkan sinyal akurat (Akurasi: ${Math.round(accuracy)}m). Coba dekat jendela.`;
+                if (!locationData.lat) {
+                    responseMessage = "Sinyal GPS lambat, sedang mencoba mendapatkan kordinat...";
+                } else {
+                    // Sudah dapat kordinat, paksa proses selesai (meskipun akurasinya kurang bagus)
+                    finalizeLocation(); 
                 }
             }
-        }, 15000); // 15 detik batas tunggu
+        }, 5000); // 15 detik batas tunggu
 
         // 3. Mulai Memantau Lokasi
         watchId = navigator.geolocation.watchPosition(
@@ -274,7 +279,13 @@
             (err) => {
                 clearTimeout(timeoutId);
                 stopWatching();
-                responseMessage = "Gagal akses GPS. Pastikan izin lokasi aktif.";
+                if (activeMode === 'office') {
+                    isInOfficeArea = false;
+                    responseMessage = "Gagal akses GPS. Izin lokasi wajib untuk absen kantor. ";
+                } else {
+                    isInOfficeArea = true; 
+                    responseMessage = "GPS tidak akurat, lokasi mungkin kurang presisi.";
+                }
             },
             { 
                 enableHighAccuracy: true, 
@@ -286,13 +297,23 @@
     function finalizeLocation() {
         stopWatching();
         isLocating = false;
-        
-        if (distance <= 100) {
-            isInOfficeArea = true;
+
+        if (activeMode === 'office') {
+            if (distance <= 50) {
+                isInOfficeArea = true;
+                responseMessage = null;
+            } else {
+                responseMessage = `Anda di luar area (${Math.round(distance)}m). Maksimal jarak 50m.`;
+                isInOfficeArea = false;
+            }
         } else {
-            responseMessage = `Anda di luar area (${Math.round(distance)}m).`;
-            isInOfficeArea = false;
-            in_togglePopup();
+            // Mode WFA / Technician
+            isInOfficeArea = true;
+            if (accuracy > 50) {
+                responseMessage = `Lokasi kurang presisi (${Math.round(accuracy)}m), tapi absen WFA diizinkan.`;
+            } else {
+                responseMessage = null;
+            }
         }
     }
 
@@ -620,8 +641,17 @@
 
       <div class="p-6 mb-2">
         {#if !in_photoTaken}
-          <button type="button" onclick={in_handleTakePhoto} class="w-full py-5 bg-indigo-600 text-white rounded-[1.5rem] font-bold shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 transition-all active:scale-95">
-            <Camera size={20} /> AMBIL FOTO SEKARANG
+            <button 
+                type="button" 
+                onclick={in_handleTakePhoto} 
+                disabled={isLocating || (activeMode === 'office' && !isInOfficeArea)}
+                class="w-full py-5 bg-indigo-600 text-white rounded-[1.5rem] font-bold shadow-xl disabled:bg-slate-300 flex items-center justify-center gap-3 transition-all"
+            >
+            {#if isLocating}
+                <RefreshCcw size={20} class="animate-spin" /> VALIDASI LOKASI...
+            {:else}
+                <Camera size={20} /> AMBIL FOTO SEKARANG
+            {/if}
           </button>
         {:else}
           <div class="flex gap-3">
@@ -699,9 +729,23 @@
             }}
               class="flex-[2]"
             >
-              <button type="submit" disabled={isSubmitting || (work_base === 'office' && !isInOfficeArea)} class="w-full py-4 {hasCheckedInStatus ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300">
-                {isSubmitting ? 'MENGIRIM...' : 'KONFIRMASI'}
-              </button>
+                <button 
+                    type="submit" 
+                    disabled={
+                        isSubmitting ||
+                        (activeMode === 'office' && (!isInOfficeArea || !locationData.lat)) || 
+                        (activeMode !== 'office' && !locationData.lat)
+                    }
+                    class="w-full py-4 {hasCheckedInStatus ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300"
+                >
+                    {#if isSubmitting}
+                        MENGIRIM... 
+                    {:else if isLocating}
+                        MENCARI LOKASI...
+                    {:else}
+                        KONFIRMASI
+                    {/if}
+                </button>
             </form>
           </div>
         {/if}
