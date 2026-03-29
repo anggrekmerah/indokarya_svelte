@@ -1,9 +1,11 @@
 <script>
-    import { fade, fly } from 'svelte/transition';
+    import { fade, fly, slide } from 'svelte/transition';
     import { enhance } from '$app/forms';
     import { tick } from 'svelte';
     import { onMount, onDestroy } from 'svelte';
-        
+    import imageCompression from 'browser-image-compression';
+    import { invalidateAll } from '$app/navigation';
+
     let { data } = $props();
 
     // State untuk data list pengajuan (Simulasi hasil Join tabel transaksi & master)
@@ -13,6 +15,7 @@
     let isLoadingMore = $state(false);
     let hasMoreData = $state(true);
     let isError = $state(false);
+    let files = $state(null);
 
     let showForm = $state(false);
     let isSubmitting = $state(false);
@@ -21,9 +24,13 @@
 
     // Gunakan $derived untuk mencari detail cuti yang dipilih secara otomatis
     let selectedLeaveDetail = $derived(
-        data.allLeaves.find(l => l.id == selectedLeaveId)
+        data.allcuti.find(l => l.id_leave == selectedLeaveId)
     );
 
+    let isUnitJam = $derived(selectedLeaveDetail?.unit === 'jam');
+    let isNeedAttachment = $derived(selectedLeaveDetail?.is_need_attachment === 'Y');
+    let isIzin = $derived(selectedLeaveDetail?.category === 'izin');
+    
     // Fungsi pembantu warna status
     const getStatusColor = (status) => {
     switch (status) {
@@ -107,6 +114,7 @@
         if (leaveSubmissions.length > 0 && document.documentElement.scrollHeight <= window.innerHeight) {
             loadMore();
         }
+
     });
 
     // Event Listener Scroll
@@ -120,6 +128,47 @@
         window.addEventListener('scroll', onScroll);
         return () => window.removeEventListener('scroll', onScroll);
     });
+
+    async function handleEnhance({ formData, cancel }) {
+        isSubmitting = true;
+        
+        const imageFile = formData.get('attachment');
+        
+        // Lakukan kompresi jika ada file gambar (terutama untuk Selfie/Izin)
+        if (imageFile && imageFile.size > 0 && imageFile.type.startsWith('image/')) {
+            const options = {
+                maxSizeMB: 1,          // Maksimal 1MB
+                maxWidthOrHeight: 1280, // Resize jika terlalu besar
+                useWebWorker: true
+            };
+            
+            try {
+                const compressedFile = await imageCompression(imageFile, options);
+                // Ganti file asli dengan file yang sudah dikompresi di dalam FormData
+                formData.set('attachment', compressedFile, imageFile.name);
+            } catch (error) {
+                console.error("Compression error:", error);
+            }
+        }
+
+        return async ({ result, update }) => {
+            if (result.type === 'success') { 
+                showForm = false;
+                page = 1;
+                // ... logic refresh data ...
+                await update(); 
+
+                const refreshRes = await fetch('/api/leaves', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ page: 1, limit: 10 })
+                });
+                leaveSubmissions = await refreshRes.json();
+                
+            }
+            isSubmitting = false;
+        };
+    }
 </script>
 
 <main class="min-h-screen bg-slate-50 p-4 md:p-8 pt-24 md:pt-28 font-sans">
@@ -233,24 +282,8 @@
       <form 
         method="POST" 
         action="?/ajukanCuti" 
-        use:enhance={() => {
-            isSubmitting = true; 
-            return async ({ result, update }) => {
-            if (result.type === 'success') { 
-                showForm = false; 
-                // Opsional: Reset data dan ambil ulang page 1 agar data terbaru muncul di paling atas
-                page = 1;
-                const refreshRes = await fetch('/api/leaves', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ page: 1, limit: 10 })
-                });
-                leaveSubmissions = await refreshRes.json();
-                await update(); 
-            }
-            isSubmitting = false; 
-            };
-        }}
+        use:enhance={handleEnhance}
+        enctype="multipart/form-data"
         >
         <div class="space-y-4 mb-8 text-left">
           {#if responseMessage}
@@ -268,39 +301,77 @@
             required 
             class="block bg-slate-50 border-none rounded-2xl p-4 mt-1 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
             >
-            {#each data.allLeaves as leave} 
-                <option value="{leave.id}">{leave.nama_cuti} ({leave.kode_cuti})</option>
+            {#each data.allcuti as leave} 
+                <option value="{leave.id_leave}">{leave.nama_cuti} ({leave.kode_cuti})</option>
             {/each}
             </select>
 
             {#if selectedLeaveDetail}
-                <div 
-                    transition:fade 
-                    class="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl flex gap-3 items-start"
-                >
-                    <div class="bg-indigo-600 p-1.5 rounded-lg text-white mt-0.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider mb-1">
-                            Ketentuan {selectedLeaveDetail.nama_cuti}
-                        </p>
-                        <p class="text-xs text-indigo-700 leading-relaxed">
-                            {selectedLeaveDetail.deskripsi || "Tidak ada ketentuan khusus untuk jenis cuti ini."}
-                        </p>
+                <div transition:fade class="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                    <p class="text-[11px] font-bold text-indigo-900 uppercase mb-1">
+                        Ketentuan {selectedLeaveDetail.nama_cuti} ({selectedLeaveDetail.category})
+                    </p>
+                    <p class="text-xs text-indigo-700">{selectedLeaveDetail.deskripsi || "Tidak ada deskripsi."}</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="bg-white px-2 py-1 rounded-md border text-[10px] font-bold text-indigo-600">
+                            UNIT: {selectedLeaveDetail.unit.toUpperCase()}
+                        </span>
                         {#if selectedLeaveDetail.maksimal_cuti}
-                            <div class="mt-2 inline-block bg-white px-2 py-1 rounded-md border border-indigo-200 text-[10px] font-bold text-indigo-600">
-                                MAKSIMAL: {selectedLeaveDetail.maksimal_cuti} HARI
-                            </div>
+                            <span class="bg-white px-2 py-1 rounded-md border text-[10px] font-bold text-indigo-600">
+                                MAKS: {selectedLeaveDetail.maksimal_cuti} {selectedLeaveDetail.unit}
+                            </span>
                         {/if}
                     </div>
                 </div>
             {/if}
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="mulai" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">
+                        {isUnitJam ? 'Mulai Jam' : 'Mulai Tanggal'}
+                    </label> 
+                    <input 
+                        id="mulai" 
+                        type={isUnitJam ? "datetime-local" : "date"} 
+                        name="tanggal_mulai" 
+                        required 
+                        class="w-full bg-slate-50 border-none rounded-2xl p-4 mt-1 font-bold text-slate-700" 
+                    />
+                </div>
+                <div>
+                    <label for="selesai" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">
+                        {isUnitJam ? 'Selesai Jam' : 'Selesai Tanggal'}
+                    </label> 
+                    <input 
+                        id="selesai" 
+                        type={isUnitJam ? "datetime-local" : "date"} 
+                        name="tanggal_selesai" 
+                        required 
+                        class="w-full bg-slate-50 border-none rounded-2xl p-4 mt-1 font-bold text-slate-700" 
+                    />
+                </div>
+            </div>
+
+            {#if isNeedAttachment || isIzin}
+                <div transition:slide>
+                    <label for="attachment" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">
+                        {isIzin ? 'Foto Selfie (Wajib Izin)' : 'Lampiran Pendukung'}
+                    </label>
+                    <input 
+                        id="attachment"
+                        name="attachment"
+                        type="file"
+                        accept="image/*"
+                        capture={isIzin ? "user" : null} 
+                        required={isIzin || isNeedAttachment}
+                        bind:files
+                        class="w-full bg-slate-50 border-dashed border-2 border-slate-200 rounded-2xl p-4 mt-1 font-bold text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700"
+                    />
+                </div>
+            {/if}
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <!-- <div class="grid grid-cols-2 gap-4">
             <div>
               <label for="mulai" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">Mulai</label> 
               <input id="mulai" type="date" name="tanggal_mulai" required class="w-full bg-slate-50 border-none rounded-2xl p-4 mt-1 font-bold text-slate-700" />
@@ -309,7 +380,7 @@
               <label for="selesai" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">Selesai</label> 
               <input id="selesai" type="date" name="tanggal_selesai" required class="w-full bg-slate-50 border-none rounded-2xl p-4 mt-1 font-bold text-slate-700" />
             </div>
-          </div>
+          </div> -->
 
           <div>
             <label for="alasan" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">Alasan</label> 

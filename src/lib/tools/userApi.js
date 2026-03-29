@@ -16,3 +16,11 @@ export async function userChangeFcmToken(body, fetch) {
     return responseAPI;
     
 }
+
+export async function userChangeProfile(body, fetch) {
+
+    const responseAPI = await requestAPI('PUT','/user/update-profile', body, fetch) 
+
+    return responseAPI;
+    
+}

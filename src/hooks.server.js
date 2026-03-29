@@ -23,16 +23,16 @@ export async function handle({ event, resolve }) {
 	const isPublic = publicRoutes.some(route => pathname.startsWith(route));
     const isApiRoute = pathname.startsWith('/api');
 
-	if (!isMobile && !isAsset) {
-        // Opsi A: Lempar ke halaman khusus "Mobile Only"
-        // throw redirect(307, '/mobile-only'); 
+	// if (!isMobile && !isAsset) {
+    //     // Opsi A: Lempar ke halaman khusus "Mobile Only"
+    //     // throw redirect(307, '/mobile-only'); 
 
-        // Opsi B: Berikan respon teks sederhana
-        return new Response('Akses ditolak. Aplikasi ini hanya dapat diakses melalui perangkat mobile.', {
-            status: 403,
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-    }
+    //     // Opsi B: Berikan respon teks sederhana
+    //     return new Response('Akses ditolak. Aplikasi ini hanya dapat diakses melalui perangkat mobile.', {
+    //         status: 403,
+    //         headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    //     });
+    // }
 
 	// ✅ jika route public dan tidak login → langsung lanjut
 	if (!sessionId && isPublic) {

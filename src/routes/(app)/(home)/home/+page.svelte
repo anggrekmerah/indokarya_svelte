@@ -288,7 +288,6 @@
         isLocating = false;
         
         if (distance <= 100) {
-            responseMessage = "Lokasi terkunci! Silahkan absen.";
             isInOfficeArea = true;
         } else {
             responseMessage = `Anda di luar area (${Math.round(distance)}m).`;
