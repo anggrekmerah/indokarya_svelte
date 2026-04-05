@@ -52,7 +52,6 @@
       console.log('currentPath', currentPath)
       if (newPath !== currentPath && !hasActiveFilters()) {
           console.log(`[PAGE CHANGE END] New path detected: ${newPath}`);
-          await resetFilter()
           // Update the tracker
           currentPath = newPath;
       }
@@ -95,7 +94,6 @@
     <div class="flex items-center gap-3">
       <div class="flex items-center text-xs font-semibold text-gray-600">
         <button onclick={ async () => {
-                await resetFilter()
                 await goto('/task', { keepFocus: true, replaceState: true })
             }} class="relative p-1 text-gray-600 hover:text-gray-800 transition-colors duration-200 focus:outline-none">
             <List class="h-6 w-6" />

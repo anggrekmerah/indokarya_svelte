@@ -85,35 +85,38 @@
     let currentAttendance = $derived(data.checkTodayAttendance?.data || localAttendance);
     //   let hasCheckedInStatus = $derived(!!currentAttendance);
     let hasCheckedInStatus = $state(!!data.checkTodayAttendance?.data || localAttendance);
-    let displayCheckIn = $derived(currentAttendance?.check_in_time || '--:--');
-    let displayCheckOut = $derived(currentAttendance?.check_out_time || '--:--');
+    let displayCheckIn = $state(currentAttendance?.check_in_time || '--:--');
+    let displayCheckOut = $state(currentAttendance?.check_out_time || '--:--');
 
     let watchId = null;
     let accuracy = 0;
     let distance = 0;
     let isLocating = $state(false);
 
-  // Menentukan label status
-  let statusLabel = $derived.by(() => {
-    const attendanceData = data.checkTodayAttendance?.data;
+    // Menentukan label status
+    // Perbaikan logika statusLabel di dalam <script>
+    let statusLabel = $derived.by(() => {
+        // 1. Ambil data terbaru dari server atau hasil input lokal/manual
+        const attendanceData = data.checkTodayAttendance?.data;
+        
+        // 2. Prioritas Tertinggi: Cek apakah sudah absen keluar
+        // Kita cek data server ATAU state UI displayCheckOut jika baru saja klik Checkout
+        if (attendanceData?.check_out_time || (displayCheckOut !== '--:--')) {
+            return "Sudah Absen Keluar";
+        }
 
-    // 1. Cek apakah data ada dan check_out_time sudah terisi
-    if (attendanceData?.check_out_time) {
-        return "Sudah Absen Keluar";
-    }
+        // 3. Prioritas Kedua: Cek apakah sudah absen masuk (Hadir)
+        // Sesuai logika Anda: jika check_in_time tidak null, maka Sudah Hadir
+        if (attendanceData?.check_in_time || (displayCheckIn !== '--:--')) {
+            // Cek apakah data berasal dari server atau hanya di lokal (offline)
+            if (!attendanceData && localAttendance) {
+                return "Sudah Hadir (Offline)";
+            }
+            return "Sudah Hadir (Online)";
+        }
 
-    // 2. Jika belum check-out, cek apakah sudah absen masuk secara online
-    if (attendanceData) {
-        return "Sudah Hadir (Online)";
-    }
-
-    // 3. Cek kehadiran offline
-    if (localAttendance) {
-        return "Sudah Hadir (Offline)";
-    }
-
-    // 4. Default jika tidak ada data sama sekali
-    return "Belum Absen";
+        // 4. Default: Jika data null atau tidak ada jam masuk
+        return "Belum Absen";
     });
 
   const mapsConf = {
@@ -353,7 +356,9 @@
       icon: Briefcase,
       color: 'text-blue-600',
       bg: 'bg-blue-50',
-      desc: 'Tahun 2024'
+      desc: 'Tahun ' + new Date().toLocaleDateString('id-ID', { 
+            year: 'numeric' 
+        })
     },
     {
       label: 'Kehadiran Bulan Ini',
@@ -423,20 +428,29 @@
         {/if}
 
         <div class="pt-2">
-            {#if work_base === 'office' || work_base === 'technician'}
-                {#if displayCheckOut !== '--:--'}
-                    <div class="p-3 bg-rose-50 text-rose-700 rounded-xl border border-rose-100 text-[10px] font-bold text-center" transition:slide>
-                        ⚠️ ANDA SUDAH ABSEN KELUAR
-                    </div>
-                {:else}
+            {#if work_base === 'office' || work_base === 'technician' || work_base === 'helper'}
+                
                     <button 
+                        disabled={displayCheckOut !== '--:--'}
                         onclick={in_togglePopup}
-                        class="w-full py-5 {hasCheckedInStatus ? 'bg-rose-600 shadow-rose-100' : 'bg-indigo-600 shadow-indigo-100'} text-white rounded-[1.5rem] font-bold text-sm shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                        class="w-full py-5 
+                        {displayCheckOut !== '--:--' 
+                            ? 'bg-gray-400 shadow-gray-200 cursor-not-allowed' 
+                            : hasCheckedInStatus 
+                                ? 'bg-rose-600 shadow-rose-100' 
+                                : 'bg-indigo-600 shadow-indigo-100'} 
+                                text-white rounded-[1.5rem] font-bold text-sm shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
                     >
                         {#if hasCheckedInStatus}<RefreshCcw size={18}/>{:else}<Camera size={18}/>{/if}
-                        {hasCheckedInStatus ? 'ABSEN KELUAR (CHECK OUT)' : 'ABSEN MASUK (CHECK IN)'}
+                        {#if displayCheckOut !== '--:--'}
+                            <RefreshCcw size={18}/>
+                            SUDAH ABSEN KELUAR
+                        {:else if hasCheckedInStatus}
+                            ABSEN KELUAR (CHECK OUT)
+                        {:else}
+                            ABSEN MASUK (CHECK IN)
+                        {/if}
                     </button>
-                {/if}    
                 
             {:else if work_base === 'hybrid'}
                 {#if !hasCheckedInStatus}
@@ -467,7 +481,7 @@
     </section>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {#if work_base !== 'office'}
+      {#if work_base == 'hybrid' || work_base == 'tehcnician'}
           <!-- <main class="flex-1 overflow-y-auto pb-20">  -->
             <div class="p-2 md:p-6">
                 <!-- Dashboard Cards Section -->
@@ -696,10 +710,10 @@
                     console.log(result)
                     if (result.type === 'success') {
                         // Berhasil Online
-                        hasCheckedInStatus = true; // Langsung set true
                         
                         if (result.data.fromAction === 'checkin') {
                             displayCheckIn = result.data.absenTime;
+                            hasCheckedInStatus = true; // Langsung set true
                         } else {
                             // Jika ini aksi logout/checkout
                             // hasCheckedInStatus = false; 

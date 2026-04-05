@@ -5,6 +5,8 @@
 
   const now = new Date();
   let currentYear = now.getFullYear();
+  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  let prevMonthName = new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(prevDate);
 
   // PERBAIKAN: Gunakan objek 'now' secara langsung dalam format()
   let currentMonth = new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(now) 
@@ -16,77 +18,76 @@
   };
 
   const generateMonthlyLogs = (serverData) => {
-    let logs = [];
-    const now = new Date();
-    const currentYear = now.getFullYear(); // Sesuai konteks sistem [cite: 2]
-    const currentMonth = now.getMonth();    // Februari (0-indexed) [cite: 1]
-    const today = now.getDate();
+      let logs = [];
+      const now = new Date();
+      const currentYear = now.getFullYear(); 
+      const currentMonth = now.getMonth(); 
 
-    // Mendapatkan jumlah hari dalam bulan ini
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      // Menentukan tanggal mulai: tanggal 25 bulan sebelumnya
+      const startDate = new Date(currentYear, currentMonth - 1, 25);
+      // Menentukan tanggal akhir: tanggal 24 bulan ini
+      const endDate = new Date(currentYear, currentMonth, 24);
 
-    const getDayName = (date) => {
-        // PERBAIKAN: Gunakan 'long' (huruf kecil semua)
-        return new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date);
-    };
+      const getDayName = (date) => { 
+          return new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date); 
+      }; 
 
-    const getMonthName = (date) => {
-        return new Intl.DateTimeFormat('id-ID', { month: 'short' }).format(date);
-    };
-    let i = 1
-    for (let e = 0; e <= daysInMonth; e++) {
-        // Buat objek tanggal untuk setiap hari di bulan tersebut
-        const dateObj = new Date(currentYear, currentMonth, i);
-        
-        // Format ISO lokal (YYYY-MM-DD) tanpa masalah timezone
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const day = String(dateObj.getDate()).padStart(2, '0');
-        const dateString = `${year}-${month}-${day}`;
-        
-        const dayName = getDayName(dateObj);
-        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+      const getMonthName = (date) => { 
+          return new Intl.DateTimeFormat('id-ID', { month: 'short' }).format(date); 
+      }; 
 
-        // Cari data server yang cocok dengan tanggal ini
-        const record = serverData.find(d => d.date === dateString);
+      // Melakukan iterasi dari startDate hingga endDate
+      let iterDate = new Date(startDate);
+      while (iterDate <= endDate) {
+          const year = iterDate.getFullYear(); 
+          const month = String(iterDate.getMonth() + 1).padStart(2, '0'); 
+          const day = String(iterDate.getDate()).padStart(2, '0'); 
+          const dateString = `${year}-${month}-${day}`; 
+          
+          const dayName = getDayName(iterDate); 
+          const isWeekend = iterDate.getDay() === 0 || iterDate.getDay() === 6; 
+          
+          const record = serverData.find(d => d.date === dateString); 
 
-        if (record) {
-            // Parsing koordinat "lat long" 
-            const coords = record.check_in_location ? record.check_in_location.split(' ') : [null, null];
+          if (record) { 
+              const coords = record.check_in_location ? 
+                  record.check_in_location.split(' ') : [null, null]; 
 
-            logs.push({
-                date: `${day} ${getMonthName(dateObj)}`,
-                day: dayName,
-                checkIn: record.check_in_time ? record.check_in_time.substring(0, 5) : "--:--", 
-                checkOut: record.check_out_time ? record.check_out_time.substring(0, 5) : "--:--", 
-                status: record.status, 
-                lat: coords[0], 
-                long: coords[1], 
-                photo: record.check_in_photo ? record.check_in_photo.replace('./static', '') : null, 
-                isData: true
-            });
-        } else {
-            // Logika status jika tidak ada data absen
-            let displayStatus = "-";
-            if (i <= today) {
-                displayStatus = isWeekend ? "Libur" : "absent";
-            }
+              logs.push({
+                  date: `${day} ${getMonthName(iterDate)}`, 
+                  day: dayName, 
+                  checkIn: record.check_in_time ? record.check_in_time.substring(0, 5) : "--:--", 
+                  checkOut: record.check_out_time ? record.check_out_time.substring(0, 5) : "--:--", 
+                  status: record.status, 
+                  lat: coords[0], 
+                  long: coords[1], 
+                  photo: record.check_in_photo ? record.check_in_photo.replace('./static', '') : null, 
+                  isData: true 
+              });
+          } else { 
+              let displayStatus = "-"; 
+              // Bandingkan dengan waktu sekarang untuk status 'absent'
+              if (iterDate <= now) { 
+                  displayStatus = isWeekend ? "Libur" : "absent"; 
+              }
 
-            logs.push({
-                date: `${day} ${getMonthName(dateObj)}`,
-                day: dayName,
-                checkIn: "--:--",
-                checkOut: "--:--",
-                status: displayStatus,
-                lat: null,
-                long: null,
-                photo: null,
-                isData: false
-            });
-        }
-        i++
-    }
-    return logs;
+              logs.push({
+                  date: `${day} ${getMonthName(iterDate)}`, 
+                  day: dayName, 
+                  checkIn: "--:--",
+                  checkOut: "--:--",
+                  status: displayStatus,
+                  lat: null, 
+                  long: null, 
+                  photo: null, 
+                  isData: false 
+              });
+          }
+          
+          // Pindah ke hari berikutnya
+          iterDate.setDate(iterDate.getDate() + 1);
+      }
+      return logs;
   };
 
   let monthlyLogs = generateMonthlyLogs(data.monthlyAttendance.data);
@@ -104,7 +105,9 @@
   <div class="max-w-2xl mx-auto px-4">
     <div class="mb-6">
       <h1 class="text-2xl font-black text-slate-800 tracking-tight">Riwayat Absensi</h1>
-      <p class="text-slate-500 font-medium">{currentMonth} {currentYear}</p>
+      <p class="text-slate-500 font-medium text-sm">
+        Periode: 25 {prevMonthName} — 24 {currentMonth} {currentYear}
+      </p>
     </div>
 
     <div class="space-y-3">

@@ -1,8 +1,5 @@
 import { redirect } from '@sveltejs/kit';
 import { userByTokenAPI } from '$lib/tools/tokenApi';
-// import { ClientMenuAPI } from '$lib/tools/menuApi';
-// import { userGroupAPI } from '$lib/tools/userGroupAPI';
-// import { LangAPI } from '$lib/tools/langApi';
 import {getUserCache, setUserCache} from '$lib/server/userCache'
 
 const publicRoutes = [
@@ -19,11 +16,12 @@ export async function handle({ event, resolve }) {
 	const sessionId = event.cookies.get('session_id');
 
 	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-	const isAsset = event.url.pathname.startsWith('/_app') || event.url.pathname.startsWith('/favicon.ico');
+	
+	const isAsset = pathname.includes('.') || pathname.startsWith('/favicon.ico');
 	const isPublic = publicRoutes.some(route => pathname.startsWith(route));
     const isApiRoute = pathname.startsWith('/api');
 
-	// if (!isMobile && !isAsset) {
+	// if (!isMobile && !isAsset && !isApiRoute) {
     //     // Opsi A: Lempar ke halaman khusus "Mobile Only"
     //     // throw redirect(307, '/mobile-only'); 
 
@@ -35,12 +33,12 @@ export async function handle({ event, resolve }) {
     // }
 
 	// ✅ jika route public dan tidak login → langsung lanjut
-	if (!sessionId && isPublic) {
-		return resolve(event);
-	}
+	if (!sessionId && (isPublic || isAsset)) {
+        return resolve(event);
+    }
 
 	// ❌ jika bukan public dan tidak login → redirect
-	if (!sessionId && !isPublic) {
+	if (!sessionId && !isPublic && !isAsset) {
 
 		// jika request API
 		if (isApiRoute) {

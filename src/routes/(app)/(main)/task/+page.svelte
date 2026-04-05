@@ -4,6 +4,7 @@
     import { ioClient } from '$lib/stores/socket.js'; 
     import TicketUnlock from '$lib/components/TicketUnlock.svelte';
     import TicketLock from '$lib/components/TicketLock.svelte';
+    import TicketReadOnly from '$lib/components/TicketReadOnly.svelte';
     
     import { 
         items, 
@@ -79,20 +80,38 @@
         
         {#if messages}
             {#each messages as ticket} 
-                {#if ticket.ticket_priority_lock == 'N'}
+                {#if data.userHelper}
+                    <TicketReadOnly {ticket} />
+                {:else}
+                    {#if ticket.ticket_priority_lock == 'N'}
+                        <TicketUnlock {ticket} />
+                    {:else}
+                        <TicketLock {ticket} />
+                    {/if}
+                {/if}
+                <!-- {#if ticket.ticket_priority_lock == 'N'}
                     <TicketUnlock ticket={ticket} />
                 {:else}
                     <TicketLock ticket={ticket} />
-                {/if}
+                {/if} -->
             {/each}    
         {/if}
         
         {#each $items as ticket} 
-            {#if ticket.ticket_priority_lock == 'N'}
+            {#if data.userHelper}
+                <TicketReadOnly {ticket} />
+            {:else}
+                {#if ticket.ticket_priority_lock == 'N'}
+                    <TicketUnlock {ticket} />
+                {:else}
+                    <TicketLock {ticket} />
+                {/if}
+            {/if}
+            <!-- {#if ticket.ticket_priority_lock == 'N'}
                 <TicketUnlock ticket={ticket} />
             {:else}
                 <TicketLock ticket={ticket} />
-            {/if}
+            {/if} -->
         {:else}
             {#if !$isLoading && messages.length === 0}
                 <div class="py-4 text-center text-gray-500">

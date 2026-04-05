@@ -29,7 +29,8 @@ export const load = async ({ cookies, url, locals, fetch }) => {
 		LangAPI({ id_user: locals.user.id }, fetch),
 		userGroupAPI({ id_user: locals.user.id }, fetch)
 	]);
-    
+    console.log('menu.data')
+	console.log(menu.data)
     return {
         user: locals.user,
 		menu: menu.data,

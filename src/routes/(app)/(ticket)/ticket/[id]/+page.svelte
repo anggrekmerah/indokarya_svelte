@@ -225,7 +225,7 @@
                 { lat: centerMarker.lat, lng: centerMarker.lng }
             );
 
-            isNearDestination = distance <= 100;
+            isNearDestination = distance <= 30;
             console.log('isNearDestination', distance)
             console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
             console.log(wasNearDestination)
@@ -793,6 +793,10 @@
             // isInfoExpanded = false;
             watchOriginMarked = true
         }
+
+        setTimeout(() => {
+          window.location.href = `google.navigation:q=${centerMarker.lat},${centerMarker.lng}`;
+        }, 300);
     }
 
     async function checkDistance(userLocation, destination, radius) {
@@ -1288,16 +1292,16 @@
       </div>
       <section class="flex flex-initial items-center justify-center">
         <button onclick={handleToggleMap}
-        class=" -translate-y-4
-               flex items-center justify-center w-8 h-8 rounded-full
-               bg-[#407ad6] text-white font-semibold shadow-xl
-               hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-        {#if !isMapExpanded}
-          <Route class="w-6 h-6" />
-        {:else}
-          <RouteOff class="w-6 h-6" />
-        {/if}
-      </button>
+            class=" -translate-y-4
+                flex items-center justify-center w-8 h-8 rounded-full
+                bg-[#407ad6] text-white font-semibold shadow-xl
+                hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            {#if !isMapExpanded}
+            <Route class="w-6 h-6" />
+            {:else}
+            <RouteOff class="w-6 h-6" />
+            {/if}
+        </button>
       </section>
       
     </section>
@@ -1722,7 +1726,7 @@
                         let totalSize = 0;
                         compressedFiles.forEach(f => totalSize += f.size);
                         
-                        if (totalSize > 524288) { // 512KB
+                        if (totalSize > 1000000) { // 1MB
                             alertMessage = `Total ukuran file terlalu besar(${(totalSize).toFixed(2)} KB). Silakan kurangi jumlah foto/video.`;
                             loadingCheckout = false;
                             alertPopup = true;

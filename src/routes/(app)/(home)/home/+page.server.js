@@ -24,7 +24,7 @@ export async function load({ params, fetch, locals, parent }) {
         ,data_attendance    :null
     };
 
-    if(parentData.user.work_base == 'office') {
+    if(parentData.user.work_base == 'office' || parentData.user.work_base == 'helper') {
         returnData = {}
     } else {
         

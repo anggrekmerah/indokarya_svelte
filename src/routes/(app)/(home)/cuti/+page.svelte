@@ -16,6 +16,7 @@
     let hasMoreData = $state(true);
     let isError = $state(false);
     let files = $state(null);
+    let filesManual = $state(null);
 
     let showForm = $state(false);
     let isSubmitting = $state(false);
@@ -133,19 +134,31 @@
         isSubmitting = true;
         
         const imageFile = formData.get('attachment');
-        
-        // Lakukan kompresi jika ada file gambar (terutama untuk Selfie/Izin)
-        if (imageFile && imageFile.size > 0 && imageFile.type.startsWith('image/')) {
-            const options = {
-                maxSizeMB: 1,          // Maksimal 1MB
-                maxWidthOrHeight: 1280, // Resize jika terlalu besar
+        const attachFile = formData.get('attachmentManual');
+        const options = {
+                maxSizeMB: 0.4,          // Maksimal 1MB
+                maxWidthOrHeight: 500, // Resize jika terlalu besar
                 useWebWorker: true
             };
+
+        // Lakukan kompresi jika ada file gambar (terutama untuk Selfie/Izin)
+        if (imageFile && imageFile.size > 0 && imageFile.type.startsWith('image/')) {
             
             try {
                 const compressedFile = await imageCompression(imageFile, options);
                 // Ganti file asli dengan file yang sudah dikompresi di dalam FormData
                 formData.set('attachment', compressedFile, imageFile.name);
+            } catch (error) {
+                console.error("Compression error:", error);
+            }
+        }
+
+        if (attachFile && attachFile.size > 0 && attachFile.type.startsWith('image/')) {
+            
+            try {
+                const compressedFile = await imageCompression(attachFile, options);
+                // Ganti file asli dengan file yang sudah dikompresi di dalam FormData
+                formData.set('attachmentManual', compressedFile, attachFile.name);
             } catch (error) {
                 console.error("Compression error:", error);
             }
@@ -164,7 +177,9 @@
                     body: JSON.stringify({ page: 1, limit: 10 })
                 });
                 leaveSubmissions = await refreshRes.json();
-                
+
+            } else {
+                responseMessage = result.data.message
             }
             isSubmitting = false;
         };
@@ -369,6 +384,17 @@
                     />
                 </div>
             {/if}
+
+            <label for="attachment" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">
+                Lampiran Pendukung
+            </label>
+            <input 
+                id="attachmentManual"
+                name="attachmentManual"
+                type="file"
+                accept="image/*"
+                class="w-full bg-slate-50 border-dashed border-2 border-slate-200 rounded-2xl p-4 mt-1 font-bold text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700"
+            />
           </div>
 
           <!-- <div class="grid grid-cols-2 gap-4">

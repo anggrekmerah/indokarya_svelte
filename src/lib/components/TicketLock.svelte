@@ -18,7 +18,7 @@
         <div class="flex items-center">
             <img
             class="h-8 w-8 rounded-full ring-2 ring-white transition-transform duration-300 hover:scale-110"
-            src="https://placehold.co/32x32/gray/ffffff?text={ticket.cust_name[0]}"
+            src="https://placehold.co/32x32/gray/ffffff?text={ticket.cust_name}"
             alt="User avatar"
             />
             <span class="ml-2 font-medium text-gray-500">{ticket.cust_name}</span>

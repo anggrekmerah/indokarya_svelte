@@ -19,6 +19,7 @@ export async function load({ url, fetch, locals, parent }) {
 
     // You can use fetch to call APIs or access database here
     const idUser = parentData.user.id
+    const isHelper = parentData.user.work_base === 'helper';
     let payload = {"ID" : idUser, from:'server'}
     let isSearch = false
 
@@ -75,6 +76,7 @@ export async function load({ url, fetch, locals, parent }) {
     return {
         listTicket: listTicket.data,
         search : isSearch,
-        loadmore : false
+        loadmore : false,
+        userHelper: isHelper
     };
 }

@@ -36,6 +36,7 @@ export const actions = {
         const tgl_selesai_raw = data.get('tanggal_selesai');
         const alasan = data.get('alasan');
         const file = data.get('attachment');
+        const fileManual = data.get('attachmentManual');
 
         if (!jenis_cuti_id || !tgl_mulai_raw || !tgl_selesai_raw || !alasan) {
             return fail(400, { message: 'Semua field wajib diisi!' });
@@ -78,6 +79,24 @@ export const actions = {
             }
         }
 
+        let fileNameDbManual = null;
+        if (fileManual && fileManual.size > 0) {
+            try {
+                const uploadDirManual = join(process.cwd(), 'static', 'uploads');
+                if (!existsSync(uploadDirManual)) mkdirSync(uploadDirManual, { recursive: true });
+
+                const cleanFileNameManual = `${Date.now()}-${fileManual.name.replace(/\s+/g, '_')}`;
+                const fullPathManual = join(uploadDirManual, cleanFileNameManual);
+                
+                const buffer = Buffer.from(await fileManual.arrayBuffer());
+                writeFileSync(fullPathManual, buffer);
+                
+                fileNameDbManual = cleanFileNameManual; // Simpan nama file saja atau path lengkap sesuai kebutuhan
+            } catch (err) {
+                return fail(500, { message: 'Gagal simpan file.' });
+            }
+        }
+
         try {
             // Sesuaikan payload dengan struktur tabel t_leave_requests
             const payload = {
@@ -89,6 +108,7 @@ export const actions = {
                 end_time: end.time,
                 reason: alasan,
                 attachment_file: fileNameDb,
+                attachment_file_manual: fileNameDbManual,
                 total_days: totalDays,
                 status: 'pending'
             };

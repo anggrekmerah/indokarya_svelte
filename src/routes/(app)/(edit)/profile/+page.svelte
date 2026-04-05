@@ -16,8 +16,8 @@
 
         // Opsi Kompresi
         const options = {
-            maxSizeMB: 1,           // Ukuran maksimal 1MB
-            maxWidthOrHeight: 1024, // Resolusi maksimal 1024px
+            maxSizeMB: 0.4,           // Maksimal 400KB (di bawah limit 512KB server)
+            maxWidthOrHeight: 500,    // Resolusi 500px sudah cukup untuk foto profil
             useWebWorker: true
         };
 
