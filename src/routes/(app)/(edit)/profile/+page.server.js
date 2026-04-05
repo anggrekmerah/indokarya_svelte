@@ -61,7 +61,7 @@ export const actions = {
             }
 
             // URL yang akan disimpan di database atau dikembalikan ke UI
-            const finalImageUrl = fileName ? `/uploads/${fileName}` : null;
+            const finalImageUrl = fileName ? `/static-files/uploads/${fileName}` : null;
 
             const payload = { 
                 'ID': userID,
