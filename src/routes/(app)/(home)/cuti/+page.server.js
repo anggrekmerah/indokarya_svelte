@@ -4,6 +4,9 @@ import { allCuti } from '$lib/tools/cuti'
 import { fail, redirect } from '@sveltejs/kit';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { get } from 'svelte/store';
+import { t } from 'svelte-i18n';
+
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, fetch, locals, parent }) {
@@ -19,8 +22,6 @@ export async function load({ params, fetch, locals, parent }) {
 
     const allcuti = await allCuti({}, fetch)
     returnData.allcuti = allcuti.data
-
-    console.log(returnData)
 
     return returnData;
 }
@@ -39,7 +40,7 @@ export const actions = {
         const fileManual = data.get('attachmentManual');
 
         if (!jenis_cuti_id || !tgl_mulai_raw || !tgl_selesai_raw || !alasan) {
-            return fail(400, { message: 'Semua field wajib diisi!' });
+            return fail(400, { message: get(t)('Semua field wajib diisi!') });
         }
 
         // --- Logic Pemisahan Date & Time ---
@@ -75,7 +76,7 @@ export const actions = {
                 
                 fileNameDb = cleanFileName; // Simpan nama file saja atau path lengkap sesuai kebutuhan
             } catch (err) {
-                return fail(500, { message: 'Gagal simpan file.' });
+                return fail(500, { message: get(t)('Gagal simpan file') });
             }
         }
 
@@ -93,7 +94,7 @@ export const actions = {
                 
                 fileNameDbManual = cleanFileNameManual; // Simpan nama file saja atau path lengkap sesuai kebutuhan
             } catch (err) {
-                return fail(500, { message: 'Gagal simpan file.' });
+                return fail(500, { message: get(t)('Gagal simpan file') });
             }
         }
 
@@ -115,10 +116,10 @@ export const actions = {
 
             const response = await leaveRequest(payload, fetch);
             
-            if (response.error) return fail(500, { message: response.message });
+            if (response.error) return fail(500, { message: get(t)(response.message_key) });
             return { success: true };
         } catch (error) {
-            return fail(500, { message: 'Kesalahan sistem API.' });
+            return fail(500, { message: get(t)('Kesalahan sistem API') });
         }
     }
 };

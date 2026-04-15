@@ -6,7 +6,8 @@ import { fail, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { mkdirSync } from 'fs';
 import { todayAttendance } from '$lib/tools/attendenceAPI'
-
+import { t } from 'svelte-i18n';
+import { get } from 'svelte/store';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, fetch, locals, parent }) {
@@ -18,7 +19,7 @@ export async function load({ params, fetch, locals, parent }) {
 
     if(!hasCheckedIn){
         // If the process is successful, redirect the user
-        const message = encodeURIComponent("Anda belum absen masuk hari ini!");
+        const message = encodeURIComponent(get(t)("Anda belum absen masuk hari ini!"));
         throw redirect(302, `/home?error=${message}`);
     }
 
@@ -46,13 +47,13 @@ export const actions = {
         const id_ticket = data.get('id_ticket');
         const reason_unlocked = data.get('reason_unlocked');
         if (!reason_unlocked) {
-            return fail(400, { message: 'Please fill the reason.' });
+            return fail(400, { message: get(t)('Please fill the reason') });
         }
         try {
             const unlockReport = await ticketRequestUnlockAPI({ID:locals.user.id, id_ticket: id_ticket, unlock_reason: reason_unlocked }, fetch)
             
             if(unlockReport.error)
-                return fail(500, { message: 'Server error during unlock ticket.' });
+                return fail(500, { message: get(t)(unlockReport.message_key) });
 
             return {
                 status: 200,
@@ -60,7 +61,7 @@ export const actions = {
             };
         } catch (error) {
             
-            return fail(500, { message: 'Server error during upload.' });
+            return fail(500, { message: get(t)('Server error during upload') });
         }
         
     },
@@ -73,7 +74,7 @@ export const actions = {
         const directoryPath = './static/report/' + id_ticket + '/';
 
         if (!photo) {
-            return fail(400, { message: 'No photo uploaded.' });
+            return fail(400, { message: get(t)('No photo uploaded') });
         }
 
         mkdirSync(directoryPath, { recursive: true });
@@ -85,7 +86,7 @@ export const actions = {
             await writeFile(filePath, Buffer.from(await photo.arrayBuffer()));
             const updateTicket = await ticketCheckInAPI({ID:idUser, id_ticket: id_ticket, photo:filePath }, fetch)
             if(updateTicket.error)
-                return fail(500, { message: 'Server error during update ticket.' });
+                return fail(500, { message: get(t)(updateTicket.message_key) });
 
             return {
                 status: 200,
@@ -93,15 +94,14 @@ export const actions = {
             };
         } catch (error) {
             console.error('Failed to save file:', error);
-            return fail(500, { message: 'Server error during upload.' });
+            return fail(500, { message: get(t)('Server error during upload') });
         }
 
     },
 
     checkout: async ({request, fetch, locals, params}) => {
         const data = await request.formData();
-        console.log('CHECKOUT')
-        console.log(data)
+        
         const reportDescription = data.get('description')
         const ticketId = data.get('id_ticket')
         const machineReports = data.get('machineReports')
@@ -128,19 +128,19 @@ export const actions = {
         const directoryPath = './static/report/' + ticketId + '/';
         
         if (!machineReports) {
-            return fail(400, { message: 'Report Machine Reports must not empty.' });
+            return fail(400, { message: get(t)('Report Machine Reports must not empty') });
         }
 
         if (!generalNotes) {
-            return fail(400, { message: 'Report General Notes must not empty.' });
+            return fail(400, { message: get(t)('Report General Notes must not empty') });
         }
 
         if (!reportDescription) {
-            return fail(400, { message: 'Report Description must not empty.' });
+            return fail(400, { message: get(t)('Report Description must not empty') });
         }
 
         if (!signature) {
-            return fail(400, { message: 'Signature must set.' });
+            return fail(400, { message: get(t)('Signature must set') });
         }
 
  
@@ -189,7 +189,7 @@ export const actions = {
                 
             // If there is an error, fail and return immediately
             if (updateTicket.error) {
-                return fail(500, { message: 'Server error during update ticket.' });
+                return fail(500, { message: get(t)(updateTicket.message_key) });
             }
 
            return {
@@ -200,7 +200,7 @@ export const actions = {
         } catch (error) {
             
             console.error('Failed to save file:', error);
-            return fail(500, { message: 'Server error during upload.' });
+            return fail(500, { message: get(t)('Server error during upload') });
         }
  
     }

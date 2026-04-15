@@ -1,7 +1,7 @@
 <script>
     import { enhance } from '$app/forms';
     import { onMount } from 'svelte';
-    import { _ } from 'svelte-i18n';
+    import { t } from 'svelte-i18n';
     import { goto } from '$app/navigation'; // Tambahkan baris ini [cite: 5]
 
     let { data } = $props();
@@ -43,8 +43,8 @@
     <div class="hidden lg:block bg-indigo-700 dark:bg-indigo-900 relative overflow-hidden">
       <div class="w-full h-full bg-cover bg-center opacity-10" style="background-image: url('/images/tech-pattern.svg');"></div>
       <div class="absolute inset-0 flex flex-col justify-end p-12 text-white">
-        <h1 class="text-4xl font-bold mb-4">Security Management</h1>
-        <p class="text-lg">Set a strong password to protect your technician account.</p>
+        <h1 class="text-4xl font-bold mb-4">{$t('Security Management')}</h1>
+        <p class="text-lg">{$t('Set a strong password to protect your technician account')}.</p>
       </div>
     </div>
    
@@ -57,8 +57,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
             </svg>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">{$_('Reset Password')}</h2>
-          <p class="font-medium text-base sm:text-lg text-gray-600 dark:text-gray-400">Please enter your new password below.</p>
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">{$t('Reset Password')}</h2>
+          <p class="font-medium text-base sm:text-lg text-gray-600 dark:text-gray-400">{$t('Please enter your new password below')}.</p>
         </div>
         
         
@@ -73,7 +73,7 @@
 
           <div class="space-y-4">
             <div>
-              <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+              <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{$t('New Password')}</label>
               <input
                 id="password"
                 name="password"
@@ -85,7 +85,7 @@
             </div>
 
             <div>
-              <label for="confirm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
+              <label for="confirm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{$t('Confirm New Password')}</label>
               <input
                 id="confirm"
                 name="confirm"
@@ -108,16 +108,16 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg> 
-              {$_('Processing...')}
+              {$t('Processing...')}
             {:else}
-              {$_('Reset Password')}
+              {$t('Reset Password')}
             {/if}
             </button>
           </div>
 
           <div class="text-center">
              <a href="/login" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
-               {$_('Back to Login')}
+               {$t('Back to Login')}
              </a>
           </div>
         </form>

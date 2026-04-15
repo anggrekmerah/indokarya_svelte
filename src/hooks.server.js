@@ -1,6 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import { userByTokenAPI } from '$lib/tools/tokenApi';
 import {getUserCache, setUserCache} from '$lib/server/userCache'
+import { locale } from 'svelte-i18n';
+
 
 const publicRoutes = [
 	'/login',
@@ -20,17 +22,20 @@ export async function handle({ event, resolve }) {
 	const isAsset = pathname.includes('.') || pathname.startsWith('/favicon.ico');
 	const isPublic = publicRoutes.some(route => pathname.startsWith(route));
     const isApiRoute = pathname.startsWith('/api');
+	const lang = event.cookies.get('lang') || event.request.headers.get('accept-language')?.split(',')[0].split('-')[0] || 'id';
 
-	if (!isMobile && !isAsset && !isApiRoute) {
-        // Opsi A: Lempar ke halaman khusus "Mobile Only"
-        // throw redirect(307, '/mobile-only'); 
+	locale.set(lang);
 
-        // Opsi B: Berikan respon teks sederhana
-        return new Response('Akses ditolak. Aplikasi ini hanya dapat diakses melalui perangkat mobile.', {
-            status: 403,
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-    }
+	// if (!isMobile && !isAsset && !isApiRoute) {
+    //     // Opsi A: Lempar ke halaman khusus "Mobile Only"
+    //     // throw redirect(307, '/mobile-only'); 
+
+    //     // Opsi B: Berikan respon teks sederhana
+    //     return new Response('Akses ditolak. Aplikasi ini hanya dapat diakses melalui perangkat mobile.', {
+    //         status: 403,
+    //         headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    //     });
+    // }
 
 	// ✅ jika route public dan tidak login → langsung lanjut
 	if (!sessionId && (isPublic || isAsset)) {

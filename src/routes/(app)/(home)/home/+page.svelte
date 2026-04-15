@@ -19,7 +19,8 @@
   import { Loader } from '@googlemaps/js-api-loader';
   import { onMount, onDestroy } from 'svelte';
   import { attendanceStore } from '$lib/stores/attendanceStore.js'
-
+  import { t, locale } from 'svelte-i18n';
+  
   let { data } = $props();
   
   let baseStats = {
@@ -67,7 +68,7 @@
   // Gunakan $derived untuk mode hybrid agar konsisten dengan data server
     let hybridModeServer = $derived(data.checkTodayAttendance?.data?.attendance_mode || null);
   
-    const currentStats = baseStats[work_base] || [];
+    const currentStats = $t(baseStats[work_base]) || [];
   
     // State variables
     let isSubmitting = $state(false);
@@ -210,7 +211,7 @@
           }
       } catch (err) {
           console.error("Error accessing the camera:", err);
-          alert("Gagal mengakses kamera. Pastikan izin diberikan.");
+          alert($t("Gagal mengakses kamera. Pastikan izin diberikan"));
       }
   }
 
@@ -231,7 +232,7 @@
         // 1. Reset state & bersihkan watch sebelumnya jika ada
         stopWatching();
         isLocating = true;
-        responseMessage = "Mencari sinyal GPS...";
+        responseMessage = $t("Mencari sinyal GPS...");
 
         isInOfficeArea = (activeMode !== 'office');
 
@@ -240,7 +241,7 @@
         const timeoutId = setTimeout(() => {
             if (isLocating) {
                 if (!locationData.lat) {
-                    responseMessage = "Sinyal GPS lambat, sedang mencoba mendapatkan kordinat...";
+                    responseMessage = $t("Sinyal GPS lambat, sedang mencoba mendapatkan kordinat...");
                 } else {
                     // Sudah dapat kordinat, paksa proses selesai (meskipun akurasinya kurang bagus)
                     finalizeLocation(); 
@@ -284,10 +285,10 @@
                 stopWatching();
                 if (activeMode === 'office') {
                     isInOfficeArea = false;
-                    responseMessage = "Gagal akses GPS. Izin lokasi wajib untuk absen kantor. ";
+                    responseMessage = $t("Gagal akses GPS. Izin lokasi wajib untuk absen kantor");
                 } else {
                     isInOfficeArea = true; 
-                    responseMessage = "GPS tidak akurat, lokasi mungkin kurang presisi.";
+                    responseMessage = $t("GPS tidak akurat, lokasi mungkin kurang presisi");
                 }
             },
             { 
@@ -306,14 +307,14 @@
                 isInOfficeArea = true;
                 responseMessage = null;
             } else {
-                responseMessage = `Anda di luar area (${Math.round(distance)}m). Maksimal jarak 50m.`;
+                responseMessage = $t(`Anda di luar area (${Math.round(distance)}m). Maksimal jarak 50m`);
                 isInOfficeArea = false;
             }
         } else {
             // Mode WFA / Technician
             isInOfficeArea = true;
             if (accuracy > 50) {
-                responseMessage = `Lokasi kurang presisi (${Math.round(accuracy)}m), tapi absen WFA diizinkan.`;
+                responseMessage = $t(`Lokasi kurang presisi (${Math.round(accuracy)}m), tapi absen WFA diizinkan`);
             } else {
                 responseMessage = null;
             }
@@ -350,9 +351,9 @@
 
   const stats = $derived([
     {
-      label: `Sisa ${totalAtt?.totalSisaCuti?.[0]?.nama_cuti ?? '-'}`,
+      label: `${$t('Sisa')} ${totalAtt?.totalSisaCuti?.[0]?.nama_cuti ?? '-'}`,
       value: totalAtt?.totalSisaCuti?.[0]?.sisa_cuti ?? '-',
-      unit: 'Hari',
+      unit: $t('Hari'),
       icon: Briefcase,
       color: 'text-blue-600',
       bg: 'bg-blue-50',
@@ -361,22 +362,22 @@
         })
     },
     {
-      label: 'Kehadiran Bulan Ini',
+      label: $t('Kehadiran Bulan Ini'),
       value: totalAtt?.totalHadir?.[0]?.total_kehadiran ?? '-',
-      unit: 'Hari',
+      unit: $t('Hari'),
       icon: UserCheck,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50',
-      desc: 'Status: Aktif'
+      desc: $t('Status: Aktif')
     },
     {
-      label: 'Rata-rata Jam Kerja',
+      label: $t('Rata-rata Jam Kerja'),
       value: totalAtt?.totalJamKerja?.[0]?.avg_jam_kerja ?? '-',
-      unit: 'Jam/Hari',
+      unit: $t('Jam/Hari'),
       icon: Clock,
       color: 'text-purple-600',
       bg: 'bg-purple-50',
-      desc: 'Produktivitas Baik'
+      desc: $t('Produktivitas Baik')
     }
   ]);
 
@@ -398,25 +399,25 @@
                     <Calendar size={18} class="text-slate-500"/>
                 </div>
                 <div>
-                    <p class="text-xs font-bold text-slate-800">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-                    <p class="text-[10px] text-slate-400 font-medium">Jam Kerja: 08:00 - 17:00</p>
+                    <p class="text-xs font-bold text-slate-800">{new Date().toLocaleDateString($locale, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                    <p class="text-[10px] text-slate-400 font-medium">{$t('Jam Kerja: 08:00 - 17:00')}</p>
                 </div>
             </div>
             {#if hasCheckedInStatus}
                 <div class="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
                     <span class="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                    <span class="text-[10px] font-bold text-emerald-700 uppercase">{statusLabel}</span>
+                    <span class="text-[10px] font-bold text-emerald-700 uppercase">{ $t(statusLabel)}</span>
                 </div>
             {/if}
         </div>
 
         <div class="grid grid-cols-2 gap-4">
             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Jam Masuk</p>
+                <p class="text-[9px] font-black text-slate-400 uppercase mb-1">{$t('Jam Masuk')}</p>
                 <p class="text-lg font-bold text-slate-700">{displayCheckIn}</p>
             </div>
             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Jam Keluar</p>
+                <p class="text-[9px] font-black text-slate-400 uppercase mb-1">{$t('Jam Keluar')}</p>
                 <p class="text-lg font-bold text-slate-700">{displayCheckOut}</p>
             </div>
         </div>
@@ -444,11 +445,11 @@
                         {#if hasCheckedInStatus}<RefreshCcw size={18}/>{:else}<Camera size={18}/>{/if}
                         {#if displayCheckOut !== '--:--'}
                             <RefreshCcw size={18}/>
-                            SUDAH ABSEN KELUAR
+                            {$t('SUDAH ABSEN KELUAR')}
                         {:else if hasCheckedInStatus}
-                            ABSEN KELUAR (CHECK OUT)
+                            {$t('ABSEN KELUAR (CHECK OUT)')}
                         {:else}
-                            ABSEN MASUK (CHECK IN)
+                            {$t('ABSEN MASUK (CHECK IN)')}
                         {/if}
                     </button>
                 
@@ -458,21 +459,21 @@
                         <button onclick={() => in_toggleHybridPopup('office')} class="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl hover:border-indigo-500 flex items-center justify-between group transition-all">
                             <div class="flex items-center gap-4">
                                 <div class="p-3 bg-indigo-50 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-colors text-indigo-600"><Briefcase size={20}/></div>
-                                <span class="text-sm font-bold text-slate-700">Bekerja dari Kantor (WFO)</span>
+                                <span class="text-sm font-bold text-slate-700">{$t('Bekerja dari Kantor (WFO)')}</span>
                             </div>
                             <ChevronRight size={18} class="text-slate-300"/>
                         </button>
                         <button onclick={() => in_toggleHybridPopup('technician')} class="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl hover:border-emerald-500 flex items-center justify-between group transition-all">
                             <div class="flex items-center gap-4">
                                 <div class="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-colors text-emerald-600"><MapPin size={20}/></div>
-                                <span class="text-sm font-bold text-slate-700">Bekerja di Luar (WFA)</span>
+                                <span class="text-sm font-bold text-slate-700">{$t('Bekerja di Luar (WFA)')}</span>
                             </div>
                             <ChevronRight size={18} class="text-slate-300"/>
                         </button>
                     </div>
                 {:else}
                     <button onclick={in_togglePopup} class="w-full py-5 bg-rose-600 text-white rounded-[1.5rem] font-bold text-sm shadow-xl shadow-rose-100 active:scale-[0.98] transition-all">
-                        ABSEN KELUAR SEKARANG
+                        {$t('ABSEN KELUAR SEKARANG')}
                     </button>
                 {/if}
             {/if}
@@ -490,7 +491,7 @@
                     <!-- Total Closed Tickets Card -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border-b-4 border-emerald-500 transition-transform duration-300 hover:scale-105">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-md font-semibold text-gray-600">Total Closed Tickets</h3>
+                            <h3 class="text-md font-semibold text-gray-600">{$t('Total Closed Tickets')}</h3>
                             <div class="text-emerald-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="20 6 9 17 4 12"></polyline>
@@ -504,7 +505,7 @@
                     <!-- Total Open Tickets Card -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border-b-4 border-orange-500 transition-transform duration-300 hover:scale-105">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-md font-semibold text-gray-600">Total Open Tickets</h3>
+                            <h3 class="text-md font-semibold text-gray-600">{$t('Total Open Tickets')}</h3>
                             <div class="text-orange-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
@@ -521,7 +522,7 @@
                     <!-- Average Time to Done Card -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border-b-4 border-sky-500 transition-transform duration-300 hover:scale-105">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-md font-semibold text-gray-600">Avg. Time to Done</h3>
+                            <h3 class="text-md font-semibold text-gray-600">{$t('Avg. Time to Done')}</h3>
                             <div class="text-sky-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M12 21a9 9 0 007.41-14.79L12 2v5l-4-4"></path>
@@ -535,7 +536,7 @@
                     <!-- Total by Category Card -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border-b-4 border-violet-500 transition-transform duration-300 hover:scale-105">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-md font-semibold text-gray-600">Total by Category</h3>
+                            <h3 class="text-md font-semibold text-gray-600">{$t('Total by Category')}</h3>
                             <div class="text-violet-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h14l4 4zM16 21V5H4v16M11 5v16"></path>
@@ -544,15 +545,15 @@
                         </div>
                         <div class="mt-4 flex flex-col space-y-2 text-sm text-gray-800">
                             <div class="flex justify-between items-center">
-                                <span class="font-medium text-red-500">Urgent</span>
+                                <span class="font-medium text-red-500">{$t('Urgent')}</span>
                                 <span class="font-bold">{data.data_totalLow.total} / {data.data_totalLow.last_month}</span>
                             </div>
                             <div class="flex justify-between items-center">
-                                <span class="font-medium text-yellow-500">Medium</span>
+                                <span class="font-medium text-yellow-500">{$t('Medium')}</span>
                                 <span class="font-bold">{data.data_totalMedium.total} / {data.data_totalMedium.last_month}</span>
                             </div>
                             <div class="flex justify-between items-center">
-                                <span class="font-medium text-blue-500">Low</span>
+                                <span class="font-medium text-blue-500">{$t('Low')}</span>
                                 <span class="font-bold">{data.data_totalUrgent.total} / {data.data_totalUrgent.last_month}</span>
                             </div>
                         </div>
@@ -636,7 +637,7 @@
   <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-slate-900/60 backdrop-blur-sm" transition:fade>
     <div class="bg-white w-full max-w-md rounded-t-[3rem] md:rounded-[3rem] overflow-hidden shadow-2xl p-2" in:fly={{ y: 100 }}>
       <div class="p-6 flex justify-between items-center">
-        <h3 class="font-bold text-slate-800 text-lg">Verifikasi Wajah</h3>
+        <h3 class="font-bold text-slate-800 text-lg">{$t('Verifikasi Wajah')}</h3>
         <button type="button" onclick={in_togglePopup} class="text-slate-400 p-2 hover:bg-slate-100 rounded-full"><X size={20}/></button>
       </div>
 
@@ -662,15 +663,15 @@
                 class="w-full py-5 bg-indigo-600 text-white rounded-[1.5rem] font-bold shadow-xl disabled:bg-slate-300 flex items-center justify-center gap-3 transition-all"
             >
             {#if isLocating}
-                <RefreshCcw size={20} class="animate-spin" /> VALIDASI LOKASI...
+                <RefreshCcw size={20} class="animate-spin" /> {$t('VALIDASI LOKASI...')}
             {:else}
-                <Camera size={20} /> AMBIL FOTO SEKARANG
+                <Camera size={20} /> {$t('AMBIL FOTO SEKARANG')}
             {/if}
           </button>
         {:else}
           <div class="flex gap-3">
             <button type="button" onclick={() => { in_photoTaken = false; in_startCamera(); }} class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-colors">
-              ULANGI
+              {$t('ULANGI')}
             </button>
             <form 
               method="POST" 
@@ -729,7 +730,7 @@
                 async function saveLocally(payload) {
                     const offlineResult = await attendanceStore.saveAttendanceOffline(payload);
                     if (offlineResult.success) {
-                        responseMessage = "Absen disimpan secara lokal (Offline). Akan tersinkron otomatis saat internet kembali.";
+                        responseMessage = $t("Absen disimpan secara lokal (Offline). Akan tersinkron otomatis saat internet kembali");
                         hasCheckedInStatus = !hasCheckedInStatus; // Update UI optimis
                         
                         // Registrasi Background Sync jika didukung
@@ -753,11 +754,11 @@
                     class="w-full py-4 {hasCheckedInStatus ? 'bg-rose-600' : 'bg-emerald-600'} text-white rounded-2xl font-bold shadow-lg disabled:bg-slate-300"
                 >
                     {#if isSubmitting}
-                        MENGIRIM... 
+                        {$t('MENGIRIM... ')}
                     {:else if isLocating}
-                        MENCARI LOKASI...
+                        {$t('MENCARI LOKASI...')}
                     {:else}
-                        KONFIRMASI
+                        {$t('KONFIRMASI')}
                     {/if}
                 </button>
             </form>

@@ -11,8 +11,7 @@ export async function load({ locals, fetch, parent }) {
     const ticketTotal = await ticketTotalAPI({ID:user.id}, fetch)
     const listNotif = await getUnreadNotif({ID:user.id}, fetch)
     const totalNotif = await total({ID:user.id}, fetch)
-    console.log('ticketTotal')
-    console.log(ticketTotal)
+    
     return {
         userLang : parentData.userLang.lang
         ,users : user

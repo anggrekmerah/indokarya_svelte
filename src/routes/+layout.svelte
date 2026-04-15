@@ -4,6 +4,8 @@
 	import { onMount } from 'svelte';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte'
 	import Toast from '$lib/components/Toast.svelte';
+	import { locale } from 'svelte-i18n';
+	import '$lib/stores/i18n';
 
 	let { children } = $props();
 
@@ -14,6 +16,12 @@
         if (window.innerWidth > 1024) {
             isDesktop = true;
         }
+
+		const lang = document.documentElement.lang;
+		if (lang) {
+			$locale = lang;
+		}
+		
     });
 
 </script>

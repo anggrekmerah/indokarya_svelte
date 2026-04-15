@@ -1,5 +1,5 @@
 <script>
-    import { _ } from 'svelte-i18n';
+    import { t } from 'svelte-i18n';
     import { onMount } from 'svelte';
     import { Lock, User, MapPin, Phone, MessageSquare, FileText, Route, RouteOff, CheckCircle, ChevronDown, ChevronUp, PenSquare, XCircle, Camera, Video, Trash2, FilePlus, RefreshCcw, CameraOff, Play, StopCircle, VideoOff, LoaderCircle, ClipboardList } from 'lucide-svelte';
     import { slide } from 'svelte/transition';
@@ -247,7 +247,7 @@
 </script>
 
 <svelte:head>
-    <title>{$_('Task Details')}</title>
+    <title>{$t('Task Details')}</title>
 </svelte:head>
 
 <main class="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
@@ -258,7 +258,7 @@
         <!-- Map content goes here -->
         {#if mapsKey === 'YOUR_GOOGLE_MAPS_API_KEY' && !mapElement}
             <div class="h-full w-full flex items-center justify-center bg-gray-200 text-gray-600">
-                Map not loaded. Please set the Google Maps API Key.
+                {$t('Map not loaded. Please set the Google Maps API Key')}.
             </div>
         {/if}
       </div>
@@ -286,7 +286,7 @@
         <section class="bg-white rounded-xl shadow-lg border border-gray-100">
             <header class="flex justify-between items-center p-5 pb-0 cursor-pointer" onclick={() => isInfoExpanded = !isInfoExpanded}>
                 <h2 class="text-xl font-bold text-gray-900">
-                    {$_('Ticket Details')}
+                    {$t('Ticket Details')}
                 </h2>
                 {#if isInfoExpanded}
                     <ChevronUp class="w-5 h-5 text-gray-500" />
@@ -303,36 +303,36 @@
                         </h3>
                         
                         <p class="text-sm text-gray-500 font-light">
-                            {$_('Task ID')}: <span class="font-medium text-gray-700">#{ticketData.detailTicket.id_ticket}</span>
+                            {$t('Task ID')}: <span class="font-medium text-gray-700">#{ticketData.detailTicket.id_ticket}</span>
                         </p>
                         <p class="text-sm text-gray-500 font-light">
-                            {$_('Priority')}: 
+                            {$t('Priority')}: 
                             <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset" style="background-color: {ticketData.detailTicket.priority_color}1a; color: {ticketData.detailTicket.priority_color}; border-color: {ticketData.detailTicket.priority_color}4d;">
-                                {$_(ticketData.detailTicket.priority_name)}
+                                {$t(ticketData.detailTicket.priority_name)}
                             </span>
                         </p>
                         <p class="text-sm text-gray-500 font-light">
-                            {$_('Status')}: 
+                            {$t('Status')}: 
                             <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset" style="background-color: {ticketData.detailTicket.status_color}1a; color: {ticketData.detailTicket.status_color}; border-color: {ticketData.detailTicket.status_color}4d;">
-                                {$_(ticketData.detailTicket.status_name)}
+                                {$t(ticketData.detailTicket.status_name)}
                             </span>
                         </p>
 
                         {#if ticketData.detailTicket.id_sub_ticket}
                             <p class="text-sm text-gray-500 font-light">
-                                {$_('Parent')}: <a href="/ticket/{ticketData.detailTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{ticketData.detailTicket.id_sub_ticket}</span></a>
+                                {$t('Parent')}: <a href="/ticket/{ticketData.detailTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{ticketData.detailTicket.id_sub_ticket}</span></a>
                             </p>  
                         {/if}
                         
                         <p class="text-base text-gray-700 pt-2">
-                            <span class="font-bold">{$_('Description')}:</span> {ticketData.detailTicket.ticket_description}
+                            <span class="font-bold">{$t('Description')}:</span> {ticketData.detailTicket.ticket_description}
                         </p>
                     </div>
 
                     <hr class="border-gray-200">
 
                     <div class="space-y-3 text-sm text-gray-600">
-                        <h4 class="font-semibold text-gray-900 flex items-center"><User class="w-4 h-4 mr-2"/> {$_('Customer')}</h4>
+                        <h4 class="font-semibold text-gray-900 flex items-center"><User class="w-4 h-4 mr-2"/> {$t('Customer')}</h4>
                         <p class="font-bold">
                             {ticketData.detailTicket.cust_name}
                         </p>
@@ -353,7 +353,7 @@
         <section class="bg-white rounded-xl shadow-lg border border-gray-100">
             <header class="flex justify-between items-center p-5 cursor-pointer" onclick={() => isHistoryExpanded = !isHistoryExpanded}>
                 <h2 class="text-xl font-bold text-gray-900">
-                    {$_('Service Report')}
+                    {$t('Service Report')}
                 </h2>
                 {#if isHistoryExpanded}
                     <ChevronUp class="w-5 h-5 text-gray-500" />
@@ -367,7 +367,7 @@
 
                     <!-- Status History & Comments -->
                     <div class="space-y-4">
-                        <h3 class="flex items-center text-md font-bold text-gray-900 border-b pb-2"><RefreshCcw class="h-4 w-4 mr-2 text-blue-500"/> {$_('Status Timeline')}</h3>
+                        <h3 class="flex items-center text-md font-bold text-gray-900 border-b pb-2"><RefreshCcw class="h-4 w-4 mr-2 text-blue-500"/> {$t('Status Timeline')}</h3>
                         
                         {#if ticketData.history && ticketData.history.length > 0}
                             <div class="relative pl-6">
@@ -383,21 +383,21 @@
                                             </div>
                                             <p class="font-semibold text-gray-800">{item.status_name}</p>
                                             <p class="text-sm text-gray-600 italic mt-0.5">
-                                                {item.comment || $_('No comment.')}
+                                                {item.comment || $t('No comment.')}
                                             </p>
                                         </div>
                                     </div>
                                 {/each}
                             </div>
                         {:else}
-                            <p class="text-sm text-gray-500 italic">{$_('No history available for this ticket.')}</p>
+                            <p class="text-sm text-gray-500 italic">{$t('No history available for this ticket.')}</p>
                         {/if}
                     </div>
 
                     <!-- --- START MACHINE SERVICE REPORTS (NEW STRUCTURE) --- -->
                     <div class="space-y-6">
                         <h3 class="flex items-center text-xl font-bold text-gray-900 border-b pb-2">
-                            <ClipboardList class="h-5 w-5 mr-2 text-purple-600"/> {$_('Machine Service Details')}
+                            <ClipboardList class="h-5 w-5 mr-2 text-purple-600"/> {$t('Machine Service Details')}
                         </h3>
                         
                         {#if ticketData.machines && ticketData.machines.length > 0}
@@ -410,7 +410,7 @@
 
                                     <!-- Spare Parts for this Machine -->
                                     <div class="space-y-2 mb-4">
-                                        <h5 class="flex items-center text-md font-semibold text-gray-800"><FilePlus class="h-4 w-4 mr-2 text-red-500"/> {$_('Spare Parts Used')}</h5>
+                                        <h5 class="flex items-center text-md font-semibold text-gray-800"><FilePlus class="h-4 w-4 mr-2 text-red-500"/> {$t('Spare Parts Used')}</h5>
                                         {#if machine.spareparts.length > 0}
                                             <ul class="divide-y divide-gray-100 pl-4">
                                                 {#each machine.spareparts as part}
@@ -421,13 +421,13 @@
                                                 {/each}
                                             </ul>
                                         {:else}
-                                            <p class="text-sm text-gray-500 italic pl-4">{$_('No spare parts recorded for this machine.')}</p>
+                                            <p class="text-sm text-gray-500 italic pl-4">{$t('No spare parts recorded for this machine.')}</p>
                                         {/if}
                                     </div>
 
                                     <!-- Photos & Videos for this Machine -->
                                     <div class="space-y-2">
-                                        <h5 class="flex items-center text-md font-semibold text-gray-800"><Camera class="h-4 w-4 mr-2 text-orange-500"/> {$_('Photos & Videos')}</h5>
+                                        <h5 class="flex items-center text-md font-semibold text-gray-800"><Camera class="h-4 w-4 mr-2 text-orange-500"/> {$t('Photos & Videos')}</h5>
                                         
                                         {#if machine.media.length > 0}
                                             <div class="grid grid-cols-2 gap-3 pl-4">
@@ -467,21 +467,21 @@
                                                 {/each}
                                             </div>
                                         {:else}
-                                            <p class="text-sm text-gray-500 italic pl-4">{$_('No photos or videos attached for this machine.')}</p>
+                                            <p class="text-sm text-gray-500 italic pl-4">{$t('No photos or videos attached for this machine.')}</p>
                                         {/if}
                                     </div>
 
                                 </div>
                             {/each}
                         {:else}
-                            <p class="text-sm text-gray-500 italic">{$_('No machine details provided in the report.')}</p>
+                            <p class="text-sm text-gray-500 italic">{$t('No machine details provided in the report.')}</p>
                         {/if}
                     </div>
                     <!-- --- END MACHINE SERVICE REPORTS --- -->
                     
                     <!-- Customer Acceptance Signature (Kept outside the machine loop) -->
                     <div class="space-y-2">
-                        <h3 class="flex items-center text-md font-bold text-gray-900 border-b pb-2"><PenSquare class="h-4 w-4 mr-2 text-green-600"/> {$_('Customer Acceptance')}</h3>
+                        <h3 class="flex items-center text-md font-bold text-gray-900 border-b pb-2"><PenSquare class="h-4 w-4 mr-2 text-green-600"/> {$t('Customer Acceptance')}</h3>
                         
                         {#if ticketData.signature}
                             <div class="border border-gray-300 p-3 rounded-lg bg-gray-50">
@@ -492,10 +492,10 @@
                                     class="w-full max-h-40 object-contain mx-auto border-b border-gray-200 pb-2"
                                 >
                                 <p class="text-sm font-semibold mt-2 text-center">{ticketData.signature.signer_name}</p>
-                                <p class="text-xs text-gray-500 text-center">{$_('Signed on')} {ticketData.signature.timestamp}</p>
+                                <p class="text-xs text-gray-500 text-center">{$t('Signed on')} {ticketData.signature.timestamp}</p>
                             </div>
                         {:else}
-                            <p class="text-sm text-gray-500 italic">{$_('Signature is not yet recorded.')}</p>
+                            <p class="text-sm text-gray-500 italic">{$t('Signature is not yet recorded.')}</p>
                         {/if}
                     </div>
 
@@ -532,7 +532,7 @@
                 preload="auto"
                 tabindex="0"
             >
-                Your browser does not support the video tag.
+                {$t('Your browser does not support the video tag')}.
             </video>
         </div>
     </div>

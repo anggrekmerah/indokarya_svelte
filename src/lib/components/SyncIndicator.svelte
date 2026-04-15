@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import { isOnline } from '$lib/stores/ticketStore.js';
     import { pendingSyncCount, updatePendingCount } from '$lib/stores/syncStatus.js';
+    import { t } from 'svelte-i18n'; 
 
     onMount(() => {
         // Cek jumlah pending setiap kali komponen dimuat
@@ -16,15 +17,15 @@
 <div class="sync-indicator">
     {#if !$isOnline}
         <span class="badge offline">
-            <i class="icon-offline"></i> Offline Mode
+            <i class="icon-offline"></i> {$t('Offline Mode')} 
         </span>
     {:else if $pendingSyncCount > 0}
         <span class="badge pending">
-            <i class="icon-sync"></i> Menunggu Sinkron ({$pendingSyncCount})
+            <i class="icon-sync"></i> {$t('Menunggu Sinkron')} ({$pendingSyncCount})
         </span>
     {:else}
         <span class="badge online">
-            <i class="icon-check"></i> Terhubung & Sinkron
+            <i class="icon-check"></i> {$t('Terhubung & Sinkron')}
         </span>
     {/if}
 </div>

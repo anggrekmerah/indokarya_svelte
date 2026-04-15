@@ -1,4 +1,54 @@
 {
+    "tidak": "Tidak",
+    "ya": "Ya",
+    "manual": "Manual",
+    "input_placeholder": "Masukkan...",
+    "boolean": "Boolean",
+    "text": "Teks",
+    "number": "Angka",
+
+    "Home": "Beranda",
+    "Leave Request": "Permintaan Cuti",
+    "Attendance History": "Riwayat Kehadiran",
+    "Application": "Aplikasi",
+    "Notifications": "Notifikasi",
+    "Work Mode": "Mode Kerja",
+    
+    "Loading Page" : "Memuat Halaman",
+    "Offline Mode": "Mode Offline",
+    "Menunggu Sinkron": "Menunggu Sinkronisasi",
+    "Terhubung & Sinkron": "Terhubung & Tersinkronisasi",
+    "Nama PIC": "Nama PIC",
+    "Tidak ada PIC": "Tidak ada PIC",
+    "Tanggal Efektif": "Tanggal Efektif",
+
+    "New password and confirmation do not match": "Password baru dan konfirmasi tidak cocok",
+    "New password must be at least 8 characters long": "Password baru harus minimal 8 karakter",
+    "Incorrect current password": "Password saat ini salah",
+    "Failed change password": "Gagal mengubah password",
+    "Failed to update password due to a server error": "Gagal memperbarui password karena kesalahan server",
+
+    "Changing password...": "Sedang mengubah password...",
+    "Password updated successfully!": "Password berhasil diperbarui!",
+    "An unexpected error occurred": "Terjadi kesalahan yang tidak terduga",
+    "Server Error. Could not connect or change password": "Kesalahan server. Tidak dapat terhubung atau mengubah password",
+    "Current Password": "Password Saat Ini",
+    "New Password": "Password Baru",
+    "Confirm New Password": "Konfirmasi Password Baru",
+    "Saving...": "Menyimpan...",
+    "Minimum 8 characters": "Minimal 8 karakter",
+
+    "Nama dan Email wajib diisi": "Nama dan Email wajib diisi",
+    "Gagal menyimpan data ke server": "Gagal menyimpan data ke server",
+
+    "Employee Profile": "Profil Karyawan",
+    "Detailed view of employee information": "Tampilan detail informasi karyawan",
+    "Click photo to change": "Klik foto untuk mengubah",
+    "Current Photo": "Foto Saat Ini",
+    "Coordinates": "Koordinat",
+    "Cancel": "Batal",
+    "Save Changes": "Simpan Perubahan",
+
     "greeting": "Selamat datang di situs saya!",
     "Forgot Password": "Lupa Password",
     "Sign In" : "Masuk",
@@ -12,6 +62,7 @@
     "Open" : "Buka",
     "Assigned" : "Ditugaskan",
     "Closed" : "Selesai",
+    "Priority": "Prioritas",
     "Pending" : "Tertunda",
     "In progress" : "Sedang berlangsung",
     "Canceled" : "Batal",
@@ -46,5 +97,615 @@
     "Select":"Pilih",
     "Male":"Pria",
     "Female":"Wanitas",
-    "Update":"Rubah"
+    "Update":"Rubah",
+
+    "Perbarui keamanan kata sandi Anda": "Perbarui keamanan kata sandi Anda",
+    "Cuti": "Cuti",
+    "Daftar Absen": "Daftar Absen",
+    "Keamanan & Akun": "Keamanan & Akun",
+    "Detail akun dan informasi personal": "Detail akun dan informasi personal",
+    
+    "Minggu": "Minggu",
+    "Senin": "Senin",
+    "Selasa": "Selasa",
+    "Rabu": "Rabu",
+    "Kamis": "Kamis",
+    "Jumat": "Jumat",
+    "Sabtu": "Sabtu",
+    "Libur": "Libur",
+    "absent": "Absen",
+    "Riwayat Absensi": "Riwayat Absensi",
+    "Periode": "Periode",
+    "In": "Masuk",
+    "Out": "Keluar",
+    "Selfie Check-in": "Selfie Check-in",
+    "Check Out": "Check Out",
+    "Lokasi GPS": "Lokasi GPS",
+
+    "Semua field wajib diisi!": "Semua field wajib diisi!",
+    "Gagal simpan file": "Gagal menyimpan file",
+    "Kesalahan sistem API": "Kesalahan sistem API",
+
+    "Semua": "Semua",
+    "rejected": "ditolak",
+    "approved": "disetujui",
+    "Hari": "Hari",
+    "MENGAMBIL DATA...": "MENGAMBIL DATA...",
+    "GAGAL MEMUAT DATA": "GAGAL MEMUAT DATA",
+    "Coba Lagi": "Coba Lagi",
+    "Semua data": "Semua data",
+    "telah ditampilkan": "telah ditampilkan",
+    "TIDAK ADA DATA": "TIDAK ADA DATA",
+    "Tutup latar belakang": "Tutup latar belakang",
+    "Tutup form": "Tutup form",
+    "Form Pengajuan": "Form Pengajuan",
+    "Jenis Cuti": "Jenis Cuti",
+    "Ketentuan": "Ketentuan",
+    "UNIT": "UNIT",
+    "MAKS": "MAKS",
+    "Mulai Jam": "Mulai Jam",
+    "Mulai Tanggal": "Mulai Tanggal",
+    "Selesai Jam": "Selesai Jam",
+    "Selesai Tanggal": "Selesai Tanggal",
+    "Foto Selfie (Wajib Izin)": "Foto Selfie (Wajib Izin)",
+    "Lampiran Pendukung": "Lampiran Pendukung",
+    "Alasan": "Alasan",
+    "Mengirim...": "Mengirim...",
+    "Kirim Pengajuan": "Kirim Pengajuan",
+
+    "Foto tidak ditemukan": "Foto tidak ditemukan",
+    "Koordinat lokasi tidak valid. Pastikan GPS aktif": "Koordinat lokasi tidak valid. Pastikan GPS aktif",
+    "Gagal menyimpan absensi ke server": "Gagal menyimpan absensi ke server",
+    "Terjadi kesalahan sistem saat memproses absensi": "Terjadi kesalahan sistem saat memproses absensi",
+    "Terjadi kesalahan sistem": "Terjadi kesalahan sistem",
+    
+    "Efisiensi Kerja": "Efisiensi Kerja",
+    "Rapat Hari Ini": "Rapat Hari Ini",
+    "Sisa Cuti": "Sisa Cuti",
+    "Tiket Selesai": "Tiket Selesai",
+    "Tiket Open": "Tiket Open",
+    "Status Absen": "Status Absen",
+    "Sudah Hadir": "Sudah Hadir",
+    "Belum Absen": "Belum Absen",
+    "Status Tim": "Status Tim",
+    "Jadwal Besok": "Jadwal Besok",
+    "Sudah Hadir (Offline)": "Sudah Hadir (Offline)",
+    "Sudah Hadir (Online)": "Sudah Hadir (Online)",
+    "Gagal mengakses kamera. Pastikan izin diberikan": "Gagal mengakses kamera. Pastikan izin diberikan",
+    "Mencari sinyal GPS...": "Mencari sinyal GPS...",
+    "Sinyal GPS lambat, sedang mencoba mendapatkan kordinat...": "Sinyal GPS lambat, sedang mencoba mendapatkan koordinat...",
+    "Gagal akses GPS. Izin lokasi wajib untuk absen kantor": "Gagal akses GPS. Izin lokasi wajib untuk absen kantor",
+    "GPS tidak akurat, lokasi mungkin kurang presisi": "GPS tidak akurat, lokasi mungkin kurang presisi",
+    "Anda di luar area": "Anda di luar area",
+    "Maksimal jarak 50m": "Maksimal jarak 50m",
+    "Lokasi kurang presisi": "Lokasi kurang presisi",
+    "tapi absen WFA diizinkan": "tapi absen WFA diizinkan",
+    "Sisa": "Sisa",
+    "Tahun": "Tahun",
+    "Kehadiran Bulan Ini": "Kehadiran Bulan Ini",
+    "Status: Aktif": "Status: Aktif",
+    "Rata-rata Jam Kerja": "Rata-rata Jam Kerja",
+    "Jam/Hari": "Jam/Hari",
+    "Produktivitas Baik": "Produktivitas Baik",
+    "Jam Kerja: 08:00 - 17:00": "Jam Kerja: 08:00 - 17:00",
+    "Jam Masuk": "Jam Masuk",
+    "Jam Keluar": "Jam Keluar",
+    "SUDAH ABSEN KELUAR": "SUDAH ABSEN KELUAR",
+    "ABSEN KELUAR (CHECK OUT)": "ABSEN KELUAR (CHECK OUT)",
+    "ABSEN MASUK (CHECK IN)": "ABSEN MASUK (CHECK IN)",
+    "Bekerja dari Kantor (WFO)": "Bekerja dari Kantor (WFO)",
+    "Bekerja di Luar (WFA)": "Bekerja di Luar (WFA)",
+    "ABSEN KELUAR SEKARANG": "ABSEN KELUAR SEKARANG",
+    "Total Closed Tickets": "Total Closed Tickets",
+    "Total Open Tickets": "Total Open Tickets",
+    "Avg. Time to Done": "Avg. Time to Done",
+    "Total by Category": "Total by Category",
+    "Verifikasi Wajah": "Verifikasi Wajah",
+    "VALIDASI LOKASI...": "VALIDASI LOKASI...",
+    "AMBIL FOTO SEKARANG": "AMBIL FOTO SEKARANG",
+    "ULANGI": "ULANGI",
+    "Absen disimpan secara lokal (Offline). Akan tersinkron otomatis saat internet Kembali": "Absen disimpan secara lokal (Offline). Akan tersinkron otomatis saat internet kembali",
+    "MENGIRIM... ": "MENGIRIM...",
+    "MENCARI LOKASI...": "MENCARI LOKASI...",
+    "KONFIRMASI": "KONFIRMASI",
+    
+    "Tidak ada tiket ditemukan": "Tidak ada tiket ditemukan",
+    "Memuat item selanjutnya...": "Memuat item selanjutnya...",
+    "Scroll ke bawah untuk memuat lebih banyak": "Scroll ke bawah untuk memuat lebih banyak",
+    "Semua item telah dimuat": "Semua item telah dimuat",
+    "total": "total",
+    "Anda belum absen masuk hari ini!": "Anda belum absen masuk hari ini!",
+
+    "Map not loaded. Please set the Google Maps API Key": "Peta tidak dimuat. Silakan atur Google Maps API Key",
+    "Your browser does not support the video tag": "Browser Anda tidak mendukung tag video",
+    "Task Details": "Detail Tugas",
+    "Task ID": "ID Tugas",
+    "Parent": "Induk",
+    "Description": "Deskripsi",
+    "Service Report": "Laporan Servis",
+    "No comment": "Tidak ada komentar",
+    "No history available for this ticket.": "Tidak ada riwayat untuk tiket ini.",
+    "Machine Service Details": "Detail Servis Mesin",
+    "No spare parts recorded for this machine.": "Tidak ada suku cadang yang tercatat untuk mesin ini.",
+    "No photos or videos attached for this machine.": "Tidak ada foto atau video yang dilampirkan untuk mesin ini.",
+    "No machine details provided in the report.": "Tidak ada detail mesin yang disediakan dalam laporan.",
+    "Signed on": "Ditandatangani pada",
+    "Signature is not yet recorded.": "Tanda tangan belum direkam.",
+    "Customer": "Pelanggan",
+    "Status Timeline": "Timeline Status",
+    "Spare Parts Used": "Suku Cadang yang Digunakan",
+    "Photos & Videos": "Foto & Video",
+    "Customer Acceptance": "Persetujuan Pelanggan",
+
+    "Please fill the reason": "Silakan isi alasan",
+    "Server error during unlock ticket": "Terjadi kesalahan server saat membuka kunci tiket",
+    "Server error during upload": "Terjadi kesalahan server saat mengunggah",
+    "No photo uploaded": "Tidak ada foto yang diunggah",
+    "Report Machine Reports must not empty": "Laporan Mesin tidak boleh kosong",
+    "Report General Notes must not empty": "Catatan Umum tidak boleh kosong",
+    "Report Description must not empty": "Deskripsi Laporan tidak boleh kosong",
+    "Signature must set": "Tanda tangan harus diisi",
+
+    "Your browser does not support the MediaDevices API": "Browser Anda tidak mendukung MediaDevices API",
+    "Cannot access camera. Please check permissions": "Tidak dapat mengakses kamera. Silakan periksa izin",
+    "Please take a photo first": "Silakan ambil foto terlebih dahulu",
+    "Riwayat Kunjungan": "Riwayat Kunjungan",
+    "Menampilkan 5 aktivitas terakhir": "Menampilkan 5 aktivitas terakhir",
+    "Kunjungan": "Kunjungan",
+    "Foto / Video": "Foto / Video",
+    "Total ukuran file terlalu besar": "Total ukuran file terlalu besar",
+    "Silakan kurangi jumlah foto/video": "Silakan kurangi jumlah foto/video",
+    "Berhasil disimpan secara lokal. Data akan dikirim saat online": "Berhasil disimpan secara lokal. Data akan dikirim saat online",
+    "Submission Failed": "Pengiriman gagal",
+    "Stored offline": "Disimpan secara offline",
+    "Tutup Riwayat": "Tutup Riwayat",
+    "Dokumentasi Kunjungan": "Dokumentasi Kunjungan",
+    "Tidak ada dokumentasi": "Tidak ada dokumentasi",
+    "Pending Unlock Ticket": "Menunggu Pembukaan Kunci Tiket",
+    "Unlock Ticket": "Buka Kunci Tiket",
+    "Task & Customer Information": "Informasi Tugas & Pelanggan",
+    "PIC Names": "Nama PIC",
+    "Work Performed / Description": "Pekerjaan yang Dilakukan / Deskripsi",
+    "Spare Parts Used on this Machine": "Suku Cadang yang Digunakan pada Mesin Ini",
+    "Media Evidence for this Machine": "Bukti Media untuk Mesin Ini",
+    "Photo": "Foto",
+    "Video": "Video",
+    "Upload": "Unggah",
+    "Kelengkapan": "Kelengkapan",
+    "Task Report": "Laporan Tugas",
+    "Report Description": "Deskripsi Laporan",
+    "Customer Signature": "Tanda Tangan Pelanggan",
+    "Add Signature": "Tambah Tanda Tangan",
+    "Clear Signature": "Hapus Tanda Tangan",
+    "Clear": "Bersihkan",
+    "Save": "Simpan",
+    "Take a Photo": "Ambil Foto",
+    "Record a Video": "Rekam Video",
+    "Play Video": "Putar Video",
+    "Request Unlock Report": "Ajukan Pembukaan Kunci Laporan",
+    "Email tidak terdaftar": "Email tidak terdaftar",
+
+    "Efficient Service Management": "Manajemen Layanan yang Efisien",
+    "Your portal for quick access to work orders and scheduling": "Portal Anda untuk akses cepat ke perintah kerja dan penjadwalan",
+    "Enter your email to receive a reset link": "Masukkan email Anda untuk menerima tautan reset",
+    "Processing...": "Memproses...",
+    "Send Reset Link": "Kirim Tautan Reset",
+    "Back to Login": "Kembali ke Login",
+
+    "Username and password are required": "Username dan password wajib diisi",
+    "Technician Portal Login": "Login Portal Teknisi",
+    "Sign in to access your work schedule": "Masuk untuk mengakses jadwal kerja Anda",
+    "Logging In...": "Sedang masuk...",
+    "Sign In to Portal": "Masuk ke Portal",
+    
+    "Token tidak ditemukan": "Token tidak ditemukan",
+    "Token tidak valid atau expired": "Token tidak valid atau kedaluwarsa",
+    "Password tidak sama": "Password tidak sama",
+    "Password berhasil diubah": "Password berhasil diubah",
+    
+    "Security Management": "Manajemen Keamanan",
+    "Set a strong password to protect your technician account": "Atur password yang kuat untuk melindungi akun teknisi Anda",
+    "Please enter your new password below": "Silakan masukkan password baru Anda di bawah ini",
+    "Reset Password": "Atur Ulang Password",
+    
+    "api" : {
+        "error": {
+            "validation": "Kesalahan validasi",
+            "system": "Terjadi kesalahan pada sistem",
+            "pubkey": "Kunci publik tidak ditemukan",
+            "jwt_invalid": "Tanda tangan digital tidak valid.",
+            "jwt_expired": "Sesi verifikasi telah berakhir, silakan coba lagi.",
+            "jwt_malformed": "Format token rusak atau tidak dikenali.",
+            "attendance": {
+            "get": "Data absensi tidak ditemukan",
+            "checkin_exists": "Anda sudah melakukan Check-In hari ini",
+            "checkin": "Gagal mencatat Check-In",
+            "not_checkin": "Data Check-In tidak ditemukan. Silakan Check-In terlebih dahulu",
+            "already_checkout": "Anda sudah melakukan Check-Out hari ini",
+            "checkout": "Gagal mencatat Check-Out"
+            },
+            "attribute": {
+            "get": "Atribut tidak ditemukan",
+            "get_order": "Atribut untuk pesanan tidak ditemukan",
+            "invalid_attr": "Data atribut tidak valid",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui atribut"
+            },
+            "attr_group": {
+            "get": "Grup Atribut tidak ditemukan",
+            "group_exists": "Grup sudah ada",
+            "store": "Gagal membuat Grup",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Grup"
+            },
+            "auth": {
+            "email_not_register": "Jika email terdaftar kami akan mengirim link reset",
+            "token_invalid": "Token tidak valid",
+            "token_expired": "Token kedaluwarsa",
+            "token_not_found": "Token tidak ditemukan",
+            "token_used": "Token sudah digunakan"
+            },
+            "customer": {
+            "get": "Pelanggan tidak ditemukan",
+            "exists": "Pelanggan sudah ada",
+            "store": "Gagal membuat Pelanggan",
+            "store_machine": "Gagal menambahkan Atribut Mesin Pelanggan",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Pelanggan"
+            },
+            "leave": {
+            "get": "Cuti tidak ditemukan",
+            "exists": "Nama cuti sudah ada",
+            "store": "Gagal membuat cuti",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Cuti"
+            },
+            "group": {
+            "get": "Grup tidak ditemukan",
+            "exists": "Grup sudah ada",
+            "store": "Gagal membuat Grup",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Grup"
+            },
+            "group_menu": {
+            "get": "Menu grup tidak ditemukan",
+            "create": "Gagal membuat Menu Grup"
+            },
+            "group_menu_role": {
+            "get": "Role Menu Grup tidak ditemukan",
+            "create": "Gagal membuat Role Menu Grup"
+            },
+            "holiday": {
+            "get": "Hari libur tidak ditemukan",
+            "exists": "Tanggal libur sudah ada",
+            "store": "Gagal membuat hari libur",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Hari Libur"
+            },
+            "lang": {
+            "get": "Bahasa tidak ditemukan",
+            "update": "Gagal memperbarui Bahasa",
+            "create": "Gagal membuat Bahasa"
+            },
+            "leave_request": {
+            "get": "Data pengajuan cuti tidak ditemukan",
+            "approve": "Gagal menyetujui",
+            "rejected": "Gagal menolak",
+            "leave_request": "Anda masih memiliki pengajuan yang tertunda",
+            "min_work": "Minimal masa kerja untuk cuti ini adalah :masa_kerja bulan",
+            "quota_exceeded": "Durasi (:durasi hari) melebihi kuota (:maksimal_cuti hari)",
+            "need_attach": "Jenis :category ini memerlukan lampiran/foto selfie",
+            "create": "Gagal mencatat Pengajuan Cuti",
+            "subscriber": "Pelanggan tidak ditemukan"
+            },
+            "location": {
+            "get": "Lokasi tidak ditemukan",
+            "create": "Gagal membuat Lokasi"
+            },
+            "machine": {
+            "get": "Mesin tidak ditemukan",
+            "generate_id": "Gagal membuat nama mesin yang unik",
+            "create": "Gagal membuat Mesin",
+            "machine_attr": "Gagal menambahkan Atribut Mesin",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Mesin"
+            },
+            "menu": {
+            "get": "Menu tidak ditemukan",
+            "create": "Gagal membuat Menu",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Menu"
+            },
+            "priority": {
+            "get": "Prioritas tidak ditemukan",
+            "exists": "Prioritas sudah ada",
+            "create": "Gagal membuat Prioritas",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Prioritas"
+            },
+            "role": {
+            "get": "Peran (Role) tidak ditemukan",
+            "exists": "Peran sudah ada",
+            "create": "Gagal membuat Peran",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Peran"
+            },
+            "sparepart": {
+            "get": "Suku cadang tidak ditemukan",
+            "exists": "Suku cadang sudah ada",
+            "create": "Gagal membuat Suku Cadang",
+            "create_attr": "Gagal menambahkan Atribut Suku Cadang",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Suku Cadang"
+            },
+            "tech_dashboard": {
+            "get": "Tiket tidak ditemukan",
+            "total_closed_ticket": "Total Tiket Ditutup tidak ditemukan",
+            "total_ticket": "Total tiket tidak ditemukan",
+            "total_ticket_priority": "Total prioritas tiket tidak ditemukan"
+            },
+            "ticket_category": {
+            "get": "Kategori tiket tidak ditemukan",
+            "exists": "Kategori tiket sudah ada",
+            "store": "Gagal membuat Kategori tiket",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Kategori tiket atau Data tidak ditemukan"
+            },
+            "ticket": {
+            "get": "Tiket tidak ditemukan",
+            "get_list_attr": "Atribut Mesin tidak ditemukan",
+            "get_recom_tech": "Rekomendasi Teknisi tidak ditemukan",
+            "get_ticket_history": "Riwayat tiket tidak ditemukan",
+            "get_ticket_owner": "Pemilik tiket tidak ditemukan",
+            "get_subscriber": "Pelanggan tidak ditemukan",
+            "get_status": "Anda tidak dapat mengambil status tersebut",
+            "unlock": "Gagal membuka kunci tiket",
+            "locked": "Gagal mengunci laporan tiket",
+            "checkout": "Gagal checkout tiket",
+            "done": "Gagal menyelesaikan Tiket",
+            "req_machine": "Gagal meminta Mesin",
+            "gen_id": "Gagal membuat ID Tiket unik setelah beberapa kali percobaan",
+            "ticket_undone": "Mesin dengan Nama: :machine_name masih memiliki tiket yang belum terselesaikan",
+            "db_error": "Kesalahan Database: :message",
+            "create": "Gagal membuat Tiket setelah beberapa kali percobaan",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Tiket"
+            },
+            "ticket_status": {
+            "get": "Status tiket tidak ditemukan",
+            "exists": "Status tiket sudah ada",
+            "create": "Gagal membuat Status tiket",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Status tiket"
+            },
+            "token": {
+            "get": "Pengguna tidak ditemukan",
+            "incorect_email_pass": "Email atau Password salah"
+            },
+            "users": {
+            "get": "Pengguna tidak ditemukan",
+            "exists": "Pengguna sudah ada",
+            "store": "Gagal membuat Pengguna",
+            "store_attr": "Gagal menambahkan Atribut Pengguna",
+            "update_affected": "Tidak ada kolom yang diberikan untuk diperbarui",
+            "update": "Gagal memperbarui Pengguna"
+            },
+            "users_group": {
+            "get": "Grup pengguna tidak ditemukan",
+            "store": "Gagal membuat Grup Pengguna"
+            }
+        },
+        "success": {
+            "delete": "Data berhasil dihapus",
+            "activated": "Data berhasil diaktifkan",
+            "get": "Berhasil",
+            "attendance": {
+            "get_list": "Berhasil mengambil daftar absensi",
+            "get_detail": "Berhasil mengambil detail absensi",
+            "get_by_user": "Berhasil mengambil absensi per pengguna",
+            "get_monthly": "Berhasil mengambil absensi bulanan",
+            "get_today": "Berhasil mengambil absensi hari ini",
+            "check_today": "Berhasil mengecek absensi hari ini",
+            "check_in": "Berhasil mencatat kehadiran",
+            "check_out": "Berhasil mencatat checkout"
+            },
+            "attribute": {
+            "get_list": "Berhasil mengambil daftar atribut",
+            "get_by_name": "Berhasil mengambil atribut berdasarkan nama",
+            "get_all": "Berhasil mengambil semua atribut",
+            "create": "Berhasil membuat atribut",
+            "update": "Berhasil memperbarui Atribut",
+            "get_order": "Berhasil mengambil urutan atribut",
+            "reorder": "Berhasil mengurutkan ulang atribut",
+            "exists_attr": "Semua atribut sudah ada, tidak ada data baru yang ditambahkan",
+            "update_order": "Urutan berhasil diperbarui"
+            },
+            "attr_group": {
+            "get_list": "Berhasil mengambil daftar grup atribut",
+            "get_all": "Berhasil mengambil semua grup atribut",
+            "create": "Berhasil membuat Grup atribut",
+            "update": "Berhasil memperbarui Grup atribut",
+            "reorder": "Berhasil mengurutkan ulang Grup atribut"
+            },
+            "auth": {
+            "send_email": "Berhasil mengirim email lupa kata sandi",
+            "reset": "Berhasil mereset kata sandi",
+            "validate": "Berhasil memvalidasi reset kata sandi"
+            },
+            "customer": {
+            "get_list": "Berhasil mengambil daftar pelanggan",
+            "get": "Berhasil mengambil pelanggan",
+            "get_by_name": "Berhasil mengambil Pelanggan berdasarkan nama",
+            "get_available_machine": "Berhasil mengambil mesin pelanggan yang tersedia",
+            "find_machine": "Berhasil menemukan mesin Pelanggan",
+            "get_detail": "Berhasil mengambil detail Pelanggan",
+            "create": "Berhasil membuat Pelanggan",
+            "update": "Berhasil memperbarui Pelanggan"
+            },
+            "leave": {
+            "get_list": "Berhasil mengambil daftar cuti",
+            "get_all": "Berhasil mengambil semua data cuti",
+            "create": "Berhasil membuat cuti",
+            "update": "Berhasil memperbarui cuti"
+            },
+            "dashboard": {
+            "get": "Berhasil mengambil dashboard"
+            },
+            "group": {
+            "get_list": "Berhasil mengambil daftar grup",
+            "get_all": "Berhasil mengambil semua grup",
+            "get_event": "Berhasil mengambil acara",
+            "update_access": "Berhasil membuat akses Grup",
+            "get_group_event": "Berhasil mengambil acara Grup",
+            "create": "Berhasil membuat Grup",
+            "update": "Berhasil memperbarui Grup"
+            },
+            "group_menu": {
+            "get_list": "Berhasil mengambil daftar menu grup",
+            "create": "Berhasil membuat Menu Grup"
+            },
+            "group_menu_role": {
+            "get_by_menu": "Berhasil mengambil Role Menu Grup",
+            "create": "Berhasil membuat Role Menu Grup"
+            },
+            "holiday": {
+            "get_list": "Berhasil mengambil daftar hari libur",
+            "get_all": "Berhasil mengambil semua hari libur",
+            "create": "Berhasil membuat hari libur",
+            "update": "Berhasil memperbarui hari libur"
+            },
+            "lang": {
+            "get_active": "Berhasil mengambil Bahasa yang aktif",
+            "update_active": "Berhasil memperbarui Bahasa"
+            },
+            "leave_request": {
+            "get_list": "Berhasil mengambil daftar pengajuan cuti",
+            "get": "Berhasil mengambil semua pengajuan cuti",
+            "review": "Berhasil mengambil detail tinjauan cuti",
+            "get_detail": "Berhasil mengambil detail cuti",
+            "approve": "Berhasil menyetujui pengajuan cuti",
+            "rejected": "Berhasil menolak pengajuan cuti",
+            "leave_request": "Berhasil membuat pengajuan cuti",
+            "list_pagination": "Berhasil mengambil paginasi cuti"
+            },
+            "location": {
+            "create": "Berhasil menambahkan lokasi"
+            },
+            "machine": {
+            "get": "Berhasil mengambil data Mesin",
+            "search_by_name": "Berhasil mengambil mesin berdasarkan nama",
+            "datatables": "Berhasil mengambil daftar mesin",
+            "store": "Berhasil membuat mesin",
+            "update": "Berhasil memperbarui mesin",
+            "get_attr": "Berhasil mengambil atribut mesin"
+            },
+            "menu": {
+            "get": "Berhasil mengambil menu",
+            "get_client": "Berhasil mengambil Menu klien",
+            "get_admin": "Berhasil mengambil Menu admin",
+            "create": "Berhasil membuat Menu",
+            "update": "Berhasil memperbarui Menu"
+            },
+            "notif": {
+            "unread": "Berhasil mengambil notifikasi yang belum dibaca",
+            "total": "Berhasil mengambil total notifikasi",
+            "read": "Berhasil membaca notifikasi"
+            },
+            "priority": {
+            "get": "Berhasil mengambil Prioritas",
+            "create": "Berhasil membuat Prioritas",
+            "update": "Berhasil memperbarui Prioritas"
+            },
+            "report": {
+            "datatables": "Berhasil mengambil daftar laporan tiket",
+            "datatables_sparepart": "Berhasil mengambil daftar laporan suku cadang",
+            "export": "Berhasil mengekspor laporan tiket",
+            "export_sparepart": "Berhasil mengekspor laporan suku cadang",
+            "datatables_attendance": "Berhasil mengambil daftar laporan absensi",
+            "export_attendance": "Berhasil mengekspor laporan absensi"
+            },
+            "role": {
+            "get": "Berhasil mengambil Peran",
+            "get_by_user": "Berhasil mengambil Peran berdasarkan pengguna",
+            "create": "Berhasil membuat peran",
+            "update": "Berhasil memperbarui peran"
+            },
+            "sparepart": {
+            "datatables": "Berhasil mengambil daftar suku cadang",
+            "recomendation": "Berhasil mengambil rekomendasi suku cadang",
+            "search": "Berhasil mencari suku cadang",
+            "get": "Berhasil mengambil Suku Cadang",
+            "store": "Berhasil membuat suku cadang",
+            "update": "Berhasil memperbarui Suku Cadang"
+            },
+            "technician_dashboard": {
+            "total_ticket": "Berhasil mengambil total tiket",
+            "total_ticket_priority": "Berhasil mengambil total prioritas tiket",
+            "total_avg_ticket": "Berhasil mengambil total rata-rata tiket",
+            "get_dash_user": "Berhasil mengambil dashboard pengguna"
+            },
+            "ticket": {
+            "datatables": "Berhasil mengambil daftar tiket",
+            "get": "Berhasil mengambil semua tiket",
+            "recomen_tech": "Berhasil mengambil rekomendasi teknisi",
+            "machine_attr": "Berhasil mengambil atribut mesin",
+            "assign": "Berhasil mengambil tiket yang ditugaskan",
+            "history": "Berhasil mengambil riwayat tiket",
+            "total": "Berhasil mengambil total tiket",
+            "detail_history": "Berhasil mengambil detail riwayat tiket",
+            "detail": "Berhasil mengambil detail tiket",
+            "locked": "Berhasil mengajukan Buka Kunci tiket",
+            "request_unlock": "Berhasil mengajukan Buka Kunci tiket",
+            "unlocked": "Berhasil membuka kunci tiket",
+            "cancel": "Berhasil membatalkan tiket",
+            "checkout": "Berhasil checkout tiket",
+            "store_quick": "Berhasil menyimpan tiket cepat",
+            "done": "Berhasil menyelesaikan tiket",
+            "req_machine": "Berhasil meminta mesin",
+            "checkin": "Berhasil checkin",
+            "create": "Berhasil membuat Tiket",
+            "update": "Berhasil memperbarui Tiket",
+            "not_checkin": "Anda belum checkin"
+            },
+            "ticket_category": {
+            "datatables": "Berhasil mengambil daftar kategori",
+            "get": "Berhasil mengambil semua kategori",
+            "store": "Berhasil membuat Kategori tiket",
+            "update": "Berhasil memperbarui Kategori tiket"
+            },
+            "ticket_status": {
+            "get": "Berhasil mengambil semua status",
+            "history": "Berhasil mengambil riwayat status",
+            "create": "Berhasil membuat Status Tiket",
+            "update": "Berhasil memperbarui Status Tiket",
+            "active": "Berhasil mengambil status aktif"
+            },
+            "token": {
+            "by_token": "Berhasil mengambil data pengguna berdasarkan token",
+            "login": "Berhasil login"
+            },
+            "user": {
+            "datatables": "Berhasil mengambil daftar pengguna",
+            "get_all": "Berhasil mengambil semua pengguna",
+            "get_user_technical": "Berhasil mengambil pengguna teknis",
+            "get_user_helper": "Berhasil mengambil pengguna pembantu (helper)",
+            "get_location": "Berhasil mengambil Lokasi pengguna",
+            "store": "Berhasil membuat Pengguna",
+            "update": "Berhasil memperbarui Pengguna",
+            "update_profile": "Berhasil memperbarui profil Pengguna",
+            "fcm_token": "Berhasil memperbarui token fcm",
+            "change_password": "Berhasil mengubah kata sandi"
+            },
+            "user_group": {
+            "detail": "Berhasil mengambil Grup Pengguna",
+            "user_selected": "Berhasil mengambil Grup Pengguna",
+            "create": "Berhasil membuat Grup Pengguna"
+            }
+        }
+    },
+   
+    "menu": {
+        "application": "Aplikasi",
+        "switch_language_desc": "Klik untuk mengganti bahasa aplikasi"
+    }
 }

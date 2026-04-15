@@ -13,8 +13,6 @@ export async function load({ locals, fetch, url , parent}) {
   // Split the path to get segments
   const segments = fullPath.split('/').filter(segment => segment !== '');
 
-  console.log(segments);
-  
   // Access session data or private APIs
  const ticketStatus = segments[0] === 'task' 
     ? await getTicketStatusActiveAPI({}, fetch) 
@@ -24,8 +22,7 @@ export async function load({ locals, fetch, url , parent}) {
   const ticketTotal = await ticketTotalAPI({ID:parentData.user.id}, fetch)
   const listNotif = await getUnreadNotif({ID:parentData.user.id}, fetch)
   const totalNotif = await total({ID:parentData.user.id}, fetch)
-  console.log('listNotif')
-  console.log(listNotif)
+  
   return {
     dataTicketStatus : ticketStatus.data,
     dataTicketPriority : ticketPriority.data,

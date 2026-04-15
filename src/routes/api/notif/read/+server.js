@@ -9,7 +9,6 @@ import {readNotif} from '$lib/tools/notifAPI.js'
 
 export async function POST({ request, fetch, locals }) {
     const data = await request.json();
-    console.log(data)    
     
     const detailTicket = await readNotif({ID:locals.user.id, id_notif: data.id}, fetch)
 

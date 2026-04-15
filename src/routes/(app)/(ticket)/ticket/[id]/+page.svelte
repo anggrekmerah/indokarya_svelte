@@ -1,5 +1,5 @@
 <script>
-    import { _ } from 'svelte-i18n';
+    import { t } from 'svelte-i18n';
     import { onMount, onDestroy } from 'svelte';
     import { Lock, User, MapPin, Phone, MessageSquare, FileText, Route, RouteOff, CheckCircle, ChevronDown, ChevronUp, PenSquare, XCircle, Camera, Video, Trash2, FilePlus, RefreshCcw, CameraOff, Play, StopCircle, VideoOff, LoaderCircle } from 'lucide-svelte';
     import { slide } from 'svelte/transition';
@@ -364,7 +364,7 @@
 
     async function startCamera(type, machineId) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert('Your browser does not support the MediaDevices API.');
+            alert($t('Your browser does not support the MediaDevices API'));
             return;
         }
         
@@ -399,7 +399,7 @@
         } catch (err) {
             console.error('Error accessing camera:', err);
             // In a real app, show a friendly error modal instead of alert
-            alert('Cannot access camera. Please check permissions.');
+            alert($t('Cannot access camera. Please check permissions'));
         }
     }
 
@@ -1005,7 +1005,7 @@
 
     async function in_submitPhoto(taskID) {
         if (!in_capturedFile) {
-            alert('Please take a photo first.');
+            alert($t('Please take a photo first'));
             return;
         }
 
@@ -1282,7 +1282,7 @@
 </script>
 
 <svelte:head>
-    <title>{$_('Task Details')}</title>
+    <title>{$t('Task Details')}</title>
 </svelte:head>
 
 <main class="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
@@ -1316,7 +1316,7 @@
                     class="w-full bg-[#407ad6] text-white justify-center rounded-lg p-3 font-semibold shadow-md flex 
                         hover:bg-blue-700 transition-colors duration-200">
                     <Lock class="h-5 w-5 mr-2" />
-                    {$_('Unlock')}
+                    {$t('Unlock')}
                 </button>
             </section>
         {:else if dataTicket.id_ticket_status == 8 && isTicketLocked} 
@@ -1326,7 +1326,7 @@
                     hover:bg-yellow-700 transition-colors duration-200">
                 
                 <CheckCircle class="h-5 w-5 mr-2" />
-                {$_('Pending Unlock Ticket')}
+                {$t('Pending Unlock Ticket')}
             
             </button>
         {:else if in_checkin && !isNearDestination && !RequestReportUnLocked} 
@@ -1337,7 +1337,7 @@
                     hover:bg-yellow-700 transition-colors duration-200">
                 
                 <CheckCircle class="h-5 w-5 mr-2" />
-                {$_('Unlock Ticket')}
+                {$t('Unlock Ticket')}
             
             </button>
         {/if}
@@ -1348,7 +1348,7 @@
                        rounded-xl transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
                 <h2 class="flex items-center text-gray-700">
                     <MessageSquare class="h-5 w-5 mr-2 text-green-500" />
-                    {$_('Task & Customer Information')}
+                    {$t('Task & Customer Information')}
                 </h2>
                 {#if isInfoExpanded}
                     <ChevronUp class="h-5 w-5 transition-transform text-gray-500" />
@@ -1364,10 +1364,10 @@
                     
                     <div>
                         <h3 class="font-bold text-gray-900 text-base sm:text-lg">
-                            Riwayat Kunjungan
+                            {$t('Riwayat Kunjungan')}
                         </h3>
                         <p class="text-xs text-gray-500">
-                            Menampilkan 5 aktivitas terakhir
+                            {$t('Menampilkan 5 aktivitas terakhir')}
                         </p>
                     </div>
 
@@ -1387,7 +1387,7 @@
                         class="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium 
                             bg-blue-600 text-white rounded-lg 
                             hover:bg-blue-700 transition-colors">
-                        Kunjungan
+                        {$t('Kunjungan')}
                     </button>
 
                     <button 
@@ -1395,7 +1395,7 @@
                         class="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium 
                             bg-green-600 text-white rounded-lg 
                             hover:bg-green-700 transition-colors">
-                        Foto / Video
+                        {$t('Foto / Video')}
                     </button>
 
                 </div>
@@ -1411,36 +1411,36 @@
                     
                 
                     <p class="text-sm text-gray-500 font-light">
-                        {$_('Task ID')}: <span class="font-medium text-gray-700">#{dataTicket.id_ticket}</span>
+                        {$t('Task ID')}: <span class="font-medium text-gray-700">#{dataTicket.id_ticket}</span>
                     </p>
                     <p class="text-sm text-gray-500 font-light">
-                        {$_('Priority')}: 
+                        {$t('Priority')}: 
                         <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/20">
-                            {$_(dataTicket.priority_name)}
+                            {$t(dataTicket.priority_name)}
                         </span>
                     </p>
                     <p class="text-sm text-gray-500 font-light">
-                        {$_('Status')}: 
+                        {$t('Status')}: 
                         <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                            {$_(dataTicket.status_name)}
+                            {$t(dataTicket.status_name)}
                         </span>
                     </p>
 
                     {#if dataTicket.id_sub_ticket}
                         <p class="text-sm text-gray-500 font-light">
-                            {$_('Parent')}: <a href="/ticket/{dataTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{dataTicket.id_sub_ticket}</span></a>
+                            {$t('Parent')}: <a href="/ticket/{dataTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{dataTicket.id_sub_ticket}</span></a>
                         </p>  
                     {/if}
                     
                     <p class="text-sm text-gray-600">
-                        <span class="font-bold font-medium">{$_('Description')}:</span> {dataTicket.ticket_description}
+                        <span class="font-bold font-medium">{$t('Description')}:</span> {dataTicket.ticket_description}
                     </p>
                 </div>
 
                 <hr class="border-gray-200">
 
                 <div class="space-y-2 text-sm text-gray-600">
-                    <h2 class="font-semibold text-gray-900">{$_('Customer')}</h2>
+                    <h2 class="font-semibold text-gray-900">{$t('Customer')}</h2>
                     
                     <p class="flex items-center font-semibold">
                         {dataTicket.cust_name}
@@ -1452,7 +1452,7 @@
 
                     {#if picsList && picsList.length > 0}
                         <div class="space-y-1">
-                            <h2 class="font-semibold text-gray-900">{$_('PIC Names')}</h2>
+                            <h2 class="font-semibold text-gray-900">{$t('PIC Names')}</h2>
                             {#each picsList as pic}
                                 <p class="flex items-center italic">
                                     <span class="mr-1">•</span> {pic['pic_name']}
@@ -1477,7 +1477,7 @@
             <!-- <div class="bg-white rounded-xl shadow-lg p-5 space-y-4 border border-gray-100">
                 <h2 class="flex items-center text-lg font-bold text-gray-900">
                     <MessageSquare class="h-5 w-5 mr-2 text-blue-500" /> 
-                    {$_('General Ticket Notes')}
+                    {$t('General Ticket Notes')}
                 </h2>
                 <textarea id="general-notes" bind:value={generalReport.generalNotes} rows="2" class="w-full mt-1 rounded-md border-gray-300 shadow-sm bg-gray-50 p-3 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors" placeholder="Enter notes or observations for the entire site/ticket (e.g., access issues, overall environment)."
                 oninput={saveState}
@@ -1495,15 +1495,15 @@
                 <section class="bg-white rounded-xl shadow-lg p-5 space-y-6 border-l-4 border-green-500">
                     <h2 class="flex items-center text-xl font-bold text-gray-900 border-b pb-2">
                         <FileText class="h-6 w-6 mr-2 text-green-600" /> 
-                        <span class="font-bold ml-1 text-blue-700">Machine: {mReport.name}</span>
+                        <span class="font-bold ml-1 text-blue-700">{$t('Machine')}: {mReport.name}</span>
                     </h2>
 
                     <div class="space-y-4">
                         <!-- 1. Report Description (Binds to mReport.description) -->
                         <div>
-                            <label for={`report-description-${mReport.id}`} class="text-sm font-medium text-gray-700">{$_(mReport.label)}</label>
+                            <label for={`report-description-${mReport.id}`} class="text-sm font-medium text-gray-700">{$t(mReport.label)}</label>
                             <br>
-                            <label for={`report-description-${mReport.id}`} class="text-sm font-medium text-gray-700">{$_('Work Performed / Description')}</label>
+                            <label for={`report-description-${mReport.id}`} class="text-sm font-medium text-gray-700">{$t('Work Performed / Description')}</label>
                             <textarea 
                                 id={`report-description-${mReport.id}`} 
                                 bind:value={mReport.description} 
@@ -1517,7 +1517,7 @@
                         <!-- 2. Spare Parts Used -->
                         {#if sparePartsList.length > 0}
                             <div class="pt-2 border-t border-gray-100">
-                                <label class="text-sm font-medium text-gray-700">{$_('Spare Parts Used on this Machine')}</label>
+                                <label class="text-sm font-medium text-gray-700">{$t('Spare Parts Used on this Machine')}</label>
                                 <div class="mt-2 space-y-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg">
                                     {#each sparePartsList as part}
                                         {#if part.id_machine == mReport.id_machine}
@@ -1545,18 +1545,18 @@
 
                         <!-- 3. Upload Photos / Videos -->
                         <div class="pt-2 border-t border-gray-100">
-                            <label class="text-sm font-medium text-gray-700">{$_('Media Evidence for this Machine')}</label>
+                            <label class="text-sm font-medium text-gray-700">{$t('Media Evidence for this Machine')}</label>
                             <div class="flex space-x-2 mt-2">
                                 <!-- PASS MACHINE ID to all media functions -->
                                 <button onclick={() => startCamera('photo', mReport.id)} type="button" class="flex items-center justify-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
-                                    <Camera class="w-4 h-4 mr-2" /> {$_('Photo')}
+                                    <Camera class="w-4 h-4 mr-2" /> {$t('Photo')}
                                 </button>
                                 <button onclick={() => startCamera('video', mReport.id)} type="button" class="flex items-center justify-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
-                                    <Video class="w-4 h-4 mr-2" /> {$_('Video')}
+                                    <Video class="w-4 h-4 mr-2" /> {$t('Video')}
                                 </button>
                                 <input type="file" accept="image/*,video/*" multiple class="hidden" bind:this={fileInput} onchange={(e) => handleFileUpload(e, mReport.id)} />
                                 <button onclick={() => fileInput.click()} type="button" class="flex items-center justify-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
-                                    <FilePlus class="w-4 h-4 mr-2" /> {$_('Upload')}
+                                    <FilePlus class="w-4 h-4 mr-2" /> {$t('Upload')}
                                 </button>
                             </div>
 
@@ -1588,7 +1588,7 @@
                         <!-- Attributes -->
                         {#if mReport.attrsGrouped.length > 0}
                             <div class="pt-2 border-t border-gray-100">
-                                <label class="text-sm font-medium text-gray-700">{$_('Kelengkapan')}</label>
+                                <label class="text-sm font-medium text-gray-700">{$t('Kelengkapan')}</label>
                                 <div class="mt-2 space-y-2 p-2 bg-gray-50 rounded-lg">
                                     <!-- <button
                                         type="button"
@@ -1596,7 +1596,7 @@
                                         class="w-full bg-[#f8581a] text-white justify-center rounded-lg p-3 font-semibold shadow-md flex 
                                             hover:bg-blue-700 transition-colors duration-200">
                                         <FileText class="h-5 w-5 mr-2" />
-                                        {$_('Cek Kelengkapan Mesin')}
+                                        {$t('Cek Kelengkapan Mesin')}
                                     </button> -->
                                     {#each mReport.attrsGrouped as group}
                                         <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -1727,7 +1727,7 @@
                         compressedFiles.forEach(f => totalSize += f.size);
                         
                         if (totalSize > 1000000) { // 1MB
-                            alertMessage = `Total ukuran file terlalu besar(${(totalSize).toFixed(2)} KB). Silakan kurangi jumlah foto/video.`;
+                            alertMessage = `${$t('Total ukuran file terlalu besar')} (${(totalSize).toFixed(2)} KB). ${$t('Silakan kurangi jumlah foto/video')}.`;
                             loadingCheckout = false;
                             alertPopup = true;
                             return cancel(); // Batalkan pengiriman
@@ -1773,7 +1773,7 @@
                             await registration.sync.register(syncTag);
                         }
                         
-                        alert("Offline: Data checkout disimpan dan akan dikirim otomatis saat online.");
+                        alert($t("Offline: Data checkout disimpan dan akan dikirim otomatis saat online"));
                         goto('/task');
                         return {
                             result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
@@ -1799,12 +1799,12 @@
             >
                 <h2 class="flex items-center text-xl font-bold text-gray-900">
                     <FileText class="h-6 w-6 mr-2 text-green-500" />
-                    {$_('Task Report')}
+                    {$t('Task Report')}
                 </h2>
                 <input type="hidden" name="ID" value="{dataTicket.id_task}">
                 <div class="space-y-4">
                     <div>
-                        <label for="report-description" class="text-sm font-medium text-gray-700">{$_('Report Description')}</label>
+                        <label for="report-description" class="text-sm font-medium text-gray-700">{$t('Report Description')}</label>
                         <textarea
                         id="report-description"
                         bind:value={report.description}
@@ -1816,7 +1816,7 @@
                 
                     <!-- {#if data.detailTicket.spareparts}
                         <div>
-                            <label class="text-sm font-medium text-gray-700">{$_('Spare Parts Used')}</label>
+                            <label class="text-sm font-medium text-gray-700">{$t('Spare Parts Used')}</label>
                             <div class="mt-2 space-y-2">
                                 {#each data.detailTicket.spareparts as part}
                                     <div class="flex items-center">
@@ -1840,20 +1840,20 @@
                 </div>
 
                 <!-- <div>
-                    <label class="text-sm font-medium text-gray-700">{$_('Upload Photos / Videos')}</label>
+                    <label class="text-sm font-medium text-gray-700">{$t('Upload Photos / Videos')}</label>
                     <div class="flex space-x-2 mt-2">
                         <button onclick={() => startCamera('photo')} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
                             <Camera class="w-4 h-4 mr-2" />
-                            {$_('Take Photo')}
+                            {$t('Take Photo')}
                         </button>
                         <button onclick={() => startCamera('video')} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
                             <Video class="w-4 h-4 mr-2" />
-                            {$_('Record Video')}
+                            {$t('Record Video')}
                         </button>
                         <input type="file" accept="image/*,video/*" multiple class="hidden" bind:this={fileInput} onchange={handleFileUpload} />
                         <button onclick={() => fileInput.click()} type="button" class="flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm">
                             <FilePlus class="w-4 h-4 mr-2" />
-                            {$_('Upload File')}
+                            {$t('Upload File')}
                         </button>
                     </div>
 
@@ -1879,7 +1879,7 @@
                 </div> -->
 
                 <div class="flex flex-col items-center">
-                    <h3 class="text-sm font-medium text-gray-700 mb-2">{$_('Customer Signature')}</h3>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">{$t('Customer Signature')}</h3>
                     <div class="w-full max-w-sm h-32 rounded-lg border border-gray-300 overflow-hidden flex items-center justify-center bg-gray-50">
                         {#if report.signature}
                             <img src={report.signature} alt="Saved Signature" class="w-full h-full object-contain" />
@@ -1888,7 +1888,7 @@
                                 type="button"
                                 class="w-full h-full flex items-center justify-center text-gray-400 text-sm hover:text-gray-600 transition-colors duration-200">
                                 <PenSquare class="w-6 h-6 mr-2" />
-                                {$_('Add Signature')}
+                                {$t('Add Signature')}
                             </button>
                         {/if}
                     </div>
@@ -1899,7 +1899,7 @@
                     type="button"
                     class="flex-1 bg-gray-100 text-gray-800 rounded-lg p-3 font-semibold shadow-sm
                         hover:bg-gray-200 transition-colors duration-200">
-                    {$_('Clear Signature')}
+                    {$t('Clear Signature')}
                 </button>
                     <input type="hidden" name="isNear" value="{isNearDestination}">
                     <button
@@ -1912,7 +1912,7 @@
                             Loading...
                         {:else}
                             <CheckCircle class="h-5 w-5 mr-2" />
-                            {$_('Check Out')}
+                            {$t('Check Out')}
                         {/if}
                     </button>
                 
@@ -1927,7 +1927,7 @@
 {#if isSignaturePadOpen}
     <div class="fixed inset-0 w-screen h-dvh bg-gray-50 flex flex-col items-center justify-center p-4 z-50">
       <div class="flex items-center justify-between w-full max-w-lg mb-4">
-        <h2 class="text-xl font-bold text-gray-900">{$_('Customer Signature')}</h2>
+        <h2 class="text-xl font-bold text-gray-900">{$t('Customer Signature')}</h2>
         <button onclick={cancelSignature} class="text-gray-500 hover:text-gray-700 transition-colors">
           <XCircle class="w-6 h-6" />
         </button>
@@ -1944,12 +1944,12 @@
         <button onclick={clearSignature}
           class="flex-1 bg-gray-100 text-gray-800 rounded-lg p-3 font-semibold shadow-sm
                  hover:bg-gray-200 transition-colors duration-200">
-          {$_('Clear')}
+          {$t('Clear')}
         </button>
         <button onclick={saveSignature}
           class="flex-1 bg-blue-600 text-white rounded-lg p-3 font-semibold shadow-md flex items-center justify-center
                  hover:bg-blue-700 transition-colors duration-200">
-          {$_('Save')}
+          {$t('Save')}
         </button>
       </div>
     </div>
@@ -1961,9 +1961,9 @@
         <div class="flex items-center justify-between w-full max-w-lg mb-4">
             <h2 class="text-xl font-bold text-gray-900">
                 {#if mediaType === 'photo'}
-                    {$_('Take a Photo')}
+                    {$t('Take a Photo')}
                 {:else}
-                    {$_('Record a Video')}
+                    {$t('Record a Video')}
                 {/if}
             </h2>
             <button onclick={stopCamera} class="text-gray-500 hover:text-gray-700 transition-colors">
@@ -2007,7 +2007,7 @@
 {#if isVideoPlayerOpen}
     <div class="fixed inset-0 w-screen h-dvh bg-gray-50 flex flex-col items-center justify-center p-4 z-50">
       <div class="flex items-center justify-between w-full max-w-lg mb-4">
-        <h2 class="text-xl font-bold text-gray-900">{$_('Play Video')}</h2>
+        <h2 class="text-xl font-bold text-gray-900">{$t('Play Video')}</h2>
         <button onclick={closeVideoPlayer} class="text-gray-500 hover:text-gray-700 transition-colors">
           <XCircle class="w-6 h-6" />
         </button>
@@ -2025,7 +2025,7 @@
     <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 flex items-center justify-center">
         <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-2xl w-[95%] sm:max-w-md">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">{$_('Check In')}</h2>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">{$t('Check In')}</h2>
                 <button aria-label="button" onclick={in_togglePopup} class="text-gray-400 hover:text-gray-600 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -2073,7 +2073,7 @@
                         await registration.sync.register(`sync-checkin-${dataTicket.id_ticket}`);
                     }
 
-                    alert("Berhasil disimpan secara lokal. Data akan dikirim saat online.");
+                    alert($t("Berhasil disimpan secara lokal. Data akan dikirim saat online"));
                     handleSuccessfulCheckin()
                     // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
                     return {
@@ -2110,7 +2110,7 @@
                     {#if !in_photoTaken}
                         <video bind:this={in_videoElement} class="w-full h-auto rounded-lg shadow-md mb-4" playsinline autoplay></video>
                         <button type="button" onclick={in_handleTakePhoto} class="px-6 py-3 bg-indigo-600 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-indigo-700 transition">
-                            {$_('Take Photo')}
+                            {$t('Take Photo')}
                         </button>
                         
                         <!-- Camera switch button -->
@@ -2138,7 +2138,7 @@
                 {#if in_photoTaken}
                     <div class="flex justify-center">
                         <button type="submit" class="w-full px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition duration-300 transform hover:scale-105 shadow-lg">
-                            {$_('Check In')}
+                            {$t('Check In')}
                         </button>
                     </div>
                 {/if}
@@ -2152,8 +2152,8 @@
 {#if alertPopup}
     <div class="fixed inset-0 z-50 bg-gray-900/50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm space-y-4">
-            <h2 class="text-xl font-bold text-red-600">Submission Failed</h2>
-            <p>An error occurred while processing your request.</p>
+            <h2 class="text-xl font-bold text-red-600">{$t('Submission Failed')}</h2>
+            <p>{$t('An error occurred while processing your request')}</p>
             {#if form?.message}
                 <ul class="list-disc list-inside text-red-500">
                         <li>{form.message}</li>
@@ -2165,7 +2165,7 @@
             {/if}
             <div class="flex justify-end">
                 <button onclick={closeAlertPopup} type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                    Close
+                    {$t('Closed')}
                 </button>
             </div>
         </div>
@@ -2178,7 +2178,7 @@
 <div class="fixed inset-0 w-screen h-dvh bg-gray-50 flex flex-col items-center justify-center p-4 z-50">
     <div class="flex items-center justify-between w-full max-w-lg mb-4">
         <h2 class="text-xl font-bold text-gray-900">
-            {$_('Request Unlock Report')}
+            {$t('Request Unlock Report')}
         </h2>
         <button onclick={() => popUpReportLocked = false} class="text-gray-500 hover:text-gray-700 transition-colors">
         <XCircle class="w-6 h-6" />
@@ -2214,13 +2214,13 @@
                     await registration.sync.register(`sync-unlock-${dataTicket.id_ticket}`);
                 }
 
-                alertMessage = "Berhasil disimpan secara lokal. Data akan dikirim saat online.";
+                alertMessage = $t("Berhasil disimpan secara lokal. Data akan dikirim saat online");
                 
                 handleSuccessfulUnlock()
                 alertPopup = false
                 // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
                 return {
-                    result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
+                    result: { type: 'success', status: 202, data: { message: $t('Stored offline') } },
                     update: async () => { /* Prevent UI update after local storage */ }
                 };
 
@@ -2255,10 +2255,10 @@
 
         <div class="flex space-x-3 w-full max-w-lg">
             <button onclick={() => popUpReportLocked = false} class="rounded-lg items-center justify-center flex-1 flex p-4 bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors">
-                {$_('Cancel')}
+                {$t('Cancel')}
             </button>
             <button onclick={stopCamera} class="rounded-lg items-center justify-center flex-1 flex p-4 bg-blue-600 text-white hover:bg-red-700 transition-colors">
-                {$_('Save')}
+                {$t('Save')}
             </button>
         </div>
     </form>
@@ -2294,7 +2294,7 @@
                 preload="auto"
                 tabindex="0"
             >
-                Your browser does not support the video tag.
+                {$t('Your browser does not support the video tag')}.
             </video>
         </div>
     </div>
@@ -2313,8 +2313,8 @@
         >
             <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
                 <div>
-                    <h3 class="font-bold text-gray-900 text-lg">Riwayat Kunjungan</h3>
-                    <p class="text-xs text-gray-500">Menampilkan 5 aktivitas terakhir</p>
+                    <h3 class="font-bold text-gray-900 text-lg">{$t('Riwayat Kunjungan')}</h3>
+                    <p class="text-xs text-gray-500">{$t('Menampilkan 5 aktivitas terakhir')}</p>
                 </div>
                 <button onclick={closeLastVisitModal} class="p-2 hover:bg-gray-200 rounded-full transition-colors">
                     <XCircle class="w-6 h-6 text-gray-400" />
@@ -2360,7 +2360,7 @@
                     onclick={closeLastVisitModal}
                     class="w-full py-3 bg-[#407ad6] text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all"
                 >
-                    Tutup Riwayat
+                    {$t('Tutup Riwayat')}
                 </button>
             </div>
         </div>
@@ -2375,7 +2375,7 @@
         <!-- Header -->
         <div class="p-4 border-b flex justify-between items-center">
             <h3 class="font-semibold text-gray-800 text-base sm:text-lg">
-                Dokumentasi Kunjungan
+                {$t('Dokumentasi Kunjungan')}
             </h3>
 
             <button 
@@ -2390,7 +2390,7 @@
 
             {#if mediaList.length === 0}
                 <div class="text-center text-gray-400 py-10">
-                    Tidak ada dokumentasi
+                    {$t('Tidak ada dokumentasi')}
                 </div>
             {:else}
 
@@ -2425,7 +2425,7 @@
                         </div>
 
                         <span class="text-xs text-gray-400">
-                            Klik lihat
+                            {$t('Klik lihat')}
                         </span>
 
                     </button>

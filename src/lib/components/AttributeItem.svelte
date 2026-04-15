@@ -1,5 +1,6 @@
 <script>
     import { CheckCircle2, AlertCircle } from 'lucide-svelte';
+    import { t } from 'svelte-i18n';
 
     let { attr = $bindable() } = $props();
 
@@ -34,11 +35,8 @@
 
     <input type="hidden" name="attr_real_id" value={attr.id_attr} />
 
-    <!-- HEADER -->
     <div class="flex items-center justify-between">
-
         <div class="flex items-center gap-2">
-
             <span class="text-sm font-semibold text-slate-800">
                 {attr.attribute_name}
             </span>
@@ -49,13 +47,11 @@
 
             {#if attr.is_manual === 'Y'}
                 <span class="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-                    Manual
+                    {$t('manual')}
                 </span>
             {/if}
-
         </div>
 
-        <!-- VALIDATION ICON -->
         <div>
             {#if isValid}
                 <CheckCircle2 size={18} class="text-emerald-500" />
@@ -63,19 +59,14 @@
                 <AlertCircle size={18} class="text-rose-500" />
             {/if}
         </div>
-
     </div>
 
-    <!-- TYPE BADGE -->
     <div class="text-[10px] text-slate-500 uppercase font-bold">
-        {attr.data_type}
+        {$t(attr.data_type.toLowerCase())}
     </div>
 
-    <!-- INPUT AREA -->
     {#if attr.data_type === 'boolean'}
-
         <div class="flex gap-3 mt-1">
-
             <button
                 type="button"
                 onclick={handleToggle}
@@ -84,7 +75,7 @@
                     ? 'bg-emerald-500 text-white'
                     : 'bg-slate-200 text-slate-700'}"
             >
-                YA
+                {$t('ya')}
             </button>
 
             <button
@@ -95,22 +86,17 @@
                     ? 'bg-rose-500 text-white'
                     : 'bg-slate-200 text-slate-700'}"
             >
-                TIDAK
+                {$t('tidak')}
             </button>
-
         </div>
-
     {:else}
-
         <input
             type="text"
             bind:value={attr.attribute_value}
             oninput={handleTyping}
-            placeholder="Input..."
+            placeholder={$t('input_placeholder')}
             class="w-full border rounded-lg px-3 py-2 text-sm outline-none
             {isError ? 'border-rose-300 bg-rose-50' : 'border-slate-300 focus:border-blue-500'}"
         />
-
     {/if}
-
 </div>

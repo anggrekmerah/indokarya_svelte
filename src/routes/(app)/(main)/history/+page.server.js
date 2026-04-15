@@ -30,7 +30,7 @@ export async function load({ url, fetch, locals, parent }) {
         payload.id_ticket = ticket
 
     const listTicket = await getTicketHistory(payload, fetch)
-   console.log(listTicket)
+   
     return {
         listTicket: listTicket.data
     };

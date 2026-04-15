@@ -2,13 +2,15 @@ import { fail } from '@sveltejs/kit';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { userChangeProfile } from '$lib/tools/userApi';
+import { t } from 'svelte-i18n';
+import { get } from 'svelte/store';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ locals , parent}) {
 
     const parentData = await parent()
     // You can use fetch to call APIs or access database here
-    console.log(parentData.userLang)
+    
     return {
         user : parentData.user,
         userGroup : parentData.group
@@ -32,7 +34,7 @@ export const actions = {
 
         // Validasi dasar
         if (!name || !email) {
-            return fail(400, { error: true, message: 'Nama dan Email wajib diisi.' });
+            return fail(400, { error: true, message: get(t)('Nama dan Email wajib diisi') });
         }
 
         try {
@@ -57,7 +59,6 @@ export const actions = {
                 const buffer = Buffer.from(await imageFile.arrayBuffer());
                 writeFileSync(filePath, buffer);
                 
-                console.log(`File berhasil disimpan di: ${filePath}`);
             }
 
             // URL yang akan disimpan di database atau dikembalikan ke UI
@@ -73,17 +74,17 @@ export const actions = {
                 'gender': gender, 
                 'image_url': finalImageUrl 
             }
-            console.log(payload)
+            
             const changeProfile = await userChangeProfile(payload, fetch)
-            console.log(changeProfile)
+            
             if(changeProfile.error){
                 return fail(401, { 
-                    message: 'Failed change profile.' 
+                    message: get(t)(changeProfile.message_key) 
                 });
             } else {
                 return { 
                     success: true, 
-                    message: 'Profil dan foto berhasil diperbarui!',
+                    message: get(t)(changeProfile.message_key),
                     imageUrl: finalImageUrl 
                 };
             }
@@ -91,7 +92,7 @@ export const actions = {
             
         } catch (err) {
             console.error("Upload/Update Error:", err);
-            return fail(500, { error: true, message: 'Gagal menyimpan data ke server.' });
+            return fail(500, { error: true, message: get(t)('Gagal menyimpan data ke server') });
         }
     }
 };

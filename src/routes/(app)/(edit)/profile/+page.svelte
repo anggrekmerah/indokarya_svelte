@@ -1,5 +1,5 @@
 <script>
-    import { _ } from 'svelte-i18n';
+    import { t } from 'svelte-i18n';
     import { enhance } from '$app/forms';
     import imageCompression from 'browser-image-compression'; 
 
@@ -92,8 +92,8 @@
     <input type="hidden" name="id" value={data.user.id} />
     <div class="p-4 md:p-6">
         <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-xl w-full max-w-4xl border border-gray-200">
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 text-center mb-2">{$_('Employee Profile')}</h1>
-            <p class="text-center text-gray-500 mb-8 text-sm sm:text-base">{$_('Detailed view of employee information')}</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 text-center mb-2">{$t('Employee Profile')}</h1>
+            <p class="text-center text-gray-500 mb-8 text-sm sm:text-base">{$t('Detailed view of employee information')}</p>
             
             <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 mb-8"> 
                 <div class="flex flex-col items-center">
@@ -115,7 +115,7 @@
                     </label>
                     
                     <p class="mt-4 text-sm text-gray-600 font-medium">
-                        {isEditing ? $_('Click photo to change') : $_('Current Photo')} 
+                        {isEditing ? $t('Click photo to change') : $t('Current Photo')} 
                     </p>
                 </div>
             </div>
@@ -125,7 +125,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> 
                 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Full Name')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Full Name')}</label>
                     <!-- <p class="text-lg font-semibold text-gray-800">{data.user.name}</p> -->
                     <input 
                         type="text" 
@@ -137,7 +137,7 @@
                 </div>
 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Email Address')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Email Address')}</label>
                     <!-- <p class="text-lg font-semibold text-gray-800">{data.user.email}</p> -->
                     <input 
                         type="email" 
@@ -149,7 +149,7 @@
                 </div>
                 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Phone Number')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Phone Number')}</label>
                     <!-- <p class="text-lg font-semibold text-gray-800">{data.user.phone_number}</p> -->
                     <input 
                         type="tel" 
@@ -161,19 +161,19 @@
                 </div>
 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Address')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Address')}</label>
                     <p class="text-lg font-semibold text-gray-800">{data.user.address}</p>
                 </div>
                 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Coordinates')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Coordinates')}</label>
                     <p class="text-lg font-semibold text-gray-800">
                         Lat: {data.user.latitude || 'N/A'}, Lng: {data.user.longtitude || 'N/A'}
                     </p>
                 </div>
 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Birth Date')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Birth Date')}</label>
                     <!-- <p class="text-lg font-semibold text-gray-800">{data.user.birth_date}</p> -->
                     <input 
                         type={isEditing ? "date" : "text"} 
@@ -185,7 +185,7 @@
                 </div>
 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Gender')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Gender')}</label>
                     <!-- <p class="text-lg font-semibold text-gray-800">{data.user.gender}</p> -->
                     {#if isEditing}
                         <select name="gender" bind:value={formData.gender} class="text-lg font-semibold text-gray-800 w-full border-b border-blue-500 bg-blue-50 outline-none">
@@ -204,24 +204,24 @@
                 </div>
 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Title')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Title')}</label>
                     <p class="text-lg font-semibold text-gray-800">{data.user.title}</p>
                 </div>
 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Employee ID')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Employee ID')}</label>
                     <p class="text-lg font-semibold text-gray-800">{data.user.id}</p>
                 </div>
 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Group')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Group')}</label>
                     {#each data.userGroup as group }
                         <p class="text-lg font-semibold text-gray-800">{group.group_name}</p>
                     {/each}
                 </div>
 
                 <div class="detail-item">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">{$_('Join Date')}</label>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">{$t('Join Date')}</label>
                     <p class="text-lg font-semibold text-gray-800">{data.user.join_date}</p>
                 </div>
 
@@ -232,7 +232,7 @@
                             onclick={() => isEditing = true}
                             class="px-10 py-3 rounded-full font-bold shadow-lg transition-all bg-blue-600 hover:bg-blue-700 text-white"
                         >
-                            {$_('Edit Profile')}
+                            {$t('Edit Profile')}
                         </button>
                     {:else}
                         <button 
@@ -240,13 +240,13 @@
                             onclick={() => { isEditing = false; compressedFile = null; }}
                             class="px-10 py-3 rounded-full font-bold shadow-lg transition-all bg-gray-400 hover:bg-gray-500 text-white"
                         >
-                            {$_('Cancel')}
+                            {$t('Cancel')}
                         </button>
                         <button 
                             type="submit"
                             class="px-10 py-3 rounded-full font-bold shadow-lg transition-all bg-green-600 hover:bg-green-700 text-white"
                         >
-                            {$_('Save Changes')}
+                            {$t('Save Changes')}
                         </button>
                     {/if}
                 </div>

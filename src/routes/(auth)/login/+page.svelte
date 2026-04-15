@@ -2,7 +2,7 @@
   // @ts-nocheck
   import { enhance } from '$app/forms';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
+  import { t } from 'svelte-i18n';
 
   let loading = false;
   
@@ -26,8 +26,8 @@
       <div class="w-full h-full bg-cover bg-center opacity-10" style="background-image: url('/images/tech-pattern.svg');"></div>
       
       <div class="absolute inset-0 flex flex-col justify-end p-12 text-white">
-        <h1 class="text-4xl font-bold mb-4">Efficient Service Management</h1>
-        <p class="text-lg">Your portal for quick access to work orders and scheduling.</p>
+        <h1 class="text-4xl font-bold mb-4">{$t('Efficient Service Management')}</h1>
+        <p class="text-lg">{$t('Your portal for quick access to work orders and scheduling')}.</p>
       </div>
     </div>
     
@@ -43,8 +43,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9.75 9H9c-.75 0-1.5-.045-2.25-.133m0 0l-.75 6.002.045.093l.363-.09-.363-.09M7.5 15.75l-.363-.09.363-.09M9.75 9l-1.5-.133C7.5 8.867 6.75 8.822 6 8.822m3.75 0V7.5c0-.663-.263-1.3-.732-1.768S6.337 5 5.675 5H4.5M2.25 12h19.5" />
             </svg>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">Technician Portal Login</h2>
-          <p class="font-medium text-base sm:text-lg text-gray-600 dark:text-gray-400">Sign in to access your work schedule.</p>
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">{$t('Technician Portal Login')}</h2>
+          <p class="font-medium text-base sm:text-lg text-gray-600 dark:text-gray-400">{$t('Sign in to access your work schedule')}.</p>
         </div>
         
         {#if form?.success === false && form?.message !== 'Logged out'}
@@ -62,7 +62,7 @@
         }}>
 
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{$t('Email Address')}</label>
             <input
               id="email"
               name="email"
@@ -75,7 +75,7 @@
           </div>
 
           <div class="flex flex-col items-end">
-            <label for="password" class="block w-full text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+            <label for="password" class="block w-full text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{$t('Password')}</label>
             <input
               id="password"
               name="password"
@@ -86,7 +86,7 @@
               class="w-full py-3 px-4 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 dark:placeholder-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
             />
             <button type="reset" class="w-max mt-2 p-1">
-              <a href="/forgot-password" data-sveltekit-preload-data class="text-xs tracking-wide text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition">{$_('Forgot Password')}?</a>
+              <a href="/forgot-password" data-sveltekit-preload-data class="text-xs tracking-wide text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition">{$t('Forgot Password')}?</a>
             </button>
           </div>
 
@@ -101,9 +101,9 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              {$_('Logging In...')}
+              {$t('Logging In...')}
             {:else}
-              **{$_('Sign In to Portal')}**
+              **{$t('Sign In to Portal')}**
             {/if}
             </button>
           </div>

@@ -9,8 +9,7 @@ import {userChangeFcmToken} from '$lib/tools/userApi'
 
 export async function POST({ request, fetch, locals }) {
     const data = await request.json();  
-    console.log(locals.user)
-    console.log(data)
+    
     const detailTicket = await userChangeFcmToken(
         {
             ID: locals.user.id, 

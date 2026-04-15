@@ -12,7 +12,7 @@ register("id", () => import("../../locales/id.json"));
 // You can set the initial locale here
 init({
   fallbackLocale: "en",
-  initialLocale: "en",
+  initialLocale: "id",
 });
 
 // The Svelte store 'locale' is what you'll use to change the language.

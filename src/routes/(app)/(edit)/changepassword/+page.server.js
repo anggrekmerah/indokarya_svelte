@@ -1,6 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { loginAPI } from '$lib/tools/tokenApi';
 import { userChangePasswordAPI } from '$lib/tools/userApi';
+import { t } from 'svelte-i18n';
+import { get } from 'svelte/store';
+
 /**
  * @type {import('@sveltejs/kit').PageServerLoad}
  */
@@ -14,6 +17,7 @@ export async function load({ locals, fetch, parent }) {
     
     // Return the email along with any other data needed by the page.
     return {
+        user : parentData.user,
         userEmail: userEmail
     };
 }
@@ -37,14 +41,14 @@ export const actions = {
         if (newPassword !== confirmPassword) {
             // Use fail() to return an error object that SvelteKit's enhance utility handles.
             return fail(400, { 
-                error: 'New password and confirmation do not match.',
+                error: get(t)('New password and confirmation do not match'),
                 fields: { oldPassword, newPassword, confirmPassword } 
             });
         }
 
         if (newPassword.length < 8) {
             return fail(400, {
-                error: 'New password must be at least 8 characters long.',
+                error: get(t)('New password must be at least 8 characters long'),
                 fields: { oldPassword, newPassword, confirmPassword } 
             });
         }
@@ -72,20 +76,17 @@ export const actions = {
     
                 if(dataLogin.error) {
                     return fail(401, { 
-                        error: 'Incorrect current password.',
+                        error: get(t)(dataLogin.message_key),
                         fields: { oldPassword, newPassword, confirmPassword } 
                     });
-                }
-                console.log({ID:userID,password:newPassword})    
+                }  
                 const changepass = await userChangePasswordAPI({ID:userID, id_user: userID, password:newPassword}, fetch)
-                console.log(changepass)
                 if(changepass.error){
                     return fail(401, { 
-                        error: 'Failed change password.',
+                        error: get(t)('Failed change password'),
                         fields: { oldPassword, newPassword, confirmPassword } 
                     });
                 } else {
-                    console.log(`[ACTION SUCCESS]: Password successfully updated for user!`);
                     // Clear the session cookie to log the user out.
                     cookies.delete('session_id', { path: '/' });
 
@@ -96,7 +97,7 @@ export const actions = {
             } else {
                 // If credentials are not valid, return a failure with a message.
                 return fail(401, { 
-                        error: 'Incorrect current password.',
+                        error: get(t)('Incorrect current password'),
                         fields: { oldPassword, newPassword, confirmPassword } 
                     });
             }
@@ -108,7 +109,7 @@ export const actions = {
             
             // Return a generic error to the client
             return fail(500, {
-                error: 'Failed to update password due to a server error.',
+                error: get(t)('Failed to update password due to a server error'),
                 fields: { oldPassword, newPassword, confirmPassword } 
             });
         }

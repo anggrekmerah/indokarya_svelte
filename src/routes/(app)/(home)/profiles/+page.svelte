@@ -2,9 +2,9 @@
     import { slide, fade } from 'svelte/transition';
     import { quintOut } from 'svelte/easing';
     import { enhance } from '$app/forms';
-    import { _ } from 'svelte-i18n';
-
-    let { data, closeMenu } = $props();
+    import {  t, locale } from 'svelte-i18n';
+    
+    let { data } = $props();
 
     // Data dipisahkan agar kode HTML tetap bersih  4]
     const menuItems = [
@@ -28,6 +28,13 @@
         // { name: 'Absen', icon: '📝', url : '' },
         { name: 'Daftar Absen', icon: '📋', url : '/absen-list' }
     ];
+
+    // Fungsi untuk toggle bahasa
+    function toggleLanguage() {
+        $locale = $locale === 'id' ? 'en' : 'id';
+        // Simpan ke cookie agar persist (sesuai setup hooks.server.js sebelumnya)
+        document.cookie = `lang=${$locale};path=/;max-age=31536000`;
+    }
 </script>
 
 <main class="min-h-screen bg-slate-50 p-4 md:p-8 pt-18 md:pt-18 font-sans">
@@ -46,7 +53,7 @@
                 
                 <div class="flex-1">
                     <span class="text-sm font-black text-slate-700 uppercase tracking-wide block">
-                    {item.name}
+                    {$t(item.name)}
                     </span>
                     {#if item.description}
                     <p class="text-[10px] text-slate-400 font-medium">{item.description}</p>
@@ -63,11 +70,10 @@
         </div>
 
         <div class="space-y-1 pt-4">
-            <span class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Keamanan & Akun</span>
+            <span class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">{$t('Keamanan & Akun')}</span>
             {#each menuItems as item}
                 <a 
                     href="/{item.url}" 
-                    onclick={closeMenu}
                     class="flex items-center p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group"
                 > 
                     <div class="h-10 w-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -76,7 +82,7 @@
                         </svg> 
                     </div>
                     <div class="ml-4 flex-1">
-                        <p class="text-sm font-semibold text-slate-800">{$_(item.title)}</p> 
+                        <p class="text-sm font-semibold text-slate-800">{$t(item.title)}</p> 
                         <p class="text-xs text-slate-500">{item.desc}</p>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-300 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -87,9 +93,15 @@
         </div>
 
         <div class="space-y-1 pt-4">
-            <span class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Aplikasi</span>
+            <span class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                {$t('menu.application')}
+            </span>
+
             <button 
-                onclick={closeMenu}
+                onclick={() => {
+                    toggleLanguage();
+                    
+                }}
                 class="w-full flex items-center p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-orange-200 transition-all group text-left"
             >
                 <div class="h-10 w-10 flex items-center justify-center rounded-xl bg-orange-50 text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
@@ -97,14 +109,18 @@
                         <path d="M320 448c-121.5 0-213.7-93-213.7-213.7 0-112.5 83.3-195.8 195.8-195.8s195.8 83.3 195.8 195.8c0 120.7-92.2 213.7-213.7 213.7z"/>
                     </svg>
                 </div>
+                
                 <div class="ml-4 flex-1">
                     <p class="text-sm font-semibold text-slate-800">
-                        {data.userLang === 'en' ? 'Bahasa Indonesia' : 'English Language'}
+                        {$locale === 'en' ? 'Bahasa Indonesia' : 'English Language'}
                     </p> 
-                    <p class="text-xs text-slate-500">Klik untuk mengganti bahasa aplikasi</p>
+                    <p class="text-xs text-slate-500">
+                        {$t('menu.switch_language_desc')}
+                    </p>
                 </div>
+
                 <span class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-500 uppercase">
-                    {data.userLang === 'en' ? 'EN' : 'ID'} 
+                    {$locale === 'en' ? 'EN' : 'ID'}
                 </span>
             </button>
         </div>
@@ -115,7 +131,7 @@
                     <svg viewBox="0 0 576 512" class="h-5 w-5 fill-current mr-2">
                         <path d="M569 337C578.4 327.6 578.4 312.4 569 303.1L425 159C418.1 152.1 407.8 150.1 398.8 153.8C389.8 157.5 384 166.3 384 176L384 256L272 256C245.5 256 224 277.5 224 304L224 336C224 362.5 245.5 384 272 384L384 384L384 464C384 473.7 389.8 482.5 398.8 486.2C407.8 489.9 418.1 487.9 425 481L569 337zM224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160z"/>
                     </svg> 
-                    {$_('Log Out')} 
+                    {$t('Log Out')} 
                 </button>
             </form>
         </div>

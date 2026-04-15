@@ -6,6 +6,8 @@ import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { fail, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { t } from 'svelte-i18n';
+import { get } from 'svelte/store';
 
 
 /** @type {import('./$types').PageServerLoad} */
@@ -47,8 +49,7 @@ export async function load({ params, fetch, locals, parent }) {
     // const getTodayAttendance = await todayAttendance({user_id : locals.user.id}, fetch)
     const getcheckTodayAttendance = await checkTodayAttendance({user_id : parentData.user.id}, fetch)
     const getattendance = await attendance({user_id : parentData.user.id}, fetch)
-    console.log('getcheckTodayAttendance')
-    console.log(getcheckTodayAttendance)
+    
     return {
         ...returnData,
         // todayAttendance: getTodayAttendance || null, // Pastikan tidak undefined
@@ -87,13 +88,13 @@ export const actions = {
         const photo = data.get('photo');
         const lat = data.get('latitude');
         const long = data.get('longitude');
-        console.log(data)
+        
         if (!photo || photo.size === 0) {
-            return fail(400, { message: 'Foto tidak ditemukan.' });
+            return fail(400, { message: get(t)('Foto tidak ditemukan') });
         }
 
         if (!lat || !long || lat === 'null' || long === 'null') {
-            return fail(400, { message: 'Koordinat lokasi tidak valid. Pastikan GPS aktif.' });
+            return fail(400, { message: get(t)('Koordinat lokasi tidak valid. Pastikan GPS aktif') });
         }
 
         try {
@@ -107,7 +108,7 @@ export const actions = {
 
             if (response.error) {
                 return fail(500, { 
-                    message: response.message || 'Gagal menyimpan absensi ke server.', 
+                    message: get(t)(response.message_key) || get(t)('Gagal menyimpan absensi ke server'), 
                     fromAction: 'checkin' 
                 });
             }
@@ -119,7 +120,7 @@ export const actions = {
             };
         } catch (error) {
             console.error("Server Error:", error);
-            return fail(500, { message: 'Terjadi kesalahan sistem saat memproses absensi.' });
+            return fail(500, { message: get(t)('Terjadi kesalahan sistem saat memproses absensi') });
         }
     },
 
@@ -128,7 +129,7 @@ export const actions = {
         const photo = data.get('photo');
 
         if (!photo || photo.size === 0) {
-            return fail(400, { message: 'Foto tidak ditemukan.' });
+            return fail(400, { message: get(t)('Foto tidak ditemukan') });
         }
 
         try {
@@ -139,10 +140,10 @@ export const actions = {
                 check_out_photo: filePath
             }, fetch);
 
-            if (response.error) return fail(500, { message: 'Gagal update absen di server.', fromAction:'checkout' });
+            if (response.error) return fail(500, { message: get(t)(response.message_key), fromAction:'checkout' });
             return { success: true, fromAction:'checkout', absenTime: response.data.absenTime };
         } catch (error) {
-            return fail(500, { message: 'Terjadi kesalahan sistem.' });
+            return fail(500, { message: get(t)('Terjadi kesalahan sistem') });
         }
     }
 };

@@ -3,7 +3,6 @@
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, fetch, locals, parent }) {
   // You can use fetch to call APIs or access database here
-    // console.log(locals.user)
     
     return {
         

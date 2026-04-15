@@ -1,4 +1,75 @@
 {
+    "tidak": "No",
+    "ya": "Yes",
+    "manual": "Manual",
+    "input_placeholder": "Input...",
+    "boolean": "Boolean",
+    "text": "Text",
+    "number": "Number",
+
+    "Home": "Home",
+    "Leave Request": "Leave Request",
+    "Attendance History": "Attendance History",
+    "Application": "Application",
+    "Notifications": "Notifications",
+    "Work Mode": "Work Mode",
+
+    "Loading Page" : "Loading Page",
+    "Offline Mode": "Offline Mode",
+    "Menunggu Sinkron": "Waiting for Sync",
+    "Terhubung & Sinkron": "Connected & Synced",
+    "Nama PIC": "PIC Name",
+    "Tidak ada PIC": "No PIC",
+    "Tanggal Efektif": "Effective Date",
+
+    "New password and confirmation do not match": "New password and confirmation do not match",
+    "New password must be at least 8 characters long": "New password must be at least 8 characters long",
+    "Incorrect current password": "Incorrect current password",
+    "Failed change password": "Failed to change password",
+    "Failed to update password due to a server error": "Failed to update password due to a server error",
+
+    "Nama dan Email wajib diisi": "Name and Email are required",
+    "Gagal menyimpan data ke server": "Failed to save data to the server",
+
+    "Minimum 8 characters" : "Minimum 8 characters",
+    "Changing password...": "Changing password...",
+    "Password updated successfully!": "Password updated successfully!",
+    "An unexpected error occurred": "An unexpected error occurred",
+    "Server Error. Could not connect or change password": "Server Error. Could not connect or change password",
+    "Current Password": "Current Password",
+    "New Password": "New Password",
+    "Confirm New Password": "Confirm New Password",
+    "Saving...": "Saving...",
+    
+    "Employee Profile": "Employee Profile",
+    "Detailed view of employee information": "Detailed view of employee information",
+    "Click photo to change": "Click photo to change",
+    "Current Photo": "Current Photo",
+    "Coordinates": "Coordinates",
+    "Cancel": "Cancel",
+    "Save Changes": "Save Changes",
+
+    "Minggu": "Sunday",
+    "Senin": "Monday",
+    "Selasa": "Tuesday",
+    "Rabu": "Wednesday",
+    "Kamis": "Thursday",
+    "Jumat": "Friday",
+    "Sabtu": "Saturday",
+    "Libur": "Holiday",
+    "absent": "Absent",
+    "Riwayat Absensi": "Attendance History",
+    "Periode": "Period",
+    "In": "In",
+    "Out": "Out",
+    "Selfie Check-in": "Selfie Check-in",
+    "Check Out": "Check Out",
+    "Lokasi GPS": "GPS Location",
+
+    "Semua field wajib diisi!": "All fields are required!",
+    "Gagal simpan file": "Failed to save file",
+    "Kesalahan sistem API": "API system error",
+    
     "greeting": "Welcome to my website!",
     "Forgot Password": "Forgot password",
     "Sign In" : "Sign In",
@@ -20,6 +91,7 @@
     "To Date" : "To Date",
     "Submit" : "Submit",
     "Select Category" : "Select Category",
+    "Priority": "Priority",
     "Low" : "Low",
     "Medium" : "Medium",
     "Urgent" : "Urgent",
@@ -46,5 +118,595 @@
     "Select":"Select",
     "Male":"Male",
     "Female":"Female",
-    "Update":"Update"
+    "Update":"Update",
+
+    "Semua": "All",
+    "rejected": "Rejected",
+    "approved": "Approved",
+    "Hari": "Day",
+    "MENGAMBIL DATA...": "LOADING DATA...",
+    "GAGAL MEMUAT DATA": "FAILED TO LOAD DATA",
+    "Coba Lagi": "Try Again",
+    "Semua data": "All data",
+    "telah ditampilkan": "have been displayed",
+    "TIDAK ADA DATA": "NO DATA",
+    "Tutup latar belakang": "Close background",
+    "Tutup form": "Close form",
+    "Form Pengajuan": "Application Form",
+    "Jenis Cuti": "Leave Type",
+    "Ketentuan": "Terms",
+    "UNIT": "UNIT",
+    "MAKS": "MAX",
+    "Mulai Jam": "Start Time",
+    "Mulai Tanggal": "Start Date",
+    "Selesai Jam": "End Time",
+    "Selesai Tanggal": "End Date",
+    "Foto Selfie (Wajib Izin)": "Selfie Photo (Required for Leave)",
+    "Lampiran Pendukung": "Supporting Attachment",
+    "Alasan": "Reason",
+    "Mengirim...": "Submitting...",
+    "Kirim Pengajuan": "Submit Application",
+
+    "Foto tidak ditemukan": "Photo not found",
+    "Koordinat lokasi tidak valid. Pastikan GPS aktif": "Invalid location coordinates. Please ensure GPS is enabled",
+    "Gagal menyimpan absensi ke server": "Failed to save attendance to the server",
+    "Terjadi kesalahan sistem saat memproses absensi": "A system error occurred while processing attendance",
+    "Terjadi kesalahan sistem": "A system error occurred",
+
+    "Efisiensi Kerja": "Work Efficiency",
+    "Rapat Hari Ini": "Today's Meetings",
+    "Sisa Cuti": "Remaining Leave",
+    "Tiket Selesai": "Closed Tickets",
+    "Tiket Open": "Open Tickets",
+    "Status Absen": "Attendance Status",
+    "Sudah Hadir": "Present",
+    "Belum Absen": "Not Checked In",
+    "Status Tim": "Team Status",
+    "Jadwal Besok": "Tomorrow's Schedule",
+    "Sudah Absen Keluar": "Checked Out",
+    "Sudah Hadir (Offline)": "Present (Offline)",
+    "Sudah Hadir (Online)": "Present (Online)",
+    "Gagal mengakses kamera. Pastikan izin diberikan": "Failed to access camera. Please ensure permission is granted",
+    "Mencari sinyal GPS...": "Searching for GPS signal...",
+    "Sinyal GPS lambat, sedang mencoba mendapatkan kordinat...": "GPS signal is slow, trying to get coordinates...",
+    "Gagal akses GPS. Izin lokasi wajib untuk absen kantor": "Failed to access GPS. Location permission is required for attendance",
+    "GPS tidak akurat, lokasi mungkin kurang presisi": "GPS is not accurate, location may be imprecise",
+    "Anda di luar area": "You are outside the area",
+    "Maksimal jarak 50m": "Maximum distance 50m",
+    "Lokasi kurang presisi": "Location is not precise",
+    "tapi absen WFA diizinkan": "but WFA attendance is allowed",
+    "Sisa": "Remaining",
+    "Tahun": "Year",
+    "Kehadiran Bulan Ini": "This Month's Attendance",
+    "Status: Aktif": "Status: Active",
+    "Rata-rata Jam Kerja": "Average Working Hours",
+    "Jam/Hari": "Hours/Day",
+    "Produktivitas Baik": "Good Productivity",
+    "Jam Kerja: 08:00 - 17:00": "Working Hours: 08:00 - 17:00",
+    "Jam Masuk": "Check-in Time",
+    "Jam Keluar": "Check-out Time",
+    "SUDAH ABSEN KELUAR": "ALREADY CHECKED OUT",
+    "ABSEN KELUAR (CHECK OUT)": "CHECK OUT",
+    "ABSEN MASUK (CHECK IN)": "CHECK IN",
+    "Bekerja dari Kantor (WFO)": "Work From Office (WFO)",
+    "Bekerja di Luar (WFA)": "Work From Anywhere (WFA)",
+    "ABSEN KELUAR SEKARANG": "CHECK OUT NOW",
+    "Total Closed Tickets": "Total Closed Tickets",
+    "Total Open Tickets": "Total Open Tickets",
+    "Avg. Time to Done": "Avg. Time to Done",
+    "Total by Category": "Total by Category",
+    "Verifikasi Wajah": "Face Verification",
+    "VALIDASI LOKASI...": "VALIDATING LOCATION...",
+    "AMBIL FOTO SEKARANG": "TAKE PHOTO NOW",
+    "ULANGI": "RETRY",
+    "Absen disimpan secara lokal (Offline). Akan tersinkron otomatis saat internet Kembali": "Attendance is saved locally (Offline). It will sync automatically when internet is back",
+    "MENGIRIM... ": "SUBMITTING...",
+    "MENCARI LOKASI...": "SEARCHING LOCATION...",
+    "KONFIRMASI": "CONFIRM",
+
+    "Perbarui keamanan kata sandi Anda": "Update your password security",
+    "Cuti": "Leave",
+    "Daftar Absen": "Attendance List",
+    "Keamanan & Akun": "Security & Account",
+    "Detail akun dan informasi personal": "Account details and personal information",
+    
+    "Tidak ada tiket ditemukan": "No tickets found",
+    "Memuat item selanjutnya...": "Loading more items...",
+    "Scroll ke bawah untuk memuat lebih banyak": "Scroll down to load more",
+    "Semua item telah dimuat": "All items have been loaded",
+    "total": "total",
+    "Anda belum absen masuk hari ini!": "You have not checked in today!",
+    
+    "Map not loaded. Please set the Google Maps API Key": "Map not loaded. Please set the Google Maps API Key",
+    "Your browser does not support the video tag": "Your browser does not support the video tag",
+    "Task Details": "Task Details",
+    "Task ID": "Task ID",
+    "Parent": "Parent",
+    "Description": "Description",
+    "Service Report": "Service Report",
+    "No comment": "No comment",
+    "No history available for this ticket.": "No history available for this ticket.",
+    "Machine Service Details": "Machine Service Details",
+    "No spare parts recorded for this machine.": "No spare parts recorded for this machine.",
+    "No photos or videos attached for this machine.": "No photos or videos attached for this machine.",
+    "No machine details provided in the report.": "No machine details provided in the report.",
+    "Signed on": "Signed on",
+    "Signature is not yet recorded.": "Signature is not yet recorded.",
+    "Customer": "Customer",
+    "Status Timeline": "Status Timeline",
+    "Spare Parts Used": "Spare Parts Used",
+    "Photos & Videos": "Photos & Videos",
+    "Customer Acceptance": "Customer Acceptance",
+
+    "Please fill the reason": "Please fill the reason",
+    "Server error during unlock ticket": "Server error during unlocking ticket",
+    "Server error during upload": "Server error during upload",
+    "No photo uploaded": "No photo uploaded",
+    "Report Machine Reports must not empty": "Machine report must not be empty",
+    "Report General Notes must not empty": "General notes must not be empty",
+    "Report Description must not empty": "Report description must not be empty",
+    "Signature must set": "Signature must be provided",
+    
+    "Your browser does not support the MediaDevices API": "Your browser does not support the MediaDevices API",
+    "Cannot access camera. Please check permissions": "Cannot access camera. Please check permissions",
+    "Please take a photo first": "Please take a photo first",
+    "Riwayat Kunjungan": "Visit History",
+    "Menampilkan 5 aktivitas terakhir": "Showing last 5 activities",
+    "Kunjungan": "Visit",
+    "Foto / Video": "Photo / Video",
+    "Total ukuran file terlalu besar": "Total file size is too large",
+    "Silakan kurangi jumlah foto/video": "Please reduce the number of photos/videos",
+    "Berhasil disimpan secara lokal. Data akan dikirim saat online": "Successfully saved locally. Data will be sent when online",
+    "Submission Failed": "Submission Failed",
+    "Stored offline": "Stored offline",
+    "Tutup Riwayat": "Close History",
+    "Dokumentasi Kunjungan": "Visit Documentation",
+    "Tidak ada dokumentasi": "No documentation available",
+    "Pending Unlock Ticket": "Pending Unlock Ticket",
+    "Unlock Ticket": "Unlock Ticket",
+    "Task & Customer Information": "Task & Customer Information",
+    "PIC Names": "PIC Names",
+    "Work Performed / Description": "Work Performed / Description",
+    "Spare Parts Used on this Machine": "Spare Parts Used on this Machine",
+    "Media Evidence for this Machine": "Media Evidence for this Machine",
+    "Photo": "Photo",
+    "Video": "Video",
+    "Upload": "Upload",
+    "Kelengkapan": "Completeness",
+    "Task Report": "Task Report",
+    "Report Description": "Report Description",
+    "Customer Signature": "Customer Signature",
+    "Add Signature": "Add Signature",
+    "Clear Signature": "Clear Signature",
+    "Clear": "Clear",
+    "Save": "Save",
+    "Take a Photo": "Take a Photo",
+    "Record a Video": "Record a Video",
+    "Play Video": "Play Video",
+    "Request Unlock Report": "Request Unlock Report",
+    "Email tidak terdaftar": "Email is not registered",
+    
+    "Efficient Service Management": "Efficient Service Management",
+    "Your portal for quick access to work orders and scheduling": "Your portal for quick access to work orders and scheduling",
+    "Enter your email to receive a reset link": "Enter your email to receive a reset link",
+    "Processing...": "Processing...",
+    "Send Reset Link": "Send Reset Link",
+    "Back to Login": "Back to Login",
+
+    "Username and password are required": "Username and password are required",
+    "Technician Portal Login": "Technician Portal Login",
+    "Sign in to access your work schedule": "Sign in to access your work schedule",
+    "Logging In...": "Logging In...",
+    "Sign In to Portal": "Sign In to Portal",
+
+    "Token tidak ditemukan": "Token not found",
+    "Token tidak valid atau expired": "Token is invalid or expired",
+    "Password tidak sama": "Passwords do not match",
+    "Password berhasil diubah": "Password changed successfully",
+
+    "Security Management": "Security Management",
+    "Set a strong password to protect your technician account": "Set a strong password to protect your technician account",
+    "Please enter your new password below": "Please enter your new password below",
+    "Reset Password": "Reset Password",
+    
+    "api" : {
+        "error": {
+            "validation": "Validation error",
+            "system": "Something went wrong",
+            "pubkey": "Public key not found",
+            "jwt_invalid": "Invalid digital signature.",
+            "jwt_expired": "Verification session expired, please try again.",
+            "jwt_malformed": "Token format is corrupted or unrecognized.",
+            "attendance": {
+            "get": "Attendance records not found",
+            "checkin_exists": "You have already checked in today",
+            "checkin": "Failed to record Check-In",
+            "not_checkin": "No Check-In record found for today. Please Check-In first",
+            "already_checkout": "You have already checked out today",
+            "checkout": "Failed to record Check-Out"
+            },
+            "attribute": {
+            "get": "Attribute not found",
+            "get_order": "Attribute for order not found",
+            "invalid_attr": "Invalid data attributes",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update attribute"
+            },
+            "attr_group": {
+            "get": "Attribute Group not found",
+            "group_exists": "Group already exists",
+            "store": "Failed to create Group",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Group"
+            },
+            "auth": {
+            "email_not_register": "If the email is registered, we will send a reset link",
+            "token_invalid": "Invalid token",
+            "token_expired": "Token expired",
+            "token_not_found": "Token not found",
+            "token_used": "Token already used"
+            },
+            "customer": {
+            "get": "Customer not found",
+            "exists": "Customer already exists",
+            "store": "Failed to create Customer",
+            "store_machine": "Failed to add Customer Machine Attributes",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Customer"
+            },
+            "leave": {
+            "get": "Leave not found",
+            "exists": "Leave name already exists",
+            "store": "Failed to create leave",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Leave"
+            },
+            "group": {
+            "get": "Group not found",
+            "exists": "Group already exists",
+            "store": "Failed to create Group",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Group"
+            },
+            "group_menu": {
+            "get": "Group menu not found",
+            "create": "Failed to create Group Menu"
+            },
+            "group_menu_role": {
+            "get": "Group Menu Role not found",
+            "create": "Failed to create Group Menu Role"
+            },
+            "holiday": {
+            "get": "Holiday not found",
+            "exists": "Holiday date already exists",
+            "store": "Failed to create holiday",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Holiday"
+            },
+            "lang": {
+            "get": "Language not found",
+            "update": "Failed to update Language",
+            "create": "Failed to create Language"
+            },
+            "leave_request": {
+            "get": "Leave request records not found",
+            "approve": "Failed to approve",
+            "rejected": "Failed to reject",
+            "leave_request": "You already have a pending request",
+            "min_work": "Minimum working period for this leave is :masa_kerja months",
+            "quota_exceeded": "Duration (:durasi days) exceeds quota (:maksimal_cuti days)",
+            "need_attach": "This :category type requires an attachment or selfie photo",
+            "create": "Failed to record Leave Request",
+            "subscriber": "Subscriber not found"
+            },
+            "location": {
+            "get": "Location not found",
+            "create": "Failed to create Location"
+            },
+            "machine": {
+            "get": "Machine not found",
+            "generate_id": "Failed to generate unique machine name",
+            "create": "Failed to create Machine",
+            "machine_attr": "Failed to add Machine Attributes",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Machine"
+            },
+            "menu": {
+            "get": "Menu not found",
+            "create": "Failed to create Menu",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Menu"
+            },
+            "priority": {
+            "get": "Priority not found",
+            "exists": "Priority already exists",
+            "create": "Failed to create Priority",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Priority"
+            },
+            "role": {
+            "get": "Role not found",
+            "exists": "Role already exists",
+            "create": "Failed to create Role",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Role"
+            },
+            "sparepart": {
+            "get": "Spare part not found",
+            "exists": "Spare part already exists",
+            "create": "Failed to create Spare part",
+            "create_attr": "Failed to add Spare part Attributes",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Spare part"
+            },
+            "tech_dashboard": {
+            "get": "Ticket not found",
+            "total_closed_ticket": "Total Closed Tickets not found",
+            "total_ticket": "Total tickets not found",
+            "total_ticket_priority": "Total ticket priority not found"
+            },
+            "ticket_category": {
+            "get": "Ticket category not found",
+            "exists": "Ticket category already exists",
+            "store": "Failed to create Ticket category",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Ticket category or data not found"
+            },
+            "ticket": {
+            "get": "Ticket not found",
+            "get_list_attr": "Machine Attribute not found",
+            "get_recom_tech": "Technician Recommendation not found",
+            "get_ticket_history": "Ticket history not found",
+            "get_ticket_owner": "Ticket owner not found",
+            "get_subscriber": "Subscriber not found",
+            "get_status": "You cannot access that status",
+            "unlock": "Failed to unlock ticket",
+            "locked": "Failed to lock ticket report",
+            "checkout": "Failed to checkout ticket",
+            "done": "Failed to complete Ticket",
+            "req_machine": "Failed to request Machine",
+            "gen_id": "Failed to generate unique Ticket ID after several attempts",
+            "ticket_undone": "Machine with Name: :machine_name still has unresolved tickets",
+            "db_error": "Database Error: :message",
+            "create": "Failed to create Ticket after multiple attempts",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Ticket"
+            },
+            "ticket_status": {
+            "get": "Ticket status not found",
+            "exists": "Ticket status already exists",
+            "create": "Failed to create Ticket status",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update Ticket status"
+            },
+            "token": {
+            "get": "User not found",
+            "incorect_email_pass": "Incorrect Email or Password"
+            },
+            "users": {
+            "get": "User not found",
+            "exists": "User already exists",
+            "store": "Failed to create User",
+            "store_attr": "Failed to add User Attributes",
+            "update_affected": "No fields to update provided",
+            "update": "Failed to update User"
+            },
+            "users_group": {
+            "get": "User group not found",
+            "store": "Failed to create User Group"
+            }
+        },
+        "success": {
+            "delete": "Record successfully deleted",
+            "activated": "Record successfully activated",
+            "get": "Success",
+            "attendance": {
+            "get_list": "Successfully retrieved attendance list",
+            "get_detail": "Successfully retrieved attendance detail",
+            "get_by_user": "Successfully retrieved attendance by user",
+            "get_monthly": "Successfully retrieved monthly attendance",
+            "get_today": "Successfully retrieved today's attendance",
+            "check_today": "Successfully checked today's attendance",
+            "check_in": "Successfully recorded attendance",
+            "check_out": "Successfully checked out attendance"
+            },
+            "attribute": {
+            "get_list": "Successfully retrieved attribute list",
+            "get_by_name": "Successfully retrieved attribute by name",
+            "get_all": "Successfully retrieved all attributes",
+            "create": "Successfully created attribute",
+            "update": "Successfully updated Attribute",
+            "get_order": "Successfully retrieved attribute order",
+            "reorder": "Successfully reordered attributes",
+            "exists_attr": "All attributes already exist, no new data added",
+            "update_order": "Order successfully updated"
+            },
+            "attr_group": {
+            "get_list": "Successfully retrieved attribute group list",
+            "get_all": "Successfully retrieved all attribute groups",
+            "create": "Successfully created attribute Group",
+            "update": "Successfully updated attribute Group",
+            "reorder": "Successfully reordered attribute Group"
+            },
+            "auth": {
+            "send_email": "Successfully sent forgot password email",
+            "reset": "Successfully reset password",
+            "validate": "Successfully validated password reset"
+            },
+            "customer": {
+            "get_list": "Successfully retrieved customer list",
+            "get": "Successfully retrieved customer",
+            "get_by_name": "Successfully retrieved Customer by name",
+            "get_available_machine": "Successfully retrieved Customer available machine",
+            "find_machine": "Successfully retrieved Customer machine",
+            "get_detail": "Successfully retrieved customer details",
+            "create": "Successfully created Customer",
+            "update": "Successfully updated Customer"
+            },
+            "leave": {
+            "get_list": "Successfully retrieved leave list",
+            "get_all": "Successfully retrieved all leave types",
+            "create": "Successfully created leave",
+            "update": "Successfully updated leave"
+            },
+            "dashboard": {
+            "get": "Successfully retrieved dashboard"
+            },
+            "group": {
+            "get_list": "Successfully retrieved group list",
+            "get_all": "Successfully retrieved all groups",
+            "get_event": "Successfully retrieved event",
+            "update_access": "Successfully created Group access",
+            "get_group_event": "Successfully retrieved Group event",
+            "create": "Successfully created Group",
+            "update": "Successfully updated Group"
+            },
+            "group_menu": {
+            "get_list": "Successfully retrieved group menu list",
+            "create": "Successfully created Group Menu"
+            },
+            "group_menu_role": {
+            "get_by_menu": "Successfully retrieved Group Menu Role",
+            "create": "Successfully created Group Menu Role"
+            },
+            "holiday": {
+            "get_list": "Successfully retrieved holiday list",
+            "get_all": "Successfully retrieved all holidays",
+            "create": "Successfully created holiday",
+            "update": "Successfully updated holiday"
+            },
+            "lang": {
+            "get_active": "Successfully retrieved active Language",
+            "update_active": "Successfully updated Language"
+            },
+            "leave_request": {
+            "get_list": "Successfully retrieved leave request list",
+            "get": "Successfully retrieved all leave requests",
+            "review": "Successfully retrieved leave review details",
+            "get_detail": "Successfully retrieved leave details",
+            "approve": "Successfully approved leave request",
+            "rejected": "Successfully rejected leave request",
+            "leave_request": "Successfully created leave request",
+            "list_pagination": "Successfully retrieved leave pagination"
+            },
+            "location": {
+            "create": "Successfully added location"
+            },
+            "machine": {
+            "get": "Successfully retrieved Machines",
+            "search_by_name": "Successfully retrieved machine by name",
+            "datatables": "Successfully retrieved machine list",
+            "store": "Successfully created machine",
+            "update": "Successfully updated machine",
+            "get_attr": "Successfully retrieved machine attributes"
+            },
+            "menu": {
+            "get": "Successfully retrieved menu",
+            "get_client": "Successfully retrieved client menu",
+            "get_admin": "Successfully retrieved admin menu",
+            "create": "Successfully created Menu",
+            "update": "Successfully updated Menu"
+            },
+            "notif": {
+            "unread": "Successfully retrieved unread notifications",
+            "total": "Successfully retrieved total notifications",
+            "read": "Successfully read notification"
+            },
+            "priority": {
+            "get": "Successfully retrieved Priority",
+            "create": "Successfully created Priority",
+            "update": "Successfully updated Priority"
+            },
+            "report": {
+            "datatables": "Successfully retrieved ticket report list",
+            "datatables_sparepart": "Successfully retrieved spare part report list",
+            "export": "Successfully exported ticket report",
+            "export_sparepart": "Successfully exported spare part report",
+            "datatables_attendance": "Successfully retrieved attendance report list",
+            "export_attendance": "Successfully exported attendance report"
+            },
+            "role": {
+            "get": "Successfully retrieved Role",
+            "get_by_user": "Successfully retrieved Role by user",
+            "create": "Successfully created role",
+            "update": "Successfully updated role"
+            },
+            "sparepart": {
+            "datatables": "Successfully retrieved spare part list",
+            "recomendation": "Successfully retrieved spare part recommendations",
+            "search": "Successfully found spare part",
+            "get": "Successfully retrieved Spare part",
+            "store": "Successfully created spare part",
+            "update": "Successfully updated Spare part"
+            },
+            "technician_dashboard": {
+            "total_ticket": "Successfully retrieved total tickets",
+            "total_ticket_priority": "Successfully retrieved total ticket priority",
+            "total_avg_ticket": "Successfully retrieved total average tickets",
+            "get_dash_user": "Successfully retrieved user dashboard"
+            },
+            "ticket": {
+            "datatables": "Successfully retrieved ticket list",
+            "get": "Successfully retrieved all tickets",
+            "recomen_tech": "Successfully retrieved technician recommendation",
+            "machine_attr": "Successfully retrieved machine attribute",
+            "assign": "Successfully retrieved assigned tickets",
+            "history": "Successfully retrieved ticket history",
+            "total": "Successfully retrieved total tickets",
+            "detail_history": "Successfully retrieved ticket history detail",
+            "detail": "Successfully retrieved ticket details",
+            "locked": "Successfully requested Ticket Unlock",
+            "request_unlock": "Successfully requested Ticket Unlock",
+            "unlocked": "Successfully unlocked ticket",
+            "cancel": "Successfully canceled ticket",
+            "checkout": "Successfully checked out ticket",
+            "store_quick": "Successfully quick-stored ticket",
+            "done": "Successfully completed ticket",
+            "req_machine": "Successfully requested machine",
+            "checkin": "Successfully checked in",
+            "create": "Successfully created Ticket",
+            "update": "Successfully updated Ticket",
+            "not_checkin": "You have not checked in"
+            },
+            "ticket_category": {
+            "datatables": "Successfully retrieved category list",
+            "get": "Successfully retrieved all categories",
+            "store": "Successfully created Ticket category",
+            "update": "Successfully updated Ticket category"
+            },
+            "ticket_status": {
+            "get": "Successfully retrieved all statuses",
+            "history": "Successfully retrieved status history",
+            "create": "Successfully created Ticket Status",
+            "update": "Successfully updated Ticket Status",
+            "active": "Successfully retrieved active status"
+            },
+            "token": {
+            "by_token": "Successfully retrieved user data by token",
+            "login": "Successfully logged in"
+            },
+            "user": {
+            "datatables": "Successfully retrieved user list",
+            "get_all": "Successfully retrieved all users",
+            "get_user_technical": "Successfully retrieved technical user",
+            "get_user_helper": "Successfully retrieved helper user",
+            "get_location": "Successfully retrieved user location",
+            "store": "Successfully created User",
+            "update": "Successfully updated User",
+            "update_profile": "Successfully updated User profile",
+            "fcm_token": "Successfully updated FCM token",
+            "change_password": "Successfully changed password"
+            },
+            "user_group": {
+            "detail": "Successfully retrieved User Group",
+            "user_selected": "Successfully retrieved User Group",
+            "create": "Successfully created User Group"
+            }
+        }
+    },
+    
+    "menu": {
+        "application": "Application",
+        "switch_language_desc": "Click for change language"
+    }
 }

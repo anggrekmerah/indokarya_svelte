@@ -1,4 +1,5 @@
 <script>
+    import { t } from 'svelte-i18n'; 
     export let ticket
 </script>
 <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-3 shadow-sm">
@@ -13,12 +14,12 @@
 
     <div class="space-y-2">
         <div class="flex flex-col">
-            <span class="text-[9px] uppercase text-gray-400 font-semibold tracking-tight">Nama PIC</span>
-            <span class="text-xs font-medium text-gray-700">{ticket.pic_name || 'Tidak ada PIC'}</span>
+            <span class="text-[9px] uppercase text-gray-400 font-semibold tracking-tight">{$t('Nama PIC')}</span>
+            <span class="text-xs font-medium text-gray-700">{ticket.pic_name || $t('Tidak ada PIC')}</span>
         </div>
         
         <div class="flex flex-col">
-            <span class="text-[9px] uppercase text-gray-400 font-semibold tracking-tight">Tanggal Efektif</span>
+            <span class="text-[9px] uppercase text-gray-400 font-semibold tracking-tight">{$t('Tanggal Efektif')}</span>
             <span class="text-xs font-medium text-gray-700">{ticket.assigned_date || '-'}</span>
         </div>
     </div>

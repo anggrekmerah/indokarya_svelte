@@ -2,6 +2,8 @@ import { getTicketAssign, ticketDetailAPI } from '$lib/tools/ticketApi';
 import { todayAttendance } from '$lib/tools/attendenceAPI'
 import { fail, redirect } from '@sveltejs/kit';
 import { tick } from 'svelte';
+import {  t } from 'svelte-i18n';
+import { get } from 'svelte/store';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ url, fetch, locals, parent }) {
@@ -13,7 +15,7 @@ export async function load({ url, fetch, locals, parent }) {
 
     if(!hasCheckedIn){
         // If the process is successful, redirect the user
-        const message = encodeURIComponent("Anda belum absen masuk hari ini!");
+        const message = encodeURIComponent(get(t)("Anda belum absen masuk hari ini!"));
         throw redirect(302, `/home?error=${message}`);
     }
 

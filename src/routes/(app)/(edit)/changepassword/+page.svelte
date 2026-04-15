@@ -1,6 +1,6 @@
 <script>
     import { enhance } from '$app/forms';
-    import { _ } from 'svelte-i18n';
+    import { t } from 'svelte-i18n';
     // Assuming you have an endpoint that handles the password change POST request.
 
     // State variables for form inputs
@@ -15,11 +15,11 @@
     // Client-side validation function before submission
     function validateForm() {
         if (newPassword.length < 8) {
-            message = { type: 'error', text: $_('New password must be at least 8 characters long.') };
+            message = { type: 'error', text: $t('New password must be at least 8 characters long.') };
             return false;
         }
         if (newPassword !== confirmPassword) {
-            message = { type: 'error', text: $_('New password and confirmation do not match.') };
+            message = { type: 'error', text: $t('New password and confirmation do not match.') };
             return false;
         }
         message = { type: '', text: '' }; // Clear previous errors
@@ -35,24 +35,24 @@
         }
 
         isSubmitting = true;
-        message = { type: '', text: $_('Changing password...') };
+        message = { type: '', text: $t('Changing password...') };
 
         return async ({ result, update }) => {
             isSubmitting = false;
 
             if (result.type === 'success') {
-                message = { type: 'success', text: $_('Password updated successfully!') };
+                message = { type: 'success', text: $t('Password updated successfully!') };
                 // Reset form fields on success
                 oldPassword = '';
                 newPassword = '';
                 confirmPassword = '';
             } else if (result.type === 'failure') {
                 // SvelteKit returns a failure when fail() is used in +page.server.js
-                const errorText = result.data?.error || $_('An unexpected error occurred.');
+                const errorText = result.data?.error || $t('An unexpected error occurred');
                 message = { type: 'error', text: errorText };
             } else if (result.type === 'error') {
                 // Catch network or server errors
-                message = { type: 'error', text: $_('Server Error. Could not connect or change password.') };
+                message = { type: 'error', text: $t('Server Error. Could not connect or change password') };
             }
 
             await update({ reset: false });
@@ -61,7 +61,7 @@
 </script>
 
 <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-xl w-full max-w-lg border border-gray-200 mx-auto">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">{$_('Change Password')}</h2>
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">{$t('Change Password')}</h2>
 
     <!-- Feedback Message Display -->
     {#if message.text}
@@ -82,7 +82,7 @@
 
         <!-- Old Password -->
         <div class="mb-5">
-            <label for="oldPassword" class="block text-sm font-medium text-gray-700 mb-1">{$_('Current Password')}</label>
+            <label for="oldPassword" class="block text-sm font-medium text-gray-700 mb-1">{$t('Current Password')}</label>
             <input 
                 type="password" 
                 id="oldPassword" 
@@ -96,7 +96,7 @@
 
         <!-- New Password -->
         <div class="mb-5">
-            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">{$_('New Password')}</label>
+            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">{$t('New Password')}</label>
             <input 
                 type="password" 
                 id="newPassword" 
@@ -108,12 +108,12 @@
                 oninput={() => message = { type: '', text: '' }}
                 class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
             >
-            <p class="text-xs text-gray-500 mt-1">{$_('Minimum 8 characters')}</p>
+            <p class="text-xs text-gray-500 mt-1">{$t('Minimum 8 characters')}</p>
         </div>
 
         <!-- Confirm New Password -->
         <div class="mb-6">
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">{$_('Confirm New Password')}</label>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">{$t('Confirm New Password')}</label>
             <input 
                 type="password" 
                 id="confirmPassword" 
@@ -138,9 +138,9 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>{$_('Saving...')}</span>
+                <span>{$t('Saving...')}</span>
             {:else}
-                <span>{$_('Change Password')}</span>
+                <span>{$t('Change Password')}</span>
             {/if}
         </button>
     </form>

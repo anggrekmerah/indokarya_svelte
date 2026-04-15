@@ -5,7 +5,7 @@
     import TicketUnlock from '$lib/components/TicketUnlock.svelte';
     import TicketLock from '$lib/components/TicketLock.svelte';
     import TicketReadOnly from '$lib/components/TicketReadOnly.svelte';
-    
+    import {  t } from 'svelte-i18n';
     import { 
         items, 
         hasMore, 
@@ -115,7 +115,7 @@
         {:else}
             {#if !$isLoading && messages.length === 0}
                 <div class="py-4 text-center text-gray-500">
-                    <p>Tidak ada tiket ditemukan.</p>
+                    <p>{$t('Tidak ada tiket ditemukan')}.</p>
                 </div>
             {/if}
         {/each}
@@ -123,15 +123,15 @@
         {#if $hasMore} 
             <div bind:this={loadingSentinel} class="py-4 text-center">
                 {#if $isLoading}
-                    <p>Memuat item selanjutnya...</p>
+                    <p>{$t('Memuat item selanjutnya...')}</p>
                 {:else}
-                    <p>Scroll ke bawah untuk memuat lebih banyak</p> 
+                    <p>{$t('Scroll ke bawah untuk memuat lebih banyak')}</p> 
                 {/if}
             </div>
         {:else}
             {#if $items.length > 0}
                 <div class="py-4 text-center text-gray-500">
-                    <p>Semua item telah dimuat. ({$items.length} total)</p>
+                    <p>{$t('Semua item telah dimuat')}. ({$items.length} total)</p>
                 </div>
             {/if}
         {/if}

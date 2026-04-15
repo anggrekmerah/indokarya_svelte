@@ -3,7 +3,7 @@
     import { fade, slide } from 'svelte/transition';
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
-    import { _ } from 'svelte-i18n';
+    import { t } from 'svelte-i18n';
     import { ioClient } from '$lib/stores/socket.js';
     import FCMInitializer from '$lib/components/FCMInitializer.svelte';
     import SyncIndicator from '$lib/components/SyncIndicator.svelte';
@@ -53,7 +53,7 @@
               <path d="{item.menu_icon}"/>
             </svg>
             
-            <span>{$_(item.menu_name)}</span>
+            <span>{$t(item.menu_name)}</span>
           </a>
         {/each}
 

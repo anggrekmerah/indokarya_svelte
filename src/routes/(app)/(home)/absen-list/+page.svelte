@@ -1,5 +1,6 @@
 <script>
   import { fade, fly } from 'svelte/transition'; // 
+  import { t } from 'svelte-i18n';
 
   let { data } = $props();
 
@@ -14,7 +15,7 @@
 
   const getDayName = (dayIndex) => {
     const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    return days[dayIndex];
+    return $t(days[dayIndex]);
   };
 
   const generateMonthlyLogs = (serverData) => {
@@ -68,7 +69,7 @@
               let displayStatus = "-"; 
               // Bandingkan dengan waktu sekarang untuk status 'absent'
               if (iterDate <= now) { 
-                  displayStatus = isWeekend ? "Libur" : "absent"; 
+                  displayStatus = isWeekend ? $t("Libur") : $t("absent"); 
               }
 
               logs.push({
@@ -104,9 +105,9 @@
 <main class="min-h-screen bg-slate-50 p-4 md:p-8 pt-24 md:pt-28 font-sans">
   <div class="max-w-2xl mx-auto px-4">
     <div class="mb-6">
-      <h1 class="text-2xl font-black text-slate-800 tracking-tight">Riwayat Absensi</h1>
+      <h1 class="text-2xl font-black text-slate-800 tracking-tight">{$t('Riwayat Absensi')}</h1>
       <p class="text-slate-500 font-medium text-sm">
-        Periode: 25 {prevMonthName} — 24 {currentMonth} {currentYear}
+        {$t('Periode')}: 25 {prevMonthName} — 24 {currentMonth} {currentYear}
       </p>
     </div>
 
@@ -127,12 +128,12 @@
             <div>
                 <div class="flex gap-3 items-center">
                   <div class="text-xs">
-                    <span class="text-slate-400 block text-[10px] uppercase font-bold">In</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-bold">{$t('In')}</span>
                     <span class="font-mono font-bold text-emerald-600">{log.checkIn}</span> 
                   </div>
                   <div class="h-6 w-[1px] bg-slate-100"></div> 
                   <div class="text-xs">
-                    <span class="text-slate-400 block text-[10px] uppercase font-bold">Out</span>
+                    <span class="text-slate-400 block text-[10px] uppercase font-bold">{$t('Out')}</span>
                     <span class="font-mono font-bold text-slate-600">{log.checkOut}</span> 
                   </div>
                 </div>
@@ -175,16 +176,16 @@
         
         <div class="relative group mb-8">
             <img src={selectedLog.photo} alt="Bukti Foto" class="w-full h-48 object-cover rounded-3xl shadow-inner border-4 border-slate-50" /> 
-            <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">📸 Selfie Check-in</div> 
+            <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">📸 {$t('Selfie Check-in')}</div> 
         </div>
 
         <div class="grid grid-cols-2 gap-4 mb-8">
           <div class="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
-            <p class="text-[10px] text-emerald-600 uppercase font-black mb-1">Check In</p>
+            <p class="text-[10px] text-emerald-600 uppercase font-black mb-1">{$t('Check In')}</p>
             <p class="text-xl font-mono font-bold text-emerald-700">{selectedLog.checkIn}</p> 
           </div>
           <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
-            <p class="text-[10px] text-rose-600 uppercase font-black mb-1">Check Out</p>
+            <p class="text-[10px] text-rose-600 uppercase font-black mb-1">{$t('Check Out')}</p>
             <p class="text-xl font-mono font-bold text-rose-700">{selectedLog.checkOut}</p> 
           </div>
         </div>
@@ -197,7 +198,7 @@
           </div>
           
           <div class="min-w-0 flex-1">
-            <p class="text-[10px] text-slate-400 uppercase font-black leading-none mb-1">Lokasi GPS</p>
+            <p class="text-[10px] text-slate-400 uppercase font-black leading-none mb-1">{$t('Lokasi GPS')}</p>
             <p class="text-sm text-slate-700 font-mono font-bold break-all">
               {selectedLog.lat}, {selectedLog.long}
             </p>

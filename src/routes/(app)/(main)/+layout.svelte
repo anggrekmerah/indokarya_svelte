@@ -4,7 +4,7 @@
     import { slide } from 'svelte/transition';
     import { quintOut } from 'svelte/easing';
     import { fade } from 'svelte/transition';
-    import { _ } from 'svelte-i18n';
+    import { t } from 'svelte-i18n';
     import { onMount } from 'svelte';
     import { ioClient } from '$lib/stores/socket.js';
     import { goto } from '$app/navigation';
@@ -268,14 +268,14 @@
     <button onclick={() => toggleMenu('date')} class="mr-1 rounded-full bg-gray-100 flex-1 text-center py-2 px-1 md:px-4 text-gray-600 hover:text-blue-500">
         <span class="inline-flex items-center gap-1">
             <Calendar class="h-4 w-4"/>
-            {$_('Date')}
+            {$t('Date')}
         </span>
     </button>
 
     <button onclick={() => toggleMenu('category')} class="rounded-full bg-gray-100 flex-1 text-center py-2 px-1 md:px-4 text-gray-600 hover:text-blue-500">
         <span class="inline-flex items-center gap-1">
             <Funnel class="h-4 w-4"/>
-            {$_('Category')}
+            {$t('Category')}
         </span>
     </button>
 
@@ -284,21 +284,21 @@
    
     {#if currentFilter.status}
         <div class="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-gray-100 text-gray-700">
-            <span class="font-medium">Status:</span>
+            <span class="font-medium">{$t('Status')}:</span>
             {currentFilter.status.status_name}
         </div>    
     {/if}
     
     {#if currentFilter.date}
         <div class="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-gray-100 text-gray-700">
-            <span class="font-medium">Date:</span>
+            <span class="font-medium">{$t('Date')}:</span>
             {currentFilter.date.from} - {currentFilter.date.to} 
         </div>    
     {/if}
     
     {#if currentFilter.category}
         <div class="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-gray-100 text-gray-700">
-            <span class="font-medium">Priority:</span>
+            <span class="font-medium">{$t('Priority')}:</span>
             {currentFilter.category.priority_name}
         </div>    
     {/if}
@@ -333,7 +333,7 @@
             out:slide={{ duration: 300 }}
         >  
             <div class="flex justify-between items-center px-4 pt-4 pb-2 border-b sticky top-0 bg-white z-10">
-                <h3 class="text-xl font-bold text-gray-800">{$_('Notifications')}</h3>
+                <h3 class="text-xl font-bold text-gray-800">{$t('Notifications')}</h3>
                 <button onclick={closeMenu} class="p-1">
                     <svg class="w-6 h-6 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -358,7 +358,7 @@
         >
             {#if openMenu === 'status'}
                 <div class="p-4">
-                    <h3 class="text-lg font-semibold mb-4">{$_('Select Status')}</h3>
+                    <h3 class="text-lg font-semibold mb-4">{$t('Select Status')}</h3>
                     <ul class="space-y-1 text-sm">
                         {#each data.dataTicketStatus as status}
                             <li>
@@ -370,7 +370,7 @@
                                     await generateAndGoToQuery(data.segment) 
                                 } }
                                 class="w-full text-left p-3 rounded-md hover:bg-gray-100 border-2 border-x-transparent border-t-transparent border-b-grey-500">
-                                    {$_(status.status_name)}
+                                    {$t(status.status_name)}
                                 </button>
                             </li>
                         {/each}
@@ -380,14 +380,14 @@
 
             {#if openMenu === 'date'}
                 <div class="p-4">
-                    <h3 class="text-lg font-semibold mb-4">{$_('Filter by Date')}</h3>
+                    <h3 class="text-lg font-semibold mb-4">{$t('Filter by Date')}</h3>
                     <div class="flex flex-col space-y-4">
                         <label>
-                            <span class="text-sm text-gray-600">{$_('From Date')}:</span>
+                            <span class="text-sm text-gray-600">{$t('From Date')}:</span>
                             <input type="date" bind:value={fromDate} class="w-full mt-1 p-2 border rounded-md">
                         </label>
                         <label>
-                            <span class="text-sm text-gray-600">{$_('To Date')}:</span>
+                            <span class="text-sm text-gray-600">{$t('To Date')}:</span>
                             <input type="date" bind:value={toDate} class="w-full mt-1 p-2 border rounded-md">
                         </label>
                         <button 
@@ -399,7 +399,7 @@
                             await generateAndGoToQuery(data.segment)
                             }} 
                             class="w-full mt-4 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                            {$_('Submit')}
+                            {$t('Submit')}
                         </button>
                     </div>
                 </div>
@@ -407,7 +407,7 @@
 
             {#if openMenu === 'category'}
                 <div class="p-4">
-                    <h3 class="text-lg font-semibold mb-4">{$_('Select Category')}</h3>
+                    <h3 class="text-lg font-semibold mb-4">{$t('Select Category')}</h3>
                     <ul class="space-y-2 text-sm">
                         {#each data.dataTicketPriority as priority}
                             <li>
@@ -419,7 +419,7 @@
                                     await generateAndGoToQuery(data.segment)
                                 } } 
                                 class="w-full text-left p-2 rounded-md hover:bg-gray-100 border-2 border-x-transparent border-t-transparent border-b-grey-500">
-                                    {$_(priority.priority_name)}
+                                    {$t(priority.priority_name)}
                                 </button>
                             </li>
                         {/each}

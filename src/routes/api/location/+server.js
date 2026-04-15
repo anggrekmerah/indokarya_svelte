@@ -9,7 +9,7 @@ import {sendLocationAPI} from '$lib/tools/location'
 
 export async function POST({ request, fetch, locals }) {
     const data = await request.json();
-    console.log(data)    
+      
     const payload = {ID:locals.user.id, lat: data.lat, lng: data.lng, id_ticket:data.id_ticket}
     const sendLocation = await sendLocationAPI(payload, fetch)
 

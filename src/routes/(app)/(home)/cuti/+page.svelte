@@ -5,6 +5,7 @@
     import { onMount, onDestroy } from 'svelte';
     import imageCompression from 'browser-image-compression';
     import { invalidateAll } from '$app/navigation';
+    import { t } from 'svelte-i18n';
 
     let { data } = $props();
 
@@ -210,7 +211,7 @@
                     ? 'bg-indigo-600 text-white border-indigo-600' 
                     : 'bg-white border-slate-200 text-slate-600'}"
             >
-                {status}
+                {$t(status)}
             </button>
         {/each}
     </div>
@@ -221,7 +222,7 @@
                 <div class="flex items-center gap-4">
                     <div class="h-14 w-14 rounded-2xl bg-indigo-50 text-indigo-600 flex flex-col items-center justify-center border border-indigo-100">
                         <span class="text-lg font-bold mt-1">{item.durasi}</span> 
-                        <span class="text-[8px] font-bold uppercase">Hari</span> 
+                        <span class="text-[8px] font-bold uppercase">{$t('Hari')}</span> 
                     </div>
                     <div>
                         <h3 class="font-bold text-slate-800">{item.nama} ({item.kode})</h3>
@@ -236,29 +237,29 @@
 
         {#if isLoadingMore}
             <div class="text-center p-4 text-slate-400 text-xs animate-pulse font-bold">
-                MENGAMBIL DATA...
+                {$t('MENGAMBIL DATA...')}
             </div>
         {/if}
 
         {#if isError}
             <div class="text-center py-4">
-                <p class="text-rose-500 text-xs font-bold mb-2">GAGAL MEMUAT DATA</p>
+                <p class="text-rose-500 text-xs font-bold mb-2">{$t('GAGAL MEMUAT DATA')}</p>
                 <button 
                     onclick={() => { isError = false; loadMore(); }}
                     class="bg-slate-200 px-4 py-2 rounded-full text-[10px] font-black uppercase"
                 >
-                    Coba Lagi
+                    {$t('Coba Lagi')}
                 </button>
             </div>
         {/if}
 
         {#if !hasMoreData && leaveSubmissions.length > 0}
             <div class="text-center py-8 text-slate-300 text-[10px] font-black uppercase tracking-widest">
-                Semua data {activeFilter} telah ditampilkan
+                {$t('Semua data')} {activeFilter} {$t('telah ditampilkan')}
             </div>
         {:else if !isLoadingMore && leaveSubmissions.length === 0}
             <div class="text-center py-20 text-slate-400 text-xs font-bold">
-                TIDAK ADA DATA {activeFilter.toUpperCase()}
+                {$t('TIDAK ADA DATA')} {activeFilter.toUpperCase()}
             </div>
         {/if}
     </div>
@@ -268,7 +269,7 @@
     transition:fade={{ duration: 200 }}
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end justify-center"
     role="button"
-    aria-label="Tutup latar belakang"
+    aria-label={$t("Tutup latar belakang")}
     tabindex="0"
     onkeydown={(e) => e.key === 'Escape' && (showForm = false)}
   >
@@ -283,7 +284,7 @@
             type="button"
             onclick={() => (showForm = false)}
             class="absolute right-6 p-2 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-colors group"
-            aria-label="Tutup form"
+            aria-label={$t("Tutup form")}
         >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -292,7 +293,7 @@
       
       <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
       
-      <h2 class="text-2xl font-black text-slate-800 mb-6 text-left">Form Pengajuan</h2>
+      <h2 class="text-2xl font-black text-slate-800 mb-6 text-left">{$t('Form Pengajuan')}</h2>
       
       <form 
         method="POST" 
@@ -308,7 +309,7 @@
           {/if}
 
           <div class="grid grid-cols-1 gap-4">
-            <label for="jenis_cuti" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">Jenis Cuti</label> 
+            <label for="jenis_cuti" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">{$t('Jenis Cuti')}</label> 
             <select 
             id="jenis_cuti"
             name="jenis_cuti_id" 
@@ -324,16 +325,16 @@
             {#if selectedLeaveDetail}
                 <div transition:fade class="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
                     <p class="text-[11px] font-bold text-indigo-900 uppercase mb-1">
-                        Ketentuan {selectedLeaveDetail.nama_cuti} ({selectedLeaveDetail.category})
+                        {$t('Ketentuan')} {selectedLeaveDetail.nama_cuti} ({selectedLeaveDetail.category})
                     </p>
                     <p class="text-xs text-indigo-700">{selectedLeaveDetail.deskripsi || "Tidak ada deskripsi."}</p>
                     <div class="mt-2 flex gap-2">
                         <span class="bg-white px-2 py-1 rounded-md border text-[10px] font-bold text-indigo-600">
-                            UNIT: {selectedLeaveDetail.unit.toUpperCase()}
+                            {$t('UNIT')}: {selectedLeaveDetail.unit.toUpperCase()}
                         </span>
                         {#if selectedLeaveDetail.maksimal_cuti}
                             <span class="bg-white px-2 py-1 rounded-md border text-[10px] font-bold text-indigo-600">
-                                MAKS: {selectedLeaveDetail.maksimal_cuti} {selectedLeaveDetail.unit}
+                                {$t('MAKS')}: {selectedLeaveDetail.maksimal_cuti} {selectedLeaveDetail.unit}
                             </span>
                         {/if}
                     </div>
@@ -343,7 +344,7 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label for="mulai" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">
-                        {isUnitJam ? 'Mulai Jam' : 'Mulai Tanggal'}
+                        {isUnitJam ? $t('Mulai Jam') : $t('Mulai Tanggal')}
                     </label> 
                     <input 
                         id="mulai" 
@@ -355,7 +356,7 @@
                 </div>
                 <div>
                     <label for="selesai" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">
-                        {isUnitJam ? 'Selesai Jam' : 'Selesai Tanggal'}
+                        {isUnitJam ? $t('Selesai Jam') : $t('Selesai Tanggal')}
                     </label> 
                     <input 
                         id="selesai" 
@@ -370,7 +371,7 @@
             {#if isNeedAttachment || isIzin}
                 <div transition:slide>
                     <label for="attachment" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">
-                        {isIzin ? 'Foto Selfie (Wajib Izin)' : 'Lampiran Pendukung'}
+                        {isIzin ? $t('Foto Selfie (Wajib Izin)') : $t('Lampiran Pendukung')}
                     </label>
                     <input 
                         id="attachment"
@@ -386,7 +387,7 @@
             {/if}
 
             <label for="attachment" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">
-                Lampiran Pendukung
+                {$t('Lampiran Pendukung')}
             </label>
             <input 
                 id="attachmentManual"
@@ -409,7 +410,7 @@
           </div> -->
 
           <div>
-            <label for="alasan" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">Alasan</label> 
+            <label for="alasan" class="text-[10px] font-black uppercase text-slate-400 ml-1 block">{$t('Alasan')}</label> 
             <textarea id="alasan" name="alasan" required rows="3" class="w-full bg-slate-50 border-none rounded-2xl p-4 mt-1 font-bold text-slate-700" placeholder="Ketik alasan cuti..."></textarea>
           </div>
         </div>
@@ -419,7 +420,7 @@
           type="submit" 
           class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50"
         >
-          {isSubmitting ? 'Mengirim...' : 'Kirim Pengajuan'} 
+          {isSubmitting ? $t('Mengirim...') : $t('Kirim Pengajuan')} 
         </button>
       </form>
     </div>
