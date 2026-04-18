@@ -81,10 +81,10 @@
     
     $effect(async () => {
         const newPath = $page.url.pathname;
-        console.log('newPath', newPath)
-        console.log('currentPath', currentPath)
+        // console.log('newPath', newPath)
+        // console.log('currentPath', currentPath)
         if (newPath !== currentPath && !hasActiveFilters()) {
-            console.log(`[PAGE CHANGE END] New path detected: ${newPath}`);
+            // console.log(`[PAGE CHANGE END] New path detected: ${newPath}`);
             await resetFilter()
             // Update the tracker
             currentPath = newPath;
@@ -94,22 +94,22 @@
     onMount(() => {
 
         if (ioClient) {
-            console.log('Socket available. Attaching listener...');
+            // console.log('Socket available. Attaching listener...');
             // socket.emit('join_user_room', 5);
 
             ioClient.on('totalTicket', (newData) => {
                 totalTicket = newData.total_task
-                console.log('New message total:', newData);
+                // console.log('New message total:', newData);
             });
 
             ioClient.on('totalNotif', (newData) => {
                 totalNotif = newData.total
-                console.log('New message total:', newData);
+                // console.log('New message total:', newData);
             });
 
             ioClient.on('TicketCreated', (newData) => {
                 messagesNotif.push(newData)
-                console.log('New ticket received:', newData);
+                // console.log('New ticket received:', newData);
             });
 
         }

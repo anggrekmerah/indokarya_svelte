@@ -13,7 +13,7 @@
         // 1. Kirim permintaan API untuk menandai sebagai 'dibaca'
         try {
             const apiEndpoint = '/api/notif/read';
-            console.log(notifId)
+            // console.log(notifId)
             const response = await fetch(apiEndpoint, {
                 method: 'POST', // Menggunakan POST untuk mengirim data ID
                 headers: {

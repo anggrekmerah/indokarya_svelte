@@ -256,7 +256,7 @@
                       lat: position.coords.latitude,
                       long: position.coords.longitude
                   }; 
-                  console.log(locationData)
+                //   console.log(locationData)
                 accuracy = position.coords.accuracy;
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
@@ -267,10 +267,10 @@
                 const officeLatLng = new google.maps.LatLng(officelat, officelong);
                 const userLatLng = new google.maps.LatLng(lat, lng);
 
-                console.log("DEBUG DATA:");
-                console.log("Data Office Raw:", data.officelat, data.officelong);
-                console.log("Parsed Office:", officelat, officelong);
-                console.log("User Pos:", lat, lng);
+                // console.log("DEBUG DATA:");
+                // console.log("Data Office Raw:", data.officelat, data.officelong);
+                // console.log("Parsed Office:", officelat, officelong);
+                // console.log("User Pos:", lat, lng);
 
                 distance = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, officeLatLng);
 
@@ -708,7 +708,7 @@
                 isSubmitting = true;
 
                 return async ({ result }) => {
-                    console.log(result)
+                    // console.log(result)
                     if (result.type === 'success') {
                         // Berhasil Online
                         

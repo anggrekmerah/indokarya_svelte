@@ -40,7 +40,7 @@
             });
             
             if (response.ok) {
-                console.log('Token FCM berhasil disimpan di server Express.js/Laravel.');
+                // console.log('Token FCM berhasil disimpan di server Express.js/Laravel.');
             } else {
                 console.error('Gagal menyimpan token di server:', response.statusText);
             }
@@ -63,7 +63,7 @@
         // Pendaftaran eksplisit sangat penting untuk menghindari error "no active Service Worker"
         navigator.serviceWorker.register('/service-worker.js', { scope: '/', type: 'module' })
             .then(async (registration) => {
-                console.log('SW Svelte berhasil didaftarkan/ditemukan.');
+                // console.log('SW Svelte berhasil didaftarkan/ditemukan.');
                 
                 // Beri tahu Firebase registrasi SW mana yang valid
                 // messaging.useServiceWorker(registration); 
@@ -79,7 +79,7 @@
                     if (currentToken) {
                         await sendTokenToServer(currentToken);
                     } else {
-                        console.log('Tidak ada token perangkat yang tersedia. Minta izin notifikasi.');
+                        // console.log('Tidak ada token perangkat yang tersedia. Minta izin notifikasi.');
                     }
                 } else {
                     console.warn("Izin notifikasi ditolak.");
@@ -98,7 +98,7 @@
 
         // --- 4. Handle Pesan Foreground (Saat Aplikasi Svelte Aktif) ---
         onMessage(messaging, (payload) => {
-            console.log("Pesan Foreground FCM diterima (Svelte):", payload);
+            // console.log("Pesan Foreground FCM diterima (Svelte):", payload);
             
             // Logika untuk menampilkan notifikasi di UI Svelte
             // Gunakan Svelte store atau event dispatching untuk memperbarui UI

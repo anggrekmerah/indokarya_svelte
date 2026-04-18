@@ -51,8 +51,8 @@
         
         if (ioClient) {
             ioClient.on('TicketCreated', (newData) => {
-                console.log('TicketCreated')
-                console.log(newData)
+                // console.log('TicketCreated')
+                // console.log(newData)
                 messages.push(newData.data)
             });
         }

@@ -45,8 +45,8 @@ async function storeTickets(keyMetadata, response) {
  * @param {object} initialData - Data listTicket dari SvelteKit load function
  */
 export async function loadInitialData(keyMetadata, urlSearchParams, initialData) {
-    console.log('initialData store')
-    console.log(initialData)
+    // console.log('initialData store')
+    // console.log(initialData)
     isLoading.set(true);
     const filters = getFilterParams(urlSearchParams);
     let onlineStatus = false;
@@ -68,7 +68,7 @@ export async function loadInitialData(keyMetadata, urlSearchParams, initialData)
     }
 
     try {
-        console.log('onlineStatus', onlineStatus)
+        // console.log('onlineStatus', onlineStatus)
         if (onlineStatus && initialData) {
             // ONLINE: Simpan ke DB lokal & gunakan data dari server
             await storeTickets(keyMetadata, initialData);
@@ -83,13 +83,13 @@ export async function loadInitialData(keyMetadata, urlSearchParams, initialData)
                     type: 'PREFETCH_TASKS',
                     urls: ticketUrls
                 });
-                console.log(`[Store] Meminta SW prefetch ${ticketUrls.length} tiket.`);
+                // console.log(`[Store] Meminta SW prefetch ${ticketUrls.length} tiket.`);
 
                 navigator.serviceWorker.controller.postMessage({
                     type: 'PREFETCH_HISTORY',
                     urls: historyUrls
                 });
-                console.log(`[Store] Meminta SW prefetch ${historyUrls.length} history.`);
+                // console.log(`[Store] Meminta SW prefetch ${historyUrls.length} history.`);
             }
 
             for (let itemStore in initialData.items) {
@@ -103,8 +103,8 @@ export async function loadInitialData(keyMetadata, urlSearchParams, initialData)
             // OFFLINE: Ambil dari DB lokal
             const metadata = await db.metadata.get(keyMetadata);
             const initialItems = await baseQuery.offset(0).limit(LIMIT).toArray();
-            console.log('initialItems')
-            console.log(initialItems)
+            // console.log('initialItems')
+            // console.log(initialItems)
             const calculatedHasMore = initialItems.length === LIMIT;
 
             dataTicket = {
@@ -123,7 +123,7 @@ export async function loadInitialData(keyMetadata, urlSearchParams, initialData)
             hasMore: metadata?.hasMore ?? false,
         };
     } finally {
-        console.log(dataTicket)
+        // console.log(dataTicket)
         items.set(dataTicket.items ?? []);
         currentOffset.set(dataTicket.items?.length ?? 0); // Offset dihitung dari jumlah item yang dimuat
         hasMore.set(dataTicket.hasMore ?? false);
@@ -148,8 +148,8 @@ export async function loadMoreItems(keyMetadata, apiEndpoint, urlSearchParams) {
     
     if ($isLoading || !$hasMore) return;
 
-    console.log('$isLoading', $isLoading)
-    console.log('$hasMore', $hasMore)
+    // console.log('$isLoading', $isLoading)
+    // console.log('$hasMore', $hasMore)
 
     isLoading.set(true);
     const filters = getFilterParams(urlSearchParams);
@@ -175,12 +175,12 @@ export async function loadMoreItems(keyMetadata, apiEndpoint, urlSearchParams) {
     try {
         let newData = {};
         
-        console.log('$isOnline',$isOnline)
+        // console.log('$isOnline',$isOnline)
         if ($isOnline) {
             // ONLINE
             
-            console.log(payload)
-            console.log('apiEndpoint', apiEndpoint)
+            // console.log(payload)
+            // console.log('apiEndpoint', apiEndpoint)
             const responseAPI = await fetch(apiEndpoint, {
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' },
@@ -202,8 +202,8 @@ export async function loadMoreItems(keyMetadata, apiEndpoint, urlSearchParams) {
                 hasMore: offlineItems.length === LIMIT 
             };
         }
-        console.log('newData')
-        console.log(newData)
+        // console.log('newData')
+        // console.log(newData)
         if (newData?.data?.items) {
             const newItems = newData.data.items;
             items.set([...$items, ...newItems]);

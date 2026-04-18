@@ -147,8 +147,8 @@
             version: 'weekly',
             libraries: ['maps','marker','places','routes','geometry']
         }
-        console.log('mapsConf history')
-        console.log(mapsConf)
+        // console.log('mapsConf history')
+        // console.log(mapsConf)
     let mapsLoader;
     if (typeof window !== 'undefined') {
         mapsLoader = new Loader(mapsConf);

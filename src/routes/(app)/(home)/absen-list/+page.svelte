@@ -24,10 +24,10 @@
       const currentYear = now.getFullYear(); 
       const currentMonth = now.getMonth(); 
 
-      // Menentukan tanggal mulai: tanggal 25 bulan sebelumnya
-      const startDate = new Date(currentYear, currentMonth - 1, 25);
-      // Menentukan tanggal akhir: tanggal 24 bulan ini
-      const endDate = new Date(currentYear, currentMonth, 24);
+      // Menentukan tanggal mulai: tanggal 26 bulan sebelumnya
+      const startDate = new Date(currentYear, currentMonth - 1, 26);
+      // Menentukan tanggal akhir: tanggal 25 bulan ini
+      const endDate = new Date(currentYear, currentMonth, 26);
 
       const getDayName = (date) => { 
           return new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date); 
@@ -107,7 +107,7 @@
     <div class="mb-6">
       <h1 class="text-2xl font-black text-slate-800 tracking-tight">{$t('Riwayat Absensi')}</h1>
       <p class="text-slate-500 font-medium text-sm">
-        {$t('Periode')}: 25 {prevMonthName} — 24 {currentMonth} {currentYear}
+        {$t('Periode')}: 26 {prevMonthName} — 25 {currentMonth} {currentYear}
       </p>
     </div>
 

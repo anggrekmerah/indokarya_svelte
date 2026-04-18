@@ -165,7 +165,7 @@
 
     $effect(async () => {
 
-        console.log('isTicketLocked',isTicketLocked)
+        // console.log('isTicketLocked',isTicketLocked)
         const savableData = {
             description: report.description,
             sparePart: report.sparePart,
@@ -226,16 +226,16 @@
             );
 
             isNearDestination = distance <= 30;
-            console.log('isNearDestination', distance)
-            console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
-            console.log(wasNearDestination)
+            // console.log('isNearDestination', distance)
+            // console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
+            // console.log(wasNearDestination)
 
             if(isNearDestination){
                 isInfoExpanded = false
             }
 
             if (wasNearDestination === true && isNearDestination === false) {
-                console.log("Technician has left the area. Sending data to server.");
+                // console.log("Technician has left the area. Sending data to server.");
                 
                 // This function call is what you need to send the data.
                 sendLockTaskBeacon();
@@ -256,7 +256,7 @@
         try {
             const registration = await navigator.serviceWorker.ready;
             await registration.sync.register(tag);
-            console.log(`[OFFLINE] Tugas Background Sync berhasil didaftarkan: ${tag}`);
+            // console.log(`[OFFLINE] Tugas Background Sync berhasil didaftarkan: ${tag}`);
         } catch (error) {
             console.error('[OFFLINE] Gagal mendaftarkan Background Sync:', error);
         }
@@ -287,11 +287,11 @@
     async function sendLockTaskBeacon() {
         const taskId = dataTicket.id_ticket;
         const payload = JSON.stringify({ id_ticket:taskId });
-        console.log(payload)
+        // console.log(payload)
         // Check if the browser supports sendBeacon before calling
         if (navigator.sendBeacon) {
             navigator.sendBeacon('/api/ticket/locked', new Blob([payload], { type: 'application/json' }));
-            console.log('Task lock beacon sent successfully.');
+            // console.log('Task lock beacon sent successfully.');
         } else {
             // Fallback for older browsers (less reliable)
             console.warn('navigator.sendBeacon not supported. Using a less reliable fetch request.');
@@ -558,7 +558,7 @@
         const signatureDataURL = canvas.toDataURL('image/png');
         report.signature = signatureDataURL;
         isSignaturePadOpen = false;
-        console.log('Signature saved to report object.');
+        // console.log('Signature saved to report object.');
     }
 
     function cancelSignature() {
@@ -634,7 +634,7 @@
             console.error("Signature is required to submit the report.");
             return;
         }
-        console.log('Final Report:', report);
+        // console.log('Final Report:', report);
         sessionStorage.removeItem('taskReportData');
     }
 
@@ -644,20 +644,20 @@
         if (watchID !== null) {
             if (navigator.geolocation) {
                 navigator.geolocation.clearWatch(watchID);
-                console.log("Geolocation watch cleared.");
+                // console.log("Geolocation watch cleared.");
             }
         }
 
         if (AnimationFrameID !== null) {
             cancelAnimationFrame(AnimationFrameID);
             AnimationFrameID = null; // Reset the ID
-            console.log('Animation stopped.');
+            // console.log('Animation stopped.');
         }
     });
 
 
     onMount( async () => {
-        console.log($page.params.id)
+        // console.log($page.params.id)
 
         try {
             if(isOnline) {
@@ -665,12 +665,12 @@
                 dataTicket = data.detailTicket
             } else {
                 var stringTicket = await db.detailticket.where('id_ticket').equals($page.params.id).toArray()
-                console.log(stringTicket)
+                // console.log(stringTicket)
                 dataTicket = JSON.parse(stringTicket[0].payload) 
             }
         } catch (error) {
             var stringTicket = await db.detailticket.where('id_ticket').equals($page.params.id).toArray()
-            console.log(stringTicket)
+            // console.log(stringTicket)
             dataTicket = JSON.parse(stringTicket[0].payload)
         }
         
@@ -685,8 +685,8 @@
         // Initialize report objects for each machine if not loaded from session
         if (machineReports.length === 0 || machineReports.length !== machines.length) {
              machineReports = machines.map(machine => {
-                console.log('machine')
-                console.log(machine)
+                // console.log('machine')
+                // console.log(machine)
                 return {
                     id: String(machine.id_ticket_machine), // Ensure BIGINT is treated as a string
                     id_machine : machine.id_machine,
@@ -710,7 +710,7 @@
 
         if (ioClient) {
             ioClient.on('ticketUnlocked', (newData) => {
-                console.log('New message received:', newData);
+                // console.log('New message received:', newData);
                 isTicketLocked = newData.ticket_ulocked ? false : true;
                 RequestReportUnLocked = newData.ticket_ulocked ? false : true;
             });
@@ -746,8 +746,8 @@
             // 3. Get the initial location and set up the route
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
-                    console.log('position current')
-                    console.log(position)
+                    // console.log('position current')
+                    // console.log(position)
                     const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
                     userLocation = origin
                     
@@ -808,13 +808,13 @@
             destination
         );
 
-        console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
+        // console.log(`Distance to destination: ${distance.toFixed(2)} meters`);
 
         // Check if the user is within the geofence and the notification hasn't been sent yet
         if (distance <= radius) {
-            console.log("You have entered the destination zone!");
+            // console.log("You have entered the destination zone!");
 
-            console.log(AnimationFrameID)
+            // console.log(AnimationFrameID)
             // Optional: Stop watching the user's position to save battery
             isNearDestination = true
             return false
@@ -853,8 +853,8 @@
         if ('geolocation' in navigator) {
             watchID = navigator.geolocation.watchPosition(
                 async (position) => {
-                    console.log('from watch function')
-                    console.log(position)
+                    // console.log('from watch function')
+                    // console.log(position)
                     userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
 
                     await sendLocation(position.coords.latitude, position.coords.longitude)
@@ -894,7 +894,7 @@
 
     async function animateMarkerWatch(google, marker, coors) {
         
-        console.log(1)
+        // console.log(1)
         // Update the marker's position
         marker.position = coors;
 
@@ -918,7 +918,7 @@
                 lat: typeof lastPoint.lat === 'function' ? lastPoint.lat() : lastPoint.lat,
                 lng: typeof lastPoint.lng === 'function' ? lastPoint.lng() : lastPoint.lng
             };
-            console.log('userLocation', userLocation)
+            // console.log('userLocation', userLocation)
             return;
         }
 
@@ -950,7 +950,7 @@
                 },
             },
             (response, status) => { // Tidak perlu async di sini kecuali ada await di dalamnya
-                console.log(response);
+                // console.log(response);
                 if (status === 'OK') {
                     directionsRenderer.setDirections(response);
                 } else {
@@ -1021,7 +1021,7 @@
         // Handle the response from the server
         
         const responseUpload = await response.json()
-        console.log(responseUpload)
+        // console.log(responseUpload)
     }
 
     /**
@@ -1043,7 +1043,7 @@
      */
     async function in_startCamera() {
         try {
-            console.log(in_cameraFacingMode)
+            // console.log(in_cameraFacingMode)
             in_stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: in_cameraFacingMode } }, audio: false });
             if (in_videoElement) {
                 in_videoElement.srcObject = in_stream;
@@ -1097,13 +1097,13 @@
      */
     function in_handleCheckIn() {
         // Here you would add your logic to submit the data, e.g., to an API
-        console.log("Checking in with the following photo:", in_photoPreviewUrl);
+        // console.log("Checking in with the following photo:", in_photoPreviewUrl);
         in_togglePopup(); // Close the popup after submission
     }
 
     function in_switchCamera() {
         // Toggle the camera facing mode
-        console.log(in_cameraFacingMode)
+        // console.log(in_cameraFacingMode)
         in_cameraFacingMode = in_cameraFacingMode === 'environment' ? 'user' : 'environment';
         // Get the new stream with the updated mode
         if (in_stream) {
@@ -1219,7 +1219,7 @@
     }
 
     async function runOfflineTestSimulation(path) {
-        console.log("Memulai simulasi offline...");
+        // console.log("Memulai simulasi offline...");
 
         for (let i = 0; i < path.length - 1; i++) {
             const start = path[i];
@@ -1227,7 +1227,7 @@
             
             // Hitung jarak antar titik utama (Opsional, untuk log)
             const distance = calculateDistance(start, end);
-            console.log(`Jarak segmen ini: ${distance.toFixed(2)} meter`);
+            // console.log(`Jarak segmen ini: ${distance.toFixed(2)} meter`);
 
             // Simulasi pergerakan halus (10 step per segmen)
             for (let step = 0; step <= 10; step++) {
@@ -1243,7 +1243,7 @@
             }
         }
         
-        console.log("Simulasi selesai. Cek IndexedDB untuk data yang tersimpan.");
+        // console.log("Simulasi selesai. Cek IndexedDB untuk data yang tersimpan.");
     }
 
     // Fungsi untuk menghitung jarak dengan fallback offline
@@ -1663,7 +1663,7 @@
                                 
                                 // 3. Append to FormData
                                 formData.append('files', media.file, uniqueFileName); 
-                                console.log(`Appending file as: ${uniqueFileName}`);
+                                // console.log(`Appending file as: ${uniqueFileName}`);
                             }
                         });
                     });
@@ -1748,7 +1748,7 @@
                     }
 
                     if (!navigator.onLine) {
-                        console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
+                        // console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
 
                         // 1. Definisikan tag unik
                         const syncTag = `sync-report-${dataTicket.id_ticket}`;
@@ -1784,7 +1784,7 @@
 
                     return async ({ result, update }) => {
                         loadingCheckout = false;
-                        console.log(result)
+                        // console.log(result)
                         if (result.type === 'success') {
                             handleSuccessfulCheckOut();
                             alertPopup = false;
@@ -2054,7 +2054,7 @@
                 };
                 
                 if (!navigator.onLine) {
-                    console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
+                    // console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
 
                     // 1. Simpan Seluruh FormData ke IndexedDB
                     const syncTag = await saveOfflineTask(
@@ -2090,7 +2090,7 @@
                         
                         // untuk test
                         setTimeout(function() {
-                            console.log("This message appears after 2 seconds.");
+                            // console.log("This message appears after 2 seconds.");
                         }, 2000); // 2000 milliseconds = 2 seconds
                     
                         handleSuccessfulCheckin()
@@ -2195,7 +2195,7 @@
             }
 
             if (!navigator.onLine) {
-                console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
+                // console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
 
                 // 1. Simpan Seluruh FormData ke IndexedDB
                 const syncTag = await saveOfflineTask(
@@ -2227,7 +2227,7 @@
             }
             
             return async ({ result, update }) => {
-                console.log(result)
+                // console.log(result)
 
                 handleSuccessfulUnlock()
                 // Check the result type for success, not the status
