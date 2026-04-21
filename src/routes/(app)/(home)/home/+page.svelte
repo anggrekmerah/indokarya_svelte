@@ -68,8 +68,8 @@
   // Gunakan $derived untuk mode hybrid agar konsisten dengan data server
     let hybridModeServer = $derived(data.checkTodayAttendance?.data?.attendance_mode || null);
   
-    const currentStats = $t(baseStats[work_base]) || [];
-  
+    const currentStats = baseStats[work_base] || [];
+    
     // State variables
     let isSubmitting = $state(false);
     let in_showPopup = $state(false);
