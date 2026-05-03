@@ -56,6 +56,7 @@
 
     let isOnline = $state(true);
     let work_base = data.users.work_base;
+    console.log(work_base)
     let google
     let isInOfficeArea = $state(false);
     let hybridMode = $state(null);
@@ -482,7 +483,7 @@
     </section>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {#if work_base == 'hybrid' || work_base == 'tehcnician'}
+      {#if work_base == 'hybrid' || work_base == 'technician'}
           <!-- <main class="flex-1 overflow-y-auto pb-20">  -->
             <div class="p-2 md:p-6">
                 <!-- Dashboard Cards Section -->

@@ -58,7 +58,8 @@ export async function load({ params, fetch, locals, parent }) {
         mapsId: env.GOOGLE_MAPS_ID,
         officelat: env.OFFICELAT,
         officelong: env.OFFICELONG,
-        attendances: getattendance || null
+        attendances: getattendance || null,
+        users: parentData.user
     };
 }
 

@@ -192,6 +192,7 @@
     <div class="flex justify-between items-center ">
         
         <button 
+        aria-label="addform"
         onclick={() => showForm = true}
         class="fixed bottom-20 right-4 z-40 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-2xl shadow-2xl shadow-indigo-300 transition-all active:scale-90 flex items-center gap-2 group"
         >
@@ -379,7 +380,7 @@
                         type="file"
                         accept="image/*"
                         capture={isIzin ? "user" : null} 
-                        required={isIzin || isNeedAttachment}
+                        required
                         bind:files
                         class="w-full bg-slate-50 border-dashed border-2 border-slate-200 rounded-2xl p-4 mt-1 font-bold text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700"
                     />
@@ -393,6 +394,7 @@
                 id="attachmentManual"
                 name="attachmentManual"
                 type="file"
+                required
                 accept="image/*"
                 class="w-full bg-slate-50 border-dashed border-2 border-slate-200 rounded-2xl p-4 mt-1 font-bold text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700"
             />
