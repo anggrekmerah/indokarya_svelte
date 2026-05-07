@@ -115,7 +115,7 @@ export const actions = {
             };
 
             const response = await leaveRequest(payload, fetch);
-            
+            console.log(response)
             if (response.error) return fail(500, { message: get(t)(response.message_key) });
             return { success: true };
         } catch (error) {

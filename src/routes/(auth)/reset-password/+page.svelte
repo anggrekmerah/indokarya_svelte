@@ -2,7 +2,7 @@
     import { enhance } from '$app/forms';
     import { onMount } from 'svelte';
     import { t } from 'svelte-i18n';
-    import { goto } from '$app/navigation'; // Tambahkan baris ini [cite: 5]
+    import { goto } from '$app/navigation'; // Tambahkan baris ini 
 
     let { data } = $props();
 
@@ -21,14 +21,14 @@
         errorMessage = '';
 
         return async ({ result }) => {
-            // SvelteKit mengembalikan result.type 'failure' atau 'success' dari actions [cite: 5]
+            // SvelteKit mengembalikan result.type 'failure' atau 'success' dari actions 
             if (result.type === 'failure') {
                 errorMessage = result.data?.message || 'Terjadi kesalahan';
                 loading = false;
             }
 
             if (result.type === 'success') {
-                // Berikan jeda singkat atau langsung redirect jika berhasil [cite: 5]
+                // Berikan jeda singkat atau langsung redirect jika berhasil 
                 await goto('/login');
             }
             

@@ -17,6 +17,7 @@
     import { env } from '$env/dynamic/public';
     import imageCompression from 'browser-image-compression';
     import { goto } from '$app/navigation';
+    import {withSubmitGuard} from '$lib/tools/utils'
     
     let { data, form } = $props();
 
@@ -69,6 +70,7 @@
     
     let popUpReportLocked = $state(false)
     let RequestReportUnLocked = $state(false)
+    let loadingUnLocked = $state(false);
 
     let isSignaturePadOpen = $state(false);
     let isCameraPopupOpen = $state(false);
@@ -149,6 +151,7 @@
     let in_stream = $state(null);
     let in_checkin = $state(null);
     let in_cameraFacingMode = $state('user');
+    let loadingCheckin = $state(false);
 
 
     // Load google maps
@@ -2035,7 +2038,7 @@
 
             <form method="post" action="?/checkin" enctype="multipart/form-data" class="space-y-4" 
             use:enhance={ async ({formData}) => {
-                
+                loadingCheckin = true
                 if (!in_capturedFile) {
                     alert('Please take a photo first.');
                     return;
@@ -2084,7 +2087,7 @@
                 }
                 
                 return async ({ result, update }) => {
-                    
+                    loadingCheckin = false
                     // Check the result type for success, not the status
                     if (result.type === 'success') {
                         
@@ -2137,7 +2140,10 @@
                 <!-- Check In Button (only visible after a photo is taken) -->
                 {#if in_photoTaken}
                     <div class="flex justify-center">
-                        <button type="submit" class="w-full px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <button 
+                            type="submit" 
+                            disabled={loadingCheckin}
+                            class="w-full px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition duration-300 transform hover:scale-105 shadow-lg">
                             {$t('Check In')}
                         </button>
                     </div>
@@ -2186,6 +2192,7 @@
     </div>
     <form method="post" action="?/unlock_report" class="w-full h-full max-w-lg flex-col flex space-y-4"
         use:enhance={ async ({formData}) => {
+            loadingUnLocked = true
             
             formData.append('id_ticket', dataTicket.id_ticket);
             
@@ -2228,7 +2235,7 @@
             
             return async ({ result, update }) => {
                 // console.log(result)
-
+                loadingUnLocked = false
                 handleSuccessfulUnlock()
                 // Check the result type for success, not the status
                 if (result.type === 'failure') {
@@ -2257,7 +2264,10 @@
             <button onclick={() => popUpReportLocked = false} class="rounded-lg items-center justify-center flex-1 flex p-4 bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors">
                 {$t('Cancel')}
             </button>
-            <button onclick={stopCamera} class="rounded-lg items-center justify-center flex-1 flex p-4 bg-blue-600 text-white hover:bg-red-700 transition-colors">
+            <button 
+                onclick={stopCamera} 
+                disabled={loadingUnLocked}
+                class="rounded-lg items-center justify-center flex-1 flex p-4 bg-blue-600 text-white hover:bg-red-700 transition-colors">
                 {$t('Save')}
             </button>
         </div>

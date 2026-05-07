@@ -56,7 +56,7 @@
 
     let isOnline = $state(true);
     let work_base = data.users.work_base;
-    console.log(work_base)
+
     let google
     let isInOfficeArea = $state(false);
     let hybridMode = $state(null);
