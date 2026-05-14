@@ -162,8 +162,16 @@
         libraries: ['maps','marker','places','routes','geometry'] // 'places' is often needed for directions
     }        
     let mapsLoader;
-    if (typeof window !== 'undefined') {
-        mapsLoader = new Loader(mapsConf);
+    // if (typeof window !== 'undefined') {
+    //     mapsLoader = new Loader(mapsConf);
+    // }
+
+    async function initMap() {
+        if (!mapsLoader) {
+            mapsLoader = new Loader(mapsConf);
+        }
+
+        google = await mapsLoader.load();
     }
 
     $effect(async () => {
@@ -205,17 +213,22 @@
         }
 
         if (userLocation) {
-            // Create or update the user's marker
-           if (!userMarker) {
-                userMarker = new google.maps.marker.AdvancedMarkerElement({
-                    map: defMap,
-                    position: userLocation,
-                    content: pinElement.element
-                });
-            }
 
-            if (!isAnimating) {
-                smoothLocation.set(userLocation);
+            checkProximity();
+
+            if (google && defMap) {
+                // Create or update the user's marker
+                if (!userMarker && pinElement) {
+                    userMarker = new google.maps.marker.AdvancedMarkerElement({
+                        map: defMap,
+                        position: userLocation,
+                        content: pinElement.element
+                    });
+                }
+
+                if (!isAnimating) {
+                    smoothLocation.set(userLocation);
+                }   
             }
 
             // Calculate and check the distance
@@ -641,6 +654,66 @@
         sessionStorage.removeItem('taskReportData');
     }
 
+    async function setupGoogleMap() {
+        try {
+            google = await mapsLoader.load();
+            const { Map } = await google.maps.importLibrary("maps");
+            const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+            const { DirectionsRenderer } = await google.maps.importLibrary("routes");
+
+            pinElement = new PinElement(pinOpt);
+
+            defMap = new Map(mapElement, {
+                center: centerMarker,
+                zoom: 13,
+                mapId: mapID
+            });
+
+            new AdvancedMarkerElement({
+                map: defMap,
+                position: centerMarker,
+                title: dataTicket.cust_name,
+            });
+
+            directionsRenderer = new DirectionsRenderer({
+                map: defMap,
+                suppressMarkers: true 
+            });
+
+            if (userLocation) {
+                userMarker = new AdvancedMarkerElement({
+                    map: defMap,
+                    position: userLocation,
+                    content: pinElement.element
+                });
+                await calculateAndDisplayRoute(userLocation, centerMarker);
+            }
+        } catch (e) {
+            console.error('Error loading Google Maps', e);
+        }
+    }
+
+    function checkProximity() {
+        if (!userLocation || !centerMarker) return;
+
+        // Selalu hitung menggunakan Haversine (calculateDistance)
+        const distance = calculateDistance(
+            { lat: userLocation.lat, lng: userLocation.lng },
+            { lat: centerMarker.lat, lng: centerMarker.lng }
+        );
+        
+        isNearDestination = distance <= 100;
+
+        if(isNearDestination){
+            isInfoExpanded = false;
+        }
+
+        if (wasNearDestination === true && isNearDestination === false) {
+            sendLockTaskBeacon();
+        }
+
+        wasNearDestination = isNearDestination;
+    }
 
     onDestroy( async () => {
 
@@ -719,65 +792,86 @@
             });
         }
 
-        try {
-            google = await mapsLoader.load();
+        // try {
+        //     google = await mapsLoader.load();
 
-            const { Map } = await google.maps.importLibrary("maps");
-            const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker")
-            const { LatLng } = await google.maps.importLibrary("core");
-            const { DirectionsRenderer } = await google.maps.importLibrary("routes");
-            pinElement = new google.maps.marker.PinElement(pinOpt);
+        //     const { Map } = await google.maps.importLibrary("maps");
+        //     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker")
+        //     const { LatLng } = await google.maps.importLibrary("core");
+        //     const { DirectionsRenderer } = await google.maps.importLibrary("routes");
+        //     pinElement = new google.maps.marker.PinElement(pinOpt);
 
-            // 2. Initialize the map and renderer
-            defMap = await new Map(mapElement, {
-                center: centerMarker,
-                zoom: 13,
-                mapId: mapID
-            });
+        //     // 2. Initialize the map and renderer
+        //     defMap = await new Map(mapElement, {
+        //         center: centerMarker,
+        //         zoom: 13,
+        //         mapId: mapID
+        //     });
             
-            await new AdvancedMarkerElement({
-                map: defMap,
-                position: centerMarker,
-                title: dataTicket.cust_name,
-            })
+        //     await new AdvancedMarkerElement({
+        //         map: defMap,
+        //         position: centerMarker,
+        //         title: dataTicket.cust_name,
+        //     })
 
-            directionsRenderer = new DirectionsRenderer({
-                map: defMap,
-                suppressMarkers: true // We will use a custom marker for the user
-            });
+        //     directionsRenderer = new DirectionsRenderer({
+        //         map: defMap,
+        //         suppressMarkers: true // We will use a custom marker for the user
+        //     });
 
             // 3. Get the initial location and set up the route
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    // console.log('position current')
-                    // console.log(position)
-                    const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    userLocation = origin
+            // navigator.geolocation.getCurrentPosition(
+            //     async (position) => {
+            //         // console.log('position current')
+            //         // console.log(position)
+            //         const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
+            //         userLocation = origin
                     
-                    userMarker = new google.maps.marker.AdvancedMarkerElement({
-                        map: defMap,
-                        position: origin,
-                        content: pinElement.element
-                    });
+            //         userMarker = new google.maps.marker.AdvancedMarkerElement({
+            //             map: defMap,
+            //             position: origin,
+            //             content: pinElement.element
+            //         });
 
-                    await sendLocation(position.coords.latitude, position.coords.longitude)
+            //         await sendLocation(position.coords.latitude, position.coords.longitude)
                     
-                    await calculateAndDisplayRoute(origin, centerMarker);
-                    // After the route is set up, start continuous tracking
-                    // await watchUserLocation();
-                },
-                (error) => console.error("Could not get user's initial location:", error),
-                {
-                    enableHighAccuracy: true,
-                    timeout: 60000, // Increase this significantly
-                    maximumAge: 30000
-                }
-            );
+            //         await calculateAndDisplayRoute(origin, centerMarker);
+            //         // After the route is set up, start continuous tracking
+            //         // await watchUserLocation();
+            //     },
+            //     (error) => console.error("Could not get user's initial location:", error),
+            //     {
+            //         enableHighAccuracy: true,
+            //         timeout: 60000, // Increase this significantly
+            //         maximumAge: 30000
+            //     }
+            // );
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
+                        userLocation = origin;
+                        
+                        await sendLocation(position.coords.latitude, position.coords.longitude);
+                        
+                        // Langsung cek jarak pakai Haversine
+                        checkProximity();
+                      
+                    },
+                    (error) => console.error("Could not get user's initial location:", error),
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 60000,
+                        maximumAge: 30000
+                    }
+                );
+            }
             
                 
-        } catch (e) {
-            console.error('Error loading Google Maps', e);
-        }
+        // } catch (e) {
+        //     console.error('Error loading Google Maps', e);
+        // }
 
         const savedData = sessionStorage.getItem('taskReportData');
         if (savedData) {
@@ -789,12 +883,14 @@
         
     });
 
-    function handleToggleMap() {
+    async function handleToggleMap() {
         isMapExpanded = !isMapExpanded;
         watchOriginMarked = !watchOriginMarked
         if (isMapExpanded) {
             // isInfoExpanded = false;
             watchOriginMarked = true
+            await initMap();
+            await setupGoogleMap();
         }
 
         setTimeout(() => {
@@ -1252,14 +1348,14 @@
     // Fungsi untuk menghitung jarak dengan fallback offline
     function getDistance(pos1, pos2) {
         // Cek apakah library google maps tersedia dan modul geometry sudah dimuat
-        if (typeof google !== 'undefined' && google.maps && google.maps.geometry) {
-            const p1 = new google.maps.LatLng(pos1.lat, pos1.lng);
-            const p2 = new google.maps.LatLng(pos2.lat, pos2.lng);
-            return google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
-        } else {
+        // if (typeof google !== 'undefined' && google.maps && google.maps.geometry) {
+        //     const p1 = new google.maps.LatLng(pos1.lat, pos1.lng);
+        //     const p2 = new google.maps.LatLng(pos2.lat, pos2.lng);
+        //     return google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+        // } else {
             // Gunakan fungsi manual Haversine jika offline/google tidak ada
             return calculateDistance(pos1, pos2);
-        }
+        // }
     }
 
     async function compressMediaFiles(files, options) {
@@ -1289,27 +1385,27 @@
 </svelte:head>
 
 <main class="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
-    <section class="w-full flex-shrink-0 relative border-b-2 border-[#407ad6]" class:h-[70vh]={isMapExpanded} class:h-48={!isMapExpanded} transition:slide={{ duration: 300 }}>
+    <section class="w-full flex-shrink-0 relative border-b-2 border-[#407ad6]" class:h-[70vh]={isMapExpanded} class:h-20={!isMapExpanded} transition:slide={{ duration: 300 }}>
       <div class="w-full h-full" bind:this={mapElement}>
         
       </div>
       <section class="flex flex-initial items-center justify-center">
         <button onclick={handleToggleMap}
             class=" -translate-y-4
-                flex items-center justify-center w-8 h-8 rounded-full
+                flex items-center justify-center w-15 h-15 rounded-full
                 bg-[#407ad6] text-white font-semibold shadow-xl
                 hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
             {#if !isMapExpanded}
-            <Route class="w-6 h-6" />
+            <Route class="w-10 h-10" />
             {:else}
-            <RouteOff class="w-6 h-6" />
+            <RouteOff class="w-10 h-10" />
             {/if}
         </button>
       </section>
       
     </section>
 
-    <div class="max-w-xl mx-auto space-y-6 py-6 px-4 pb-20 flex-grow w-full">
+    <div class="max-w-xl mx-auto space-y-6 py-16 px-4 pb-20 flex-grow w-full">
       
         {#if !in_checkin && isNearDestination}
             <section class="flex flex-initial items-center justify-center">
@@ -1754,7 +1850,7 @@
                         // console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
 
                         // 1. Definisikan tag unik
-                        const syncTag = `sync-report-${dataTicket.id_ticket}`;
+                        const syncTag = `sync-${reportTable}-${dataTicket.id_ticket}`;
                         
                         // 2. Gunakan URL dengan action SvelteKit
                         const actionUrl = window.location.pathname + '?/checkout'; 
@@ -1774,9 +1870,10 @@
                         if (resultReport && 'serviceWorker' in navigator && 'SyncManager' in window) {
                             const registration = await navigator.serviceWorker.ready;
                             await registration.sync.register(syncTag);
+                            alert($t("Offline: Data checkout disimpan dan akan dikirim otomatis saat online"));
                         }
                         
-                        alert($t("Offline: Data checkout disimpan dan akan dikirim otomatis saat online"));
+                        
                         goto('/task');
                         return {
                             result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
@@ -2060,7 +2157,9 @@
                     // console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
 
                     // 1. Simpan Seluruh FormData ke IndexedDB
-                    const syncTag = await saveOfflineTask(
+                    const syncTag = `sync-${checkinTable}-${dataTicket.id_ticket}`;
+                    
+                    const resultCheckin = await saveOfflineTask(
                             checkinTable, 
                             {
                                 id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
@@ -2070,13 +2169,14 @@
                             formData)
 
                     // 2. Daftarkan tugas Background Sync
-                    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    if (resultCheckin && 'serviceWorker' in navigator && 'SyncManager' in window) {
                         const registration = await navigator.serviceWorker.ready;
                         // Format tag: sync-checkin-123
-                        await registration.sync.register(`sync-checkin-${dataTicket.id_ticket}`);
+                        await registration.sync.register(syncTag);
+                        alert($t("Berhasil disimpan secara lokal. Data akan dikirim saat online"));
                     }
 
-                    alert($t("Berhasil disimpan secara lokal. Data akan dikirim saat online"));
+                    
                     handleSuccessfulCheckin()
                     // Mengembalikan objek kosong/non-fetch untuk membatalkan pengiriman SvelteKit.
                     return {
@@ -2144,7 +2244,15 @@
                             type="submit" 
                             disabled={loadingCheckin}
                             class="w-full px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition duration-300 transform hover:scale-105 shadow-lg">
-                            {$t('Check In')}
+                            
+                            {#if loadingCheckin}
+                                <LoaderCircle class="h-5 w-5 mr-2" />
+                                Loading...
+                            {:else}
+                                <CheckCircle class="h-5 w-5 mr-2" />
+                                {$t('Check In')}
+                            {/if}
+                            
                         </button>
                     </div>
                 {/if}
@@ -2204,8 +2312,10 @@
             if (!navigator.onLine) {
                 // console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
 
+                const syncTag = `sync-${unlockTable}-${dataTicket.id_ticket}`;
+
                 // 1. Simpan Seluruh FormData ke IndexedDB
-                const syncTag = await saveOfflineTask(
+                const resultUnlock = await saveOfflineTask(
                         unlockTable, 
                         {
                             id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
@@ -2215,13 +2325,14 @@
                         formData)
 
                 // 2. Daftarkan tugas Background Sync
-                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                if (resultUnlock && 'serviceWorker' in navigator && 'SyncManager' in window) {
                     const registration = await navigator.serviceWorker.ready;
                     // Format tag: sync-checkin-123
-                    await registration.sync.register(`sync-unlock-${dataTicket.id_ticket}`);
+                    await registration.sync.register(syncTag);
+                    alertMessage = $t("Berhasil disimpan secara lokal. Data akan dikirim saat online");
                 }
 
-                alertMessage = $t("Berhasil disimpan secara lokal. Data akan dikirim saat online");
+                
                 
                 handleSuccessfulUnlock()
                 alertPopup = false
@@ -2497,5 +2608,8 @@
         width: 100%;
         top: 0;
         left: 0;
+    }
+    video {
+    pointer-events: none !important;
     }
 </style>

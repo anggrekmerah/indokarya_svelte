@@ -6,6 +6,7 @@ import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { get } from 'svelte/store';
 import { t } from 'svelte-i18n';
+import { parseMessageKey } from '$lib/tools/utils';
 
 
 /** @type {import('./$types').PageServerLoad} */
@@ -116,7 +117,7 @@ export const actions = {
 
             const response = await leaveRequest(payload, fetch);
             console.log(response)
-            if (response.error) return fail(500, { message: get(t)(response.message_key) });
+            if (response.error) return fail(500, { message: parseMessageKey(t, response.message_key) });
             return { success: true };
         } catch (error) {
             return fail(500, { message: get(t)('Kesalahan sistem API') });

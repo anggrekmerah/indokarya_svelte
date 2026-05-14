@@ -8,6 +8,7 @@ import { mkdirSync } from 'fs';
 import { todayAttendance } from '$lib/tools/attendenceAPI'
 import { t } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { parseMessageKey } from '$lib/tools/utils';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, fetch, locals, parent }) {
@@ -53,7 +54,7 @@ export const actions = {
             const unlockReport = await ticketRequestUnlockAPI({ID:locals.user.id, id_ticket: id_ticket, unlock_reason: reason_unlocked }, fetch)
             
             if(unlockReport.error)
-                return fail(500, { message: get(t)(unlockReport.message_key) });
+                return fail(500, { message: parseMessageKey(t, unlockReport.message_key) });
 
             return {
                 status: 200,
@@ -86,7 +87,7 @@ export const actions = {
             await writeFile(filePath, Buffer.from(await photo.arrayBuffer()));
             const updateTicket = await ticketCheckInAPI({ID:idUser, id_ticket: id_ticket, photo:filePath }, fetch)
             if(updateTicket.error)
-                return fail(500, { message: get(t)(updateTicket.message_key) });
+                return fail(500, { message: parseMessageKey(t, updateTicket.message_key) });
 
             return {
                 status: 200,
@@ -189,7 +190,7 @@ export const actions = {
                 
             // If there is an error, fail and return immediately
             if (updateTicket.error) {
-                return fail(500, { message: get(t)(updateTicket.message_key) });
+                return fail(500, { message: parseMessageKey(t, updateTicket.message_key) });
             }
 
            return {

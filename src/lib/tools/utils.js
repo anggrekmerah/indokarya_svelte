@@ -1,4 +1,5 @@
 // src/lib/utils.js
+import { get } from 'svelte/store';
 
 /**
  * Debounce utility to prevent rapid function firing
@@ -62,4 +63,35 @@ export function withSubmitGuard(existingEnhancer, options = {}) {
             }
         };
     };
+}
+
+export function parseMessageKey(t, messageKey) {
+  const translate = get(t);
+
+  if (!messageKey) return '';
+
+  // kalau string
+  if (typeof messageKey === 'string') {
+    return translate(messageKey);
+  }
+
+  // kalau array
+  if (Array.isArray(messageKey)) {
+    return messageKey
+      .map((item) => {
+        if (!item || !item.key) return '';
+
+        // kalau ada params
+        if (item.params) {
+          return translate(item.key, item.params);
+        }
+
+        return translate(item.key);
+      })
+      .filter(Boolean)
+      .join(', '); // bisa ganti '\n' kalau mau multiline
+  }
+
+  // fallback
+  return String(messageKey);
 }

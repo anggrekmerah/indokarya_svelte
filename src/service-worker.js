@@ -353,7 +353,7 @@ async function syncAttendanceRecords() {
 async function handleDynamicSync(tableName, ticketId) {
 
     const result = await deserializeTask(tableName, ticketId);
-
+    console.log(result)
     if (!result) return;
 
     const { task, formData } = result;
@@ -407,7 +407,7 @@ self.addEventListener('sync', (event) => {
     }
 
     const dynamic = event.tag.match(/^sync-(report|checkin|unlock|timelines)-(.+)$/);
-
+    console.log(dynamic)
     if (dynamic) {
 
         const [, tableName, ticketId] = dynamic;

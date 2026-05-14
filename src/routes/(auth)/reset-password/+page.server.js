@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit'
 import { get } from 'svelte/store';
 import { t } from 'svelte-i18n';
 import { validateResetPassword, resetPassword } from '$lib/tools/authAPI.js'
+import { parseMessageKey } from '$lib/tools/utils';
 
 export async function load({ url, fetch }) {
 
@@ -48,7 +49,7 @@ export const actions = {
 		const res = await resetPassword( {'token' : token, 'password': password} ,fetch)
 
 		if (res.error) {
-			return fail(400, { success: false, message: get(t)(res.message_key) });
+			return fail(400, { success: false, message: parseMessageKey(t, res.message_key) });
 		}
 
 		return {

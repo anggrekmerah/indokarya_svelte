@@ -4,6 +4,7 @@ import { join } from 'path';
 import { userChangeProfile } from '$lib/tools/userApi';
 import { t } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { parseMessageKey } from '$lib/tools/utils';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ locals , parent}) {
@@ -79,12 +80,12 @@ export const actions = {
             
             if(changeProfile.error){
                 return fail(401, { 
-                    message: get(t)(changeProfile.message_key) 
+                    message: parseMessageKey(t, changeProfile.message_key) 
                 });
             } else {
                 return { 
                     success: true, 
-                    message: get(t)(changeProfile.message_key),
+                    message: parseMessageKey(t, changeProfile.message_key),
                     imageUrl: finalImageUrl 
                 };
             }

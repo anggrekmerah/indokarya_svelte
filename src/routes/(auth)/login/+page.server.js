@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { t } from 'svelte-i18n';
 import { loginAPI } from '$lib/tools/tokenApi';
 import { get } from 'svelte/store';
+import { parseMessageKey } from '$lib/tools/utils';
 
 /** @type {import('./$types').Actions} */
 export const actions = {
@@ -26,7 +27,7 @@ export const actions = {
         if (dataLogin) {
     
             if(dataLogin.error)
-                return fail(400, { success: false, message: get(t)(dataLogin.message_key) });
+                return fail(400, { success: false, message: parseMessageKey(t, dataLogin.message_key) });
 
             // Set a cookie to remember the user. The cookie is named 'session_id' and
             // its value is an arbitrary string. In a real app, this would be a secure token.
@@ -44,7 +45,7 @@ export const actions = {
             throw redirect(303, '/home');
         } else {
             // If credentials are not valid, return a failure with a message.
-            return fail(400, { success: false, message: get(t)(dataLogin.message_key) });
+            return fail(400, { success: false, message: parseMessageKey(t, dataLogin.message_key) });
         }
     },
 

@@ -3,6 +3,7 @@ import { loginAPI } from '$lib/tools/tokenApi';
 import { userChangePasswordAPI } from '$lib/tools/userApi';
 import { t } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { parseMessageKey } from '$lib/tools/utils';
 
 /**
  * @type {import('@sveltejs/kit').PageServerLoad}
@@ -76,7 +77,7 @@ export const actions = {
     
                 if(dataLogin.error) {
                     return fail(401, { 
-                        error: get(t)(dataLogin.message_key),
+                        error: parseMessageKey(t, dataLogin.message_key),
                         fields: { oldPassword, newPassword, confirmPassword } 
                     });
                 }  

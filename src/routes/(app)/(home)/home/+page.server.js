@@ -8,6 +8,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { t } from 'svelte-i18n';
 import { get } from 'svelte/store';
+import { parseMessageKey } from '$lib/tools/utils';
 
 
 /** @type {import('./$types').PageServerLoad} */
@@ -109,7 +110,7 @@ export const actions = {
 
             if (response.error) {
                 return fail(500, { 
-                    message: get(t)(response.message_key) || get(t)('Gagal menyimpan absensi ke server'), 
+                    message: parseMessageKey(t, response.message_key) || parseMessageKey(t, 'Gagal menyimpan absensi ke server'), 
                     fromAction: 'checkin' 
                 });
             }
@@ -141,7 +142,7 @@ export const actions = {
                 check_out_photo: filePath
             }, fetch);
 
-            if (response.error) return fail(500, { message: get(t)(response.message_key), fromAction:'checkout' });
+            if (response.error) return fail(500, { message: parseMessageKey(t , response.message_key), fromAction:'checkout' });
             return { success: true, fromAction:'checkout', absenTime: response.data.absenTime };
         } catch (error) {
             return fail(500, { message: get(t)('Terjadi kesalahan sistem') });
