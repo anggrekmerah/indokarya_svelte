@@ -70,10 +70,10 @@
             <button
                 type="button"
                 onclick={handleToggle}
+                disabled={attr.technician_editable === 'N'}
                 class="flex-1 py-2 rounded-lg text-sm font-semibold transition
-                {attr.attribute_value === 'Y'
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-200 text-slate-700'}"
+                {attr.technician_editable === 'N' ? 'opacity-60 cursor-not-allowed' : ''}
+                {attr.attribute_value === 'Y' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-700'}"
             >
                 {$t('ya')}
             </button>
@@ -81,7 +81,9 @@
             <button
                 type="button"
                 onclick={handleToggle}
+                disabled={attr.technician_editable === 'N'}
                 class="flex-1 py-2 rounded-lg text-sm font-semibold transition
+                {attr.technician_editable === 'N' ? 'opacity-60 cursor-not-allowed' : ''}
                 {attr.attribute_value === 'N'
                     ? 'bg-rose-500 text-white'
                     : 'bg-slate-200 text-slate-700'}"
@@ -94,8 +96,10 @@
             type="text"
             bind:value={attr.attribute_value}
             oninput={handleTyping}
+            disabled={attr.technician_editable === 'N'} 
             placeholder={$t('input_placeholder')}
             class="w-full border rounded-lg px-3 py-2 text-sm outline-none
+            {attr.technician_editable === 'N' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}
             {isError ? 'border-rose-300 bg-rose-50' : 'border-slate-300 focus:border-blue-500'}"
         />
     {/if}

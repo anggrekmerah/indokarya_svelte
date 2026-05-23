@@ -9,6 +9,7 @@ import { todayAttendance } from '$lib/tools/attendenceAPI'
 import { t } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import { parseMessageKey } from '$lib/tools/utils';
+import {readNotif} from '$lib/tools/notifAPI'
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, fetch, locals, parent }) {
@@ -31,6 +32,9 @@ export async function load({ params, fetch, locals, parent }) {
             redirect(303, '/home');
     }     
     
+    
+    const readNotifs = await readNotif({ID:parentData.user.id, entity_id: params.id}, fetch)
+
     return {
         detailTicket: detailTicket.data[0],
         mapsKey : env.GOOGLE_MAPS_API_KEY,

@@ -1226,6 +1226,11 @@
     const videoExtensions = ['mp4','mov','webm','ogg'];
 
     function getExtension(url) {
+        if (!url || typeof url !== 'string') return '';
+        // Jika berupa Blob URL lokal dari kamera, kita cek tipe datanya lewat cara lain atau asumsikan dari tipenya
+        if (url.startsWith('blob:')) {
+            return 'jpeg'; // default tipe dari takePhoto() Anda adalah jpeg
+        }
         return url.split('.').pop().toLowerCase();
     }
 
@@ -1234,10 +1239,12 @@
     }
 
     function isImage(url) {
+        if (!url) return false;
         return imageExtensions.includes(getExtension(url));
     }
 
     function isVideo(url) {
+        if (!url) return false;
         return videoExtensions.includes(getExtension(url));
     }
 
@@ -1634,7 +1641,13 @@
                                                 </label>
                                             </div>
                                             {#each part.attrs as _, i}
-                                                <AttributeItem bind:attr={part.attrs[i]} />
+                                                {#if part.attrs[i].visible_mobile === 'Y'}
+                                                    <AttributeItem 
+                                                        bind:attr={part.attrs[i]} 
+                                                        disabled={part.attrs[i].technician_editable === 'N'} 
+                                                    />
+                                                {/if}
+                                                <!-- <AttributeItem bind:attr={part.attrs[i]} /> -->
                                             {/each}
                                         {/if}
                                     {/each}
@@ -1714,7 +1727,13 @@
                                             {#if group.open}
                                                 <div class="p-2 space-y-1">
                                                     {#each group.attrs as _, i}
-                                                        <AttributeItem bind:attr={group.attrs[i]} />
+                                                        {#if group.attrs[i].visible_mobile === 'Y'}
+                                                            <AttributeItem 
+                                                                bind:attr={group.attrs[i]} 
+                                                                disabled={group.attrs[i].technician_editable === 'N'} 
+                                                            />
+                                                        {/if}
+                                                        <!-- <AttributeItem bind:attr={group.attrs[i]} /> -->
                                                     {/each}
                                                 </div>
                                             {/if}
@@ -1731,6 +1750,8 @@
             <form method="post" enctype="multipart/form-data" action="?/checkout" class="mb-4 bg-white rounded-xl shadow-lg p-5 space-y-6 border border-gray-100"
                 use:enhance={ async ({formData}) => {
                     loadingCheckout = true;
+                    let isValidForm = true;
+                    let missingAttrNames = [];
 
                     // 1. Append general ticket data (Notes and final signature)
                     formData.append('id_ticket', dataTicket.id_ticket);
@@ -1771,6 +1792,16 @@
                         if (mReport.attrsGrouped && Array.isArray(mReport.attrsGrouped)) {
                             mReport.attrsGrouped.forEach(group => {
                                 group.attrs.forEach(attr => {
+                                    if (attr.visible_mobile === 'Y' && attr.is_required === 'Y') {
+                                        const isEmpty = attr.attribute_value === null || 
+                                                        attr.attribute_value === undefined || 
+                                                        String(attr.attribute_value).trim() === '';
+                                        
+                                        if (isEmpty) {
+                                            isValidForm = false;
+                                            missingAttrNames.push(`${mReport.name}: ${attr.attribute_name}`);
+                                        }
+                                    }
                                     // formData.append('attr_id', String(attr.id));
                                     formData.append('attr_real_id', String(attr.id_attr));
                                     formData.append('attr_value', String(attr.attribute_value ?? ''));
@@ -1788,6 +1819,17 @@
                     if (sparePartsList && sparePartsList.length > 0) {
                         sparePartsList.forEach((listSpare) => {
                             listSpare.attrs.forEach(attr => {
+
+                                if (attr.visible_mobile === 'Y' && attr.is_required === 'Y') {
+                                    const isEmpty = attr.attribute_value === null || 
+                                                    attr.attribute_value === undefined || 
+                                                    String(attr.attribute_value).trim() === '';
+                                    
+                                    if (isEmpty) {
+                                        isValidForm = false;
+                                        missingAttrNames.push(`Sparepart: ${attr.attribute_name}`);
+                                    }
+                                }
                                 // formData.append('attr_id', String(attr.id));
                                 formData.append('attr_real_id', String(attr.id_attr));
                                 formData.append('attr_value', String(attr.attribute_value ?? ''));
@@ -1800,6 +1842,15 @@
                             });
                              
                         });
+                    }
+
+                    if (!isValidForm) {
+                        loadingCheckout = false;
+                        // Tampilkan pesan error ke user (bisa menggunakan alertPopup Anda atau alert bawaan)
+                        alertMessage = `${$t('Mohon isi semua atribut wajib yang bertanda bintang')}:\n- ${missingAttrNames.join('\n- ')}`;
+                        alertPopup = true;
+                        
+                        return cancel(); // <--- Menghentikan proses submit SvelteKit di sini
                     }
 
                     // 4. Append the signature (which remains ticket-wide)
@@ -2571,7 +2622,36 @@
 
     <div class="max-w-5xl w-full">
 
-        {#if isImage(selectedMedia.res_photo)}
+        {#if selectedMedia.preview && selectedMedia.type === 'image'}
+            <img 
+                src={selectedMedia.preview}
+                alt="preview lokal"
+                class="w-full max-h-[85vh] object-contain rounded-xl"
+            />
+        {:else if selectedMedia.preview && selectedMedia.type === 'video'}
+            <video 
+                src={selectedMedia.preview}
+                controls
+                autoplay
+                class="w-full max-h-[85vh] rounded-xl"
+            ></video>
+
+        {:else if selectedMedia.res_photo && isImage(selectedMedia.res_photo)}
+            <img 
+                src={env.PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
+                alt="preview server"
+                class="w-full max-h-[85vh] object-contain rounded-xl"
+            />
+        {:else if selectedMedia.res_photo && isVideo(selectedMedia.res_photo)}
+            <video 
+                src={env.PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
+                controls
+                autoplay
+                class="w-full max-h-[85vh] rounded-xl"
+            ></video>
+        {/if}
+        
+        <!-- {#if isImage(selectedMedia.res_photo)}
             <img 
                 src={env.PUBLIC_BASE_URL_LARAVEL +'storage/'+selectedMedia.res_photo}
                 alt="preview"
@@ -2586,7 +2666,7 @@
                 autoplay
                 class="w-full max-h-[85vh] rounded-xl"
             ></video>
-        {/if}
+        {/if} -->
 
     </div>
 
