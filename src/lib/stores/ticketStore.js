@@ -1,6 +1,7 @@
 // src/lib/stores/ticketStore.js
 import { writable } from 'svelte/store';
 import { db } from '$lib/stores/dexiedb.js'; 
+import { browser } from '$app/environment';
 // ... impor lainnya (jika diperlukan)
 
 // --- STATE MANAGEMENT ---
@@ -8,7 +9,19 @@ export const items = writable([]);
 export const currentOffset = writable(0);
 export const hasMore = writable(false);
 export const isLoading = writable(false);
-export const isOnline = writable(navigator.onLine);
+export const isOnline = writable(false);
+
+if (browser) {
+    isOnline.set(navigator.onLine);
+
+    window.addEventListener('online', () => {
+        isOnline.set(true);
+    });
+
+    window.addEventListener('offline', () => {
+        isOnline.set(false);
+    });
+}
 
 // Konstanta
 const LIMIT = 5;
