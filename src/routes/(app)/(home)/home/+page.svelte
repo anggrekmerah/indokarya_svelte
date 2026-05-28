@@ -127,7 +127,7 @@
       version: 'weekly',
       libraries: ['maps','marker','places','routes','geometry'] // 'places' is often needed for directions 
   };
-  console.log('mapsConf home')
+//   console.log('mapsConf home')
 
   let mapsLoader;
     if (typeof window !== 'undefined') {

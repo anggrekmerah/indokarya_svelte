@@ -22,7 +22,7 @@ export async function load({ locals, fetch, url , parent}) {
   const ticketTotal = await ticketTotalAPI({ID:parentData.user.id}, fetch)
   const listNotif = await getUnreadNotif({ID:parentData.user.id, recipient_app: 'frontend'}, fetch)
   const totalNotif = await total({ID:parentData.user.id, recipient_app: 'frontend'}, fetch)
-  console.log('totalNotif', totalNotif)
+//   console.log('totalNotif', totalNotif)
   return {
     dataTicketStatus : ticketStatus.data,
     dataTicketPriority : ticketPriority.data,

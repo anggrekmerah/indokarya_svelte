@@ -65,7 +65,7 @@
 
     // Rentang periode: 26 bulan sebelumnya s/d 25 bulan ini
     const startDate = new Date(currentYear, currentMonth - 1, 26);
-    const endDate = new Date(currentYear, currentMonth, 26);
+    const endDate = new Date(currentYear, currentMonth, 25);
     const now = new Date();
 
     let iterDate = new Date(startDate);
@@ -81,38 +81,48 @@
       const dayName = getDayName(dateString);
       const isWeekend = dayName === 'Sabtu' || dayName === 'Minggu';
       
-      // Cari apakah tanggal ini ada di dalam data dari database (MariaDB)
-      // Kita cek record.date atau record.tanggal
-      const record = serverData.find(d => (d.date === dateString || d.tanggal === dateString));
+      // MENCARI DATA BERDASARKAN PROPERTI 'date' DARI SERVER
+      const record = serverData.find(d => d.date === dateString);
       
       if (record) {
         // JIKA DATA ADA DI DATABASE
-        let statusDisplay = record.status_kehadiran || "MASUK";
-        if (record.is_hari_libur || record.is_cuti_bersama) {
-          statusDisplay = "LIBUR";
-        } else if (record.is_terlambat) {
-          statusDisplay = `TERLAMBAT (${record.terlambat_menit}m)`;
+        // Format teks untuk status tampilan badge (late -> TERLAMBAT, dll)
+        let statusDisplay = String(record.status || 'MASUK').toUpperCase();
+        if (statusDisplay === 'LATE') statusDisplay = 'TERLAMBAT';
+
+        // Parsing koordinat lokasi jika tersedia
+        let latIn = null, longIn = null;
+        if (record.check_in_location) {
+          const parts = record.check_in_location.split(' ');
+          latIn = parts[0];
+          longIn = parts[1];
         }
 
         logs.push({
-          id: record.id_rekap || record.id || `db-${index}`,
+          id: record.id || `db-${index}`,
           date: formatDisplayDate(dateString),
           rawDate: dateString,
           day: dayName,
-          checkIn: record.waktu_masuk ? record.waktu_masuk.substring(0, 5) : "--:--",
-          checkOut: record.waktu_keluar ? record.waktu_keluar.substring(0, 5) : "--:--",
+          // Menggunakan data check_in_time & check_out_time dari server
+          checkIn: record.check_in_time ? record.check_in_time.substring(0, 5) : "--:--",
+          checkOut: record.check_out_time ? record.check_out_time.substring(0, 5) : "--:--",
           status: statusDisplay,
-          isLate: !!record.is_terlambat,
-          isHoliday: !!(record.is_hari_libur || record.is_cuti_bersama),
-          isValidIn: record.valid_masuk === 1,
-          isValidOut: record.valid_keluar === 1,
-          isData: true
+          isLate: record.status === 'late',
+          isHoliday: false, // Menyesuaikan jika ada field libur di model server Anda nanti
+          isValidIn: !!record.check_in_time,
+          isValidOut: !!record.check_out_time,
+          isData: true,
+          // Data tambahan dari server untuk detail modal
+          photoIn: record.check_in_photo || null,
+          photoOut: record.check_out_photo || null,
+          latIn: latIn,
+          longIn: longIn,
+          mode: record.attendance_mode || 'Reguler'
         });
       } else {
-        // JIKA DATA TIDAK ADA DI DATABASE (BUAT BARIS KOSONG / ABSENT)
+        // JIKA DATA TIDAK ADA DI DATABASE (BUAT BARIS KOSONG / ABSENT / LIBUR)
         let displayStatus = "-";
         
-        // Hanya beri status ABSENT/LIBUR jika tanggal tersebut sudah terlewati atau hari ini
         if (iterDate <= now) { 
           displayStatus = isWeekend ? $t("Libur") : $t("absent"); 
         }
@@ -129,7 +139,12 @@
           isHoliday: isWeekend,
           isValidIn: false,
           isValidOut: false,
-          isData: false
+          isData: false,
+          photoIn: null,
+          photoOut: null,
+          latIn: null,
+          longIn: null,
+          mode: null
         });
       }
       

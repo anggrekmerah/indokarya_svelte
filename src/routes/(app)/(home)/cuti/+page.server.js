@@ -116,7 +116,7 @@ export const actions = {
             };
 
             const response = await leaveRequest(payload, fetch);
-            console.log(response)
+            // console.log(response)
             if (response.error) return fail(500, { message: parseMessageKey(t, response.message_key) });
             return { success: true };
         } catch (error) {

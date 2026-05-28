@@ -17,12 +17,10 @@ export async function load({ params, fetch, url, parent }) {
 
     // Sesuaikan payload request agar sesuai dengan struktur validasi backend Express: req.body.request
     const payload = {
-        request: {
             user_id: parentData.user.id,
             month: selectedMonth,
             year: selectedYear
-        }
-    };
+        };
 
     // Panggil API backend pembawa payload baru
     const getMonthlyAttendance = await monthlyAttendance(payload, fetch);
