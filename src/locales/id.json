@@ -629,7 +629,8 @@
             },
             "token": {
             "get": "Pengguna tidak ditemukan",
-            "incorect_email_pass": "Email atau Password salah"
+            "incorect_email_pass": "Email atau Password salah",
+            "exists": "Email atau Password salah"
             },
             "users": {
             "get": "Pengguna tidak ditemukan",

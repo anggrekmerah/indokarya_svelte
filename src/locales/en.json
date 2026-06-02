@@ -629,7 +629,8 @@
             },
             "token": {
             "get": "User not found",
-            "incorect_email_pass": "Incorrect Email or Password"
+            "incorect_email_pass": "Incorrect Email or Password",
+            "exists": "Incorrect Email or Password"
             },
             "users": {
             "get": "User not found",
