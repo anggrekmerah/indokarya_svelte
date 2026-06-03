@@ -264,6 +264,8 @@
 
     // Fungsi untuk mendaftarkan Background Sync
     async function registerBackgroundSync(tag) {
+        if (!browser) return; 
+
         if (!('serviceWorker' in navigator) || !('SyncManager' in window)) {
             console.warn("Background Sync API tidak didukung. Data hanya akan disimpan.");
             return;
@@ -301,6 +303,8 @@
     
     // The function to send the data
     async function sendLockTaskBeacon() {
+        if (!browser) return; 
+
         const taskId = dataTicket.id_ticket;
         const payload = JSON.stringify({ id_ticket:taskId });
         // console.log(payload)
@@ -323,6 +327,8 @@
     }
 
     async function sendLocation(latitude, longitude) {
+        if (!browser) return; 
+
         const taskId = dataTicket.id_ticket;
         const payloadObj = { 
             id_ticket: taskId, 
@@ -379,6 +385,8 @@
     }
 
     async function startCamera(type, machineId) {
+        if (!browser) return; 
+
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             alert($t('Your browser does not support the MediaDevices API'));
             return;
@@ -863,7 +871,7 @@
                     {
                         enableHighAccuracy: true,
                         timeout: 60000,
-                        maximumAge: 30000
+                        maximumAge: 0
                     }
                 );
             }
@@ -923,6 +931,8 @@
     }
 
     async function  initCurrentPosistion(callback) {
+        if (!browser) return; 
+
         if (navigator.geolocation) {
             return navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -949,6 +959,8 @@
     }    
     
     async function watchUserLocation() {
+        if (!browser) return; 
+
         if ('geolocation' in navigator) {
             watchID = navigator.geolocation.watchPosition(
                 async (position) => {
@@ -1141,6 +1153,8 @@
      * Starts the camera and attaches the stream to the video element.
      */
     async function in_startCamera() {
+        if (!browser) return; 
+        
         try {
             // console.log(in_cameraFacingMode)
             in_stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: in_cameraFacingMode } }, audio: false });
