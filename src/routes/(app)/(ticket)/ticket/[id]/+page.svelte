@@ -349,13 +349,18 @@
                                 timestamp: new Date()
                             }, formData);
             
-            if ('serviceWorker' in navigator && 'SyncManager' in window) {
-                const registration = await navigator.serviceWorker.ready;
-                await registration.sync.register(`sync-timelines-${taskId}`);
+            if (typeof navigator !== 'undefined' && typeof window !== 'undefined') { 
+                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    const registration = await navigator.serviceWorker.ready;
+                    await registration.sync.register(`sync-timelines-${taskId}`);
+                }
             }
+            
         };
 
-        if (navigator.onLine) {
+        const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : false;
+
+        if (isOnline) {
             try {
                 // Gunakan fetch dengan timeout atau keepalive
                 const response = await fetch('/api/location', {
@@ -1154,7 +1159,7 @@
      */
     async function in_startCamera() {
         if (!browser) return; 
-        
+
         try {
             // console.log(in_cameraFacingMode)
             in_stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: in_cameraFacingMode } }, audio: false });
