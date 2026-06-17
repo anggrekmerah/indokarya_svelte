@@ -11,7 +11,7 @@ export async function userChangePasswordAPI(body, fetch) {
 
 export async function userChangeFcmToken(body, fetch) {
 
-    const responseAPI = await requestAPI('PUT','/user/update', body, fetch) 
+    const responseAPI = await requestAPI('PUT','/user/fcm-token', body, fetch) 
 
     return responseAPI;
     
