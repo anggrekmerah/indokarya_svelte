@@ -60,8 +60,10 @@
     let alertMessage = $state('');
 
     let showMediaModal = $state(false);
-    let selectedMedia = $state(null);;
+    let selectedMedia = $state(null);
     let isInfoExpanded = $state(true);
+    let isHistoryxpanded = $state(false)
+    let selectedLastVisit = $state([]);
     let isMapExpanded = $state(false);
     let loadingCheckout = $state(false);
     let alertPopup = $state(false)
@@ -248,6 +250,7 @@
 
             if(isNearDestination){
                 isInfoExpanded = false
+                isHistoryxpanded = false
             }
 
             if (wasNearDestination === true && isNearDestination === false) {
@@ -719,6 +722,7 @@
 
         if(isNearDestination){
             isInfoExpanded = false;
+            isHistoryxpanded = false
         }
 
         if (wasNearDestination === true && isNearDestination === false) {
@@ -775,7 +779,7 @@
         if (machineReports.length === 0 || machineReports.length !== machines.length) {
              machineReports = machines.map(machine => {
                 // console.log('machine')
-                // console.log(machine)
+                console.log(machine)
                 return {
                     id: String(machine.id_ticket_machine), // Ensure BIGINT is treated as a string
                     id_machine : machine.id_machine,
@@ -784,7 +788,8 @@
                     sparePart: [],
                     files: [],
                     attrsGrouped: machine.attrsGrouped,
-                    label: `SN: ${machine.serial_number} - ${machine.brand} - ${machine.voltage}`
+                    label: `SN: ${machine.serial_number} - ${machine.brand} - ${machine.voltage}`,
+                    historyMachine: machine.historyMachine || []
                 };
             });
         }
@@ -793,7 +798,7 @@
         sparePartsList = dataTicket.spareparts || [];
         picsList = dataTicket.pics || [];
         mediaList = dataTicket.TicketPhotoEvidence || [];
-        lastVisit = dataTicket.lastVisit || [];
+        // lastVisit = dataTicket.lastVisit || [];
 
         isTicketLocked = (dataTicket.ticket_locked == 'N') ? false : true
 
@@ -1233,7 +1238,8 @@
     }
     // end checkIN
 
-    function openLastVisitModal() {
+    function openLastVisitModal(machine) {
+        selectedLastVisit = machine.historyMachine;
         isLastVisitModalOpen = true;
     }
 
@@ -1482,118 +1488,124 @@
                 {/if}
             </button>
 
-            <div class="p-4 border-b bg-gray-50 rounded-t-2xl">
-
-                <!-- Top Section -->
-                <div class="flex justify-between items-start sm:items-center">
+            {#if isInfoExpanded}
+                <div transition:slide class="p-5 pt-0 space-y-5">
+                    <div class="space-y-3">
+                        <span class="text-md font-bold text-gray-900">
+                            {dataTicket.ticket_title}
+                        </span>
+                        
                     
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-base sm:text-lg">
-                            {$t('Riwayat Kunjungan')}
-                        </h3>
-                        <p class="text-xs text-gray-500">
-                            {$t('Menampilkan 5 aktivitas terakhir')}
+                        <p class="text-sm text-gray-500 font-light">
+                            {$t('Task ID')}: <span class="font-medium text-gray-700">#{dataTicket.id_ticket}</span>
+                        </p>
+                        <p class="text-sm text-gray-500 font-light">
+                            {$t('Priority')}: 
+                            <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/20">
+                                {$t(dataTicket.priority_name)}
+                            </span>
+                        </p>
+                        <p class="text-sm text-gray-500 font-light">
+                            {$t('Status')}: 
+                            <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                {$t(dataTicket.status_name)}
+                            </span>
+                        </p>
+
+                        <button 
+                            onclick={openMediaModal}
+                            class="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium 
+                                bg-green-600 text-white rounded-lg 
+                                hover:bg-green-700 transition-colors">
+                            {$t('Foto / Video')}
+                        </button>
+
+                        {#if dataTicket.id_sub_ticket}
+                            <p class="text-sm text-gray-500 font-light">
+                                {$t('Parent')}: <a href="/ticket/{dataTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{dataTicket.id_sub_ticket}</span></a>
+                            </p>  
+                        {/if}
+                        
+                        <p class="text-sm text-gray-600">
+                            <span class="font-bold font-medium">{$t('Description')}:</span> {dataTicket.ticket_description}
                         </p>
                     </div>
 
-                    <!-- Close (selalu kanan atas) -->
-                    <button 
-                        onclick={closeLastVisitModal}
-                        class="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                        <XCircle class="w-5 h-5 text-gray-400" />
-                    </button>
+                    <hr class="border-gray-200">
+
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <h2 class="font-semibold text-gray-900">{$t('Customer')}</h2>
+                        
+                        <p class="flex items-center font-semibold">
+                            {dataTicket.cust_name}
+                        </p>
+
+                        <p class="flex items-center">
+                            {dataTicket.cust_address}
+                        </p>
+
+                        {#if picsList && picsList.length > 0}
+                            <div class="space-y-1">
+                                <h2 class="font-semibold text-gray-900">{$t('PIC Names')}</h2>
+                                {#each picsList as pic}
+                                    <p class="flex items-center italic">
+                                        <span class="mr-1">•</span> {pic['pic_name']}
+                                    </p>
+                                {/each}
+                            </div>
+                        {/if}
+
+                        <a href={`tel:${dataTicket.cust_phone}`} class="flex items-center text-blue-600 hover:text-blue-500 transition-colors hover:underline">
+                            {dataTicket.cust_phone}
+                        </a>
+                    </div>
+
+                    <hr class="border-gray-200">
                 </div>
+            {/if}
+        </section>
 
-                <!-- Action Buttons -->
-                <div class="mt-3 flex gap-2">
-                    
-                    <button 
-                        onclick={openLastVisitModal}
-                        class="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium 
-                            bg-blue-600 text-white rounded-lg 
-                            hover:bg-blue-700 transition-colors">
-                        {$t('Kunjungan')}
-                    </button>
-
-                    <button 
-                        onclick={openMediaModal}
-                        class="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium 
-                            bg-green-600 text-white rounded-lg 
-                            hover:bg-green-700 transition-colors">
-                        {$t('Foto / Video')}
-                    </button>
-
-                </div>
-
-            </div>
+        <!-- Riwayat kunjungan -->
+        <section class="bg-white rounded-xl shadow-lg border border-gray-100">
+            <button onclick={() => isHistoryxpanded = !isHistoryxpanded}
+                class="w-full flex items-center justify-between p-5 text-lg font-semibold text-left
+                       rounded-xl transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                <h2 class="flex items-center text-gray-700">
+                    <MessageSquare class="h-5 w-5 mr-2 text-green-500" />
+                    {$t('Riwayat Kunjungan')}
+                </h2>
+                {#if isHistoryxpanded}
+                    <ChevronUp class="h-5 w-5 transition-transform text-gray-500" />
+                {:else}
+                    <ChevronDown class="h-5 w-5 transition-transform text-gray-500" />
+                {/if}
+            </button>
         
-        {#if isInfoExpanded}
-            <div transition:slide class="p-5 pt-0 space-y-5">
-                <div class="space-y-3">
-                    <span class="text-md font-bold text-gray-900">
-                        {dataTicket.ticket_title}
-                    </span>
-                    
-                
-                    <p class="text-sm text-gray-500 font-light">
-                        {$t('Task ID')}: <span class="font-medium text-gray-700">#{dataTicket.id_ticket}</span>
-                    </p>
-                    <p class="text-sm text-gray-500 font-light">
-                        {$t('Priority')}: 
-                        <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 ring-1 ring-inset ring-red-600/20">
-                            {$t(dataTicket.priority_name)}
-                        </span>
-                    </p>
-                    <p class="text-sm text-gray-500 font-light">
-                        {$t('Status')}: 
-                        <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                            {$t(dataTicket.status_name)}
-                        </span>
-                    </p>
+            {#if isHistoryxpanded}
+                <div transition:slide class="p-5 pt-0 space-y-5">
+                    <div class="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                        {#each machineReports as machine}
+                            <button 
+                                type="button"
+                                onclick={() => openLastVisitModal(machine)}
+                                class="text-left p-4 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all active:scale-[0.99]"
+                            >
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-bold text-gray-900 text-base">{machine.name}</h4>
+                                        <p class="text-xs text-gray-500 mt-1">{machine.label}</p>
+                                    </div>
+                                    <span class="text-[10px] bg-blue-50 text-blue-600 font-semibold px-2 py-1 rounded-md">
+                                        {machine.historyMachine.length} {$t('Kunjungan')}
+                                    </span>
+                                </div>
+                            </button>
+                        {/each}
+                    </div>
 
-                    {#if dataTicket.id_sub_ticket}
-                        <p class="text-sm text-gray-500 font-light">
-                            {$t('Parent')}: <a href="/ticket/{dataTicket.id_sub_ticket}"><span class="font-medium text-blue-700">#{dataTicket.id_sub_ticket}</span></a>
-                        </p>  
-                    {/if}
-                    
-                    <p class="text-sm text-gray-600">
-                        <span class="font-bold font-medium">{$t('Description')}:</span> {dataTicket.ticket_description}
-                    </p>
+                    <hr class="border-gray-200">
                 </div>
-
-                <hr class="border-gray-200">
-
-                <div class="space-y-2 text-sm text-gray-600">
-                    <h2 class="font-semibold text-gray-900">{$t('Customer')}</h2>
-                    
-                    <p class="flex items-center font-semibold">
-                        {dataTicket.cust_name}
-                    </p>
-
-                    <p class="flex items-center">
-                        {dataTicket.cust_address}
-                    </p>
-
-                    {#if picsList && picsList.length > 0}
-                        <div class="space-y-1">
-                            <h2 class="font-semibold text-gray-900">{$t('PIC Names')}</h2>
-                            {#each picsList as pic}
-                                <p class="flex items-center italic">
-                                    <span class="mr-1">•</span> {pic['pic_name']}
-                                </p>
-                            {/each}
-                        </div>
-                    {/if}
-
-                    <a href={`tel:${dataTicket.cust_phone}`} class="flex items-center text-blue-600 hover:text-blue-500 transition-colors hover:underline">
-                        {dataTicket.cust_phone}
-                    </a>
-                </div>
-
-                <hr class="border-gray-200">
-            </div>
-        {/if}
+            {/if}
         </section>
 
         {#if in_checkin && isNearDestination && !isTicketLocked }
@@ -2513,35 +2525,44 @@
             </div>
             
             <div class="p-4 overflow-y-auto space-y-4 bg-white">
-                {#each lastVisit as visit, i}
+                {#each selectedLastVisit as visit, i}
                     <div class="relative pl-6 border-l-2 border-blue-100 pb-2 last:pb-0 last:border-l-0">
                         <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white shadow-sm"></div>
                         
                         <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                    {visit['ticket_check_in'] || 'No Date'}
+                                    {visit.created_date || 'No Date'}
                                 </span>
-                                <span class="text-[10px] uppercase tracking-wider font-bold text-green-600">
-                                    {visit['machine_req_type']}
+                                
+                                <span class="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded
+                                    {visit.status_name === 'Open' ? 'text-amber-600 bg-amber-50' : ''}
+                                    {visit.status_name === 'Done' ? 'text-green-600 bg-green-50' : ''}
+                                    {visit.status_name === 'Closed' ? 'text-gray-600 bg-gray-100' : ''}"
+                                >
+                                    {visit.status_name}
                                 </span>
                             </div>
 
-                            <h4 class="text-sm font-semibold text-gray-800 flex items-center">
-                                <User class="w-3 h-3 mr-1" /> {visit['assignee_name'] || 'Unassigned'}
+                            <div class="mb-1 text-xs text-gray-400 font-mono">
+                                #{visit.id_ticket}
+                            </div>
+                            <h4 class="text-sm font-bold text-gray-900 mb-2">
+                                {visit.ticket_tittle}
                             </h4>
 
-                            <p class="text-sm text-gray-600 mt-2 italic leading-relaxed">
-                                "{visit['all_notes_and_descriptions']}"
-                            </p>
+                            <div class="text-xs font-semibold text-gray-700 flex items-center mb-2">
+                                <User class="w-3 h-3 mr-1 text-gray-400" /> {visit.username || 'Unassigned'}
+                            </div>
 
-                            {#if visit['all_spareparts']}
-                                <div class="mt-3 pt-2 border-t border-dashed border-gray-200">
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Spareparts:</p>
-                                    <p class="text-xs text-gray-700">{visit['all_spareparts']}</p>
-                                </div>
-                            {/if}
+                            <p class="text-xs text-gray-600 italic leading-relaxed bg-white p-2 rounded-lg border border-gray-50">
+                                "{visit.machine_notes || visit.ticket_notes || visit.ticket_descriptions || 'Tidak ada catatan'}"
+                            </p>
                         </div>
+                    </div>
+                {:else}
+                    <div class="text-center py-8 text-gray-400 text-sm">
+                        {$t('Tidak ada riwayat kunjungan untuk mesin ini.')}
                     </div>
                 {/each}
             </div>

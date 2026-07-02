@@ -26,7 +26,7 @@ export async function load({ params, fetch, locals, parent }) {
     }
 
     const detailTicket = await ticketDetailAPI({ID : parentData.user.id, id_ticket: params.id}, fetch)
-    
+    console.log(detailTicket.data[0].machines)
     if(detailTicket.error){
         // If the process is successful, redirect the user
             redirect(303, '/home');
