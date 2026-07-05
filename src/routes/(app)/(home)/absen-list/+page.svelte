@@ -65,7 +65,7 @@
 
     // Rentang periode: 26 bulan sebelumnya s/d 25 bulan ini
     const startDate = new Date(currentYear, currentMonth - 1, 26);
-    const endDate = new Date(currentYear, currentMonth, 25);
+    const endDate = new Date(currentYear, currentMonth, 26);
     const now = new Date();
 
     let iterDate = new Date(startDate);
