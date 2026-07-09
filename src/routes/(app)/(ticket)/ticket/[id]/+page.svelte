@@ -21,7 +21,7 @@
     
     let { data, form } = $props();
 
-    let isOnline = $state(navigator.onLine);
+    let isOnline = $state(browser ? navigator.onLine : true);
     let dataTicket = $state({});
 
     const reportTable = 'report'
@@ -734,6 +734,8 @@
 
     onDestroy( async () => {
 
+        if (!browser) return;
+        
         if (watchID !== null) {
             if (navigator.geolocation) {
                 navigator.geolocation.clearWatch(watchID);
