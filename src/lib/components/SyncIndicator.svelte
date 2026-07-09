@@ -8,9 +8,15 @@
         // Cek jumlah pending setiap kali komponen dimuat
         updatePendingCount();
 
-        // Opsional: Cek berkala setiap 30 detik
-        const interval = setInterval(updatePendingCount, 30000);
-        return () => clearInterval(interval);
+        navigator.serviceWorker?.addEventListener('message', (event) => {
+
+            if (event.data?.type === 'SYNC_COMPLETED') {
+
+                updatePendingCount();
+
+            }
+
+        });
     });
 </script>
 

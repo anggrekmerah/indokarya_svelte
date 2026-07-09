@@ -388,6 +388,17 @@ async function handleDynamicSync(tableName, ticketId) {
 
         await deleteOfflineTask(tableName, ticketId);
 
+        const clients = await self.clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true
+        });
+
+        clients.forEach(client => {
+            client.postMessage({
+                type: 'SYNC_COMPLETED'
+            });
+        });
+
     }
 
 }
