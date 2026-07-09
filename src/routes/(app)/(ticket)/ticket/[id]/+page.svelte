@@ -1931,39 +1931,93 @@
                     }
 
                     if (!navigator.onLine) {
-                        // console.log("Saat ini OFFLINE. Menyimpan data formulir secara lokal.");
 
-                        // 1. Definisikan tag unik
                         const syncTag = `sync-${reportTable}-${dataTicket.id_ticket}`;
-                        
-                        // 2. Gunakan URL dengan action SvelteKit
-                        const actionUrl = window.location.pathname + '?/checkout'; 
+                        const actionUrl = window.location.pathname + '?/checkout';
 
-                        // 3. Simpan ke IndexedDB (Tabel 'report')
-                        const resultReport = await saveOfflineTask(
-                            reportTable, 
-                            {
-                                id_ticket: dataTicket.id_ticket, // Menggunakan kunci dinamis sebagai ID utama tabel
-                                url: actionUrl,
-                                timestamp: new Date()
-                            }, 
-                            formData
-                        );
+                        try {
 
-                        // 4. Daftarkan Sync
-                        if (resultReport && 'serviceWorker' in navigator && 'SyncManager' in window) {
+                            // Simpan ke IndexedDB
+                            const resultReport = await saveOfflineTask(
+                                reportTable,
+                                {
+                                    id_ticket: dataTicket.id_ticket,
+                                    url: actionUrl,
+                                    timestamp: new Date()
+                                },
+                                formData
+                            );
+
+                            if (!resultReport) {
+                                alert($t("Laporan gagal disimpan ke penyimpanan offline. Silakan coba lagi."));
+                                loadingCheckout = false;
+                                return cancel();
+                            }
+
+                            // Browser tidak mendukung Service Worker
+                            if (!('serviceWorker' in navigator)) {
+                                alert(
+                                    $t("Laporan berhasil disimpan di perangkat, tetapi browser tidak mendukung Service Worker sehingga sinkronisasi otomatis tidak tersedia.")
+                                );
+
+                                goto('/task');
+                                return;
+                            }
+
+                            // Browser tidak mendukung Background Sync
+                            if (!('SyncManager' in window)) {
+                                alert(
+                                    $t("Laporan berhasil disimpan di perangkat, tetapi browser tidak mendukung sinkronisasi otomatis. Silakan kirim ulang saat koneksi tersedia.")
+                                );
+
+                                goto('/task');
+                                return;
+                            }
+
                             const registration = await navigator.serviceWorker.ready;
-                            await registration.sync.register(syncTag);
-                            alert($t("Offline: Data checkout disimpan dan akan dikirim otomatis saat online"));
-                        }
-                        
-                        
-                        goto('/task');
-                        return {
-                            result: { type: 'success', status: 202, data: { message: 'Stored offline' } },
-                            update: async () => { /* Prevent UI update after local storage */ }
-                        };
 
+                            try {
+
+                                await registration.sync.register(syncTag);
+
+                                alert(
+                                    $t("Tidak ada koneksi internet.\n\nLaporan berhasil disimpan di perangkat dan akan dikirim otomatis ketika koneksi internet tersedia.")
+                                );
+
+                            } catch (syncError) {
+
+                                console.error(syncError);
+
+                                alert(
+                                    $t("Laporan berhasil disimpan di perangkat, tetapi gagal mendaftarkan sinkronisasi otomatis.\n\nData tidak hilang. Silakan buka kembali aplikasi saat koneksi internet tersedia agar dapat dikirim.")
+                                );
+
+                            }
+
+                            goto('/task');
+
+                            return {
+                                result: {
+                                    type: 'success',
+                                    status: 202,
+                                    data: {
+                                        message: 'Stored offline'
+                                    }
+                                },
+                                update: async () => {}
+                            };
+
+                        } catch (error) {
+
+                            console.error(error);
+
+                            alert(
+                                $t("Terjadi kesalahan saat menyimpan laporan ke penyimpanan offline.\n\nSilakan coba lagi.")
+                            );
+
+                            loadingCheckout = false;
+                            return cancel();
+                        }
                     }
 
                     return async ({ result, update }) => {

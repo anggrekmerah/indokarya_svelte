@@ -378,7 +378,7 @@ async function handleDynamicSync(tableName, ticketId) {
 
     if (task.headers) {
 
-        fetchOptions.headers = { ...fetchOptions.headers, ...task.headers };
+        fetchOptions.headers = { ...fetchOptions.headers, ...task.headers, 'x-sveltekit-action': 'true' };
 
     }
 
