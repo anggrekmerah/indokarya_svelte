@@ -346,13 +346,13 @@
             const formData = new FormData();
             Object.entries(payloadObj).forEach(([key, val]) => formData.append(key, val));
             
-            await saveOfflineTask('timelines', {
+            const resultLoc = await saveOfflineTask('timelines', {
                                 id_ticket: taskId, // Menggunakan kunci dinamis sebagai ID utama tabel
                                 url: '/api/location',
                                 timestamp: new Date()
                             }, formData);
             
-            if (typeof navigator !== 'undefined' && typeof window !== 'undefined') { 
+            if (resultLoc.success && typeof navigator !== 'undefined' && typeof window !== 'undefined') { 
                 if ('serviceWorker' in navigator && 'SyncManager' in window) {
                     const registration = await navigator.serviceWorker.ready;
                     await registration.sync.register(`sync-timelines-${taskId}`);
@@ -1948,7 +1948,7 @@
                                 formData
                             );
 
-                            if (!resultReport) {
+                            if (!resultReport.success) {
                                 alert($t("Laporan gagal disimpan ke penyimpanan offline. Silakan coba lagi."));
                                 loadingCheckout = false;
                                 return cancel();
@@ -2307,7 +2307,7 @@
                             formData)
 
                     // 2. Daftarkan tugas Background Sync
-                    if (resultCheckin && 'serviceWorker' in navigator && 'SyncManager' in window) {
+                    if (resultCheckin.success && 'serviceWorker' in navigator && 'SyncManager' in window) {
                         const registration = await navigator.serviceWorker.ready;
                         // Format tag: sync-checkin-123
                         await registration.sync.register(syncTag);
@@ -2463,7 +2463,7 @@
                         formData)
 
                 // 2. Daftarkan tugas Background Sync
-                if (resultUnlock && 'serviceWorker' in navigator && 'SyncManager' in window) {
+                if (resultUnlock.success && 'serviceWorker' in navigator && 'SyncManager' in window) {
                     const registration = await navigator.serviceWorker.ready;
                     // Format tag: sync-checkin-123
                     await registration.sync.register(syncTag);

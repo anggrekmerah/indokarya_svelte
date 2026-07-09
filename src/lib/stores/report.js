@@ -38,14 +38,28 @@ export async function serializeFormData(formData) {
  * @returns {Promise<string | number>} Mengembalikan kunci utama yang disimpan.
  */
 export async function saveOfflineTask(table, itemToStore, formData) {
-    const serializedData = await serializeFormData(formData);
-    
-    // Perhatikan: properti ID utama akan dinamakan 'id' di objek yang disimpan.
-    itemToStore.data = serializedData;
-    
-    // Gunakan notasi bracket untuk mengakses tabel secara dinamis
-    await db[table].put(itemToStore); // put: menyimpan atau memperbarui
-    
+    try {
+        const serializedData = await serializeFormData(formData);
+
+        itemToStore.data = serializedData;
+
+        const primaryKey = await db[table].put(itemToStore);
+
+        return {
+            success: true,
+            primaryKey
+        };
+
+    } catch (error) {
+
+        console.error("saveOfflineTask:", error);
+
+        return {
+            success: false,
+            error
+        };
+
+    }
 }
 
 /**
