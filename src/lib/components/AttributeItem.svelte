@@ -6,6 +6,13 @@
 
     if (attr.is_manual === undefined) attr.is_manual = 'N';
 
+    if (
+        attr.data_type.toLowerCase() === 'text' &&
+        attr.re_entry === 'Y'
+    ) {
+        attr.attribute_value = '';
+    }
+
     const isEmptyValue = $derived(
         attr.attribute_value === null ||
         attr.attribute_value === undefined ||
