@@ -7,7 +7,7 @@
     if (attr.is_manual === undefined) attr.is_manual = 'N';
 
     if (
-        attr.data_type.toLowerCase() === 'text' &&
+        attr.data_type.toLowerCase() === 'string' &&
         attr.re_entry === 'Y'
     ) {
         attr.attribute_value = '';
