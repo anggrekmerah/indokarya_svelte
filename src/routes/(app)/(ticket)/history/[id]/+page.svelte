@@ -1,7 +1,7 @@
 <script>
     import { t } from 'svelte-i18n';
     import { onMount } from 'svelte';
-    import { Lock, User, MapPin, Phone, MessageSquare, FileText, Route, RouteOff, CheckCircle, ChevronDown, ChevronUp, PenSquare, XCircle, Camera, Video, Trash2, FilePlus, RefreshCcw, CameraOff, Play, StopCircle, VideoOff, LoaderCircle, ClipboardList } from 'lucide-svelte';
+    import { Lock, User, MapPin, Phone, MessageSquare, FileText, Route, RouteOff, CheckCircle, ChevronDown, ChevronUp, PenSquare, XCircle, Camera, Video, Trash2, FilePlus, RefreshCcw, CameraOff, Play, StopCircle, VideoOff, LoaderCircle, ClipboardList, Expand } from 'lucide-svelte';
     import { slide } from 'svelte/transition';
     import { enhance } from '$app/forms';
     import { Loader } from '@googlemaps/js-api-loader';
@@ -426,50 +426,119 @@
                                     </div>
 
                                     <!-- Photos & Videos for this Machine -->
-                                    <div class="space-y-2">
-                                        <h5 class="flex items-center text-md font-semibold text-gray-800"><Camera class="h-4 w-4 mr-2 text-orange-500"/> {$t('Photos & Videos')}</h5>
-                                        
-                                        {#if machine.media.length > 0}
-                                            <div class="grid grid-cols-2 gap-3 pl-4">
-                                                {#each machine.media as mediaItem}
-                                                    <div class="relative overflow-hidden rounded-lg shadow-md border border-gray-200">
-                                                        {#if mediaItem.type === 'photo'}
-                                                            <!-- Image placeholder as we don't have static paths working here -->
-                                                            <div class="relative cursor-pointer" 
-                                                                onclick={() => openPhotoModal(mediaItem.url)}
-                                                            >
-                                                                <img 
-                                                                    src={mediaItem.url} 
-                                                                    alt={mediaItem.caption} 
-                                                                    class="w-full h-32 object-cover"
-                                                                >
-                                                                
-                                                                <div class="absolute inset-0 bg-black bg-opacity-30 flex items-end p-2 pointer-events-none">
-                                                                    <p class="text-xs text-white font-medium truncate">{mediaItem.caption}</p>
-                                                                </div>
-                                                            </div>
-                                                        {:else if mediaItem.type === 'video'}
-                                                            <div class="w-full h-32 relative cursor-pointer" onclick={() => openVideoModal(mediaItem.url)}>
-                                                                <!-- Video poster/preview placeholder -->
-                                                                <div class="w-full h-full object-cover flex items-center justify-center bg-gray-900 text-white">
-                                                                    Video Preview Unavailable
-                                                                </div>
-                                                                
-                                                                <div class="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center">
-                                                                    <Play class="w-10 h-10 text-white z-10 opacity-80" /> 
-                                                                </div>
-                                                                <div class="absolute inset-x-0 bottom-0 bg-black bg-opacity-40 flex items-end p-2">
-                                                                    <p class="text-xs text-white font-medium truncate"><Video class="w-3 h-3 inline mr-1" />{mediaItem.caption}</p>
-                                                                </div>
-                                                            </div>
-                                                        {/if}
-                                                    </div>
-                                                {/each}
-                                            </div>
-                                        {:else}
-                                            <p class="text-sm text-gray-500 italic pl-4">{$t('No photos or videos attached for this machine.')}</p>
-                                        {/if}
-                                    </div>
+                                    <div class="space-y-3">
+    <h5 class="flex items-center text-md font-semibold text-gray-800">
+        <Camera class="h-4 w-4 mr-2 text-orange-500" />
+        {$t('Photos & Videos')}
+    </h5>
+
+    {#if machine.media.length > 0}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+
+            {#each machine.media as mediaItem}
+
+                <div class="group relative rounded-xl overflow-hidden border border-gray-200 shadow hover:shadow-lg transition-all duration-300">
+
+                    {#if mediaItem.type === 'photo'}
+
+                        <button
+                            class="relative w-full aspect-video overflow-hidden"
+                            onclick={() => openPhotoModal(mediaItem.url)}
+                        >
+
+                            <img
+                                src={mediaItem.url}
+                                alt={mediaItem.caption}
+                                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+
+                            <!-- Hover -->
+                            <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition"></div>
+
+                            <!-- Icon -->
+                            <div class="absolute top-2 left-2 bg-black/60 rounded-full p-1">
+                                <Camera class="w-4 h-4 text-white" />
+                            </div>
+
+                            <!-- Zoom Icon -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                <div class="bg-black/50 rounded-full p-2">
+                                    <Expand class="w-5 h-5 text-white" />
+                                </div>
+                            </div>
+
+                            <!-- Caption -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                                <p class="text-xs text-white truncate">
+                                    {mediaItem.caption}
+                                </p>
+                            </div>
+
+                        </button>
+
+                    {:else if mediaItem.type === 'video'}
+
+                        <button
+                            class="relative w-full aspect-video overflow-hidden bg-black"
+                            onclick={() => openVideoModal(mediaItem.url)}
+                        >
+
+                            <!-- Thumbnail dari video -->
+                            <video
+                                src={mediaItem.url}
+                                muted
+                                preload="metadata"
+                                playsinline
+                                class="w-full h-full object-cover pointer-events-none"
+                            />
+
+                            <!-- Overlay -->
+                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/45 transition"></div>
+
+                            <!-- Play -->
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="rounded-full bg-white/20 backdrop-blur-sm p-3 group-hover:scale-110 transition">
+                                    <Play class="w-8 h-8 text-white fill-white" />
+                                </div>
+                            </div>
+
+                            <!-- Badge -->
+                            <div class="absolute top-2 left-2 bg-red-600 text-white text-[10px] rounded px-2 py-1 flex items-center gap-1">
+                                <Video class="w-3 h-3" />
+                                VIDEO
+                            </div>
+
+                            <!-- Caption -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                                <p class="text-xs text-white truncate">
+                                    {mediaItem.caption}
+                                </p>
+                            </div>
+
+                        </button>
+
+                    {/if}
+
+                </div>
+
+            {/each}
+
+        </div>
+
+    {:else}
+
+        <div class="rounded-xl border-2 border-dashed border-gray-300 p-10 text-center">
+
+            <Camera class="w-10 h-10 mx-auto text-gray-400 mb-3"/>
+
+            <p class="text-gray-500">
+                {$t('No photos or videos attached for this machine.')}
+            </p>
+
+        </div>
+
+    {/if}
+</div>
 
                                 </div>
                             {/each}
