@@ -119,7 +119,7 @@
     let userLocation = $state(null);
 
     let currentZoom = 1;
-    let zoomCapabilities = null;
+    let zoomCapabilities = $state(null);
 
     let centerMarker = $state({}) 
     const mapID = data.mapsId
