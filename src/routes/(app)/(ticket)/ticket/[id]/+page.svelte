@@ -118,6 +118,9 @@
     let isNearDestination = $state(false);
     let userLocation = $state(null);
 
+    let currentZoom = 1;
+    let zoomCapabilities = null;
+
     let centerMarker = $state({}) 
     const mapID = data.mapsId
     const mapsKey = data.mapsKey
@@ -392,45 +395,105 @@
         alertPopup = false;
     }
 
+    async function setZoom(value) {
+
+        if (!currentStream || !zoomCapabilities) return;
+
+        const track = currentStream.getVideoTracks()[0];
+
+        currentZoom = Math.max(
+            zoomCapabilities.min,
+            Math.min(value, zoomCapabilities.max)
+        );
+
+        try {
+            await track.applyConstraints({
+                advanced: [
+                    {
+                        zoom: currentZoom
+                    }
+                ]
+            });
+        } catch (err) {
+            console.error('Failed to set zoom:', err);
+        }
+    }
+
+    async function zoomIn() {
+        if (!zoomCapabilities) return;
+        await setZoom(currentZoom + (zoomCapabilities.step || 0.2));
+    }
+
+    async function zoomOut() {
+        if (!zoomCapabilities) return;
+        await setZoom(currentZoom - (zoomCapabilities.step || 0.2));
+    }
+
     async function startCamera(type, machineId) {
-        if (!browser) return; 
+        if (!browser) return;
 
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             alert($t('Your browser does not support the MediaDevices API'));
             return;
         }
-        
-        // Stop any existing stream
+
+        // Stop camera sebelumnya jika masih aktif
         if (currentStream) {
             stopCamera();
         }
 
-        isCameraPopupOpen = true;
         mediaType = type;
-        
+        currentMachineId = machineId;
+        isCameraPopupOpen = true;
+
         const constraints = {
-            audio: (type === 'video'),
+            audio: type === 'video',
             video: {
                 facingMode: selectedCamera
             }
         };
 
         try {
-            const constraints = {
-                video: {
-                    facingMode: selectedCamera
-                }
-            };
             currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+            const track = currentStream.getVideoTracks()[0];
+
+            // Simpan kemampuan kamera
+            if (track.getCapabilities) {
+                const capabilities = track.getCapabilities();
+
+                if (capabilities.zoom) {
+                    zoomCapabilities = capabilities.zoom;
+                    currentZoom = zoomCapabilities.min;
+
+                    try {
+                        await track.applyConstraints({
+                            advanced: [
+                                {
+                                    zoom: currentZoom
+                                }
+                            ]
+                        });
+                    } catch (err) {
+                        console.warn('Unable to initialize zoom:', err);
+                    }
+                } else {
+                    zoomCapabilities = null;
+                    alert('Zoom is not supported on this camera.');
+                }
+            }
+
             if (videoElement) {
                 videoElement.srcObject = currentStream;
+                videoElement.play();
             }
-            currentMachineId = machineId; // Set the active machine ID
-            mediaType = type;
-            isCameraPopupOpen = true;
+
         } catch (err) {
             console.error('Error accessing camera:', err);
-            // In a real app, show a friendly error modal instead of alert
+
+            isCameraPopupOpen = false;
+            currentMachineId = null;
+
             alert($t('Cannot access camera. Please check permissions'));
         }
     }
@@ -2236,7 +2299,16 @@
             <button onclick={switchCamera} class="rounded-lg items-center justify-center flex-1 flex p-4 bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors">
                 <RefreshCcw class="w-6 h-6" />
             </button>
-            
+            {#if zoomCapabilities}
+                <input
+                    type="range"
+                    min={zoomCapabilities.min}
+                    max={zoomCapabilities.max}
+                    step={zoomCapabilities.step || 0.1}
+                    bind:value={currentZoom}
+                    oninput={(e) => setZoom(parseFloat(e.target.value))}
+                />
+            {/if}
         </div>
     </div>
 {/if}
