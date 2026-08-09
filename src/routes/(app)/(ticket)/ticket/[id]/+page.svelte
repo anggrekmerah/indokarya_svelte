@@ -63,6 +63,7 @@
     let selectedMedia = $state(null);
     let isInfoExpanded = $state(true);
     let isHistoryxpanded = $state(false)
+    let isListSparepartExpanded = $state(false)
     let selectedLastVisit = $state([]);
     let isMapExpanded = $state(false);
     let loadingCheckout = $state(false);
@@ -254,6 +255,7 @@
             if(isNearDestination){
                 isInfoExpanded = false
                 isHistoryxpanded = false
+                isListSparepartExpanded = false
             }
 
             if (wasNearDestination === true && isNearDestination === false) {
@@ -786,6 +788,7 @@
         if(isNearDestination){
             isInfoExpanded = false;
             isHistoryxpanded = false
+            isListSparepartExpanded = false
         }
 
         if (wasNearDestination === true && isNearDestination === false) {
@@ -1669,6 +1672,73 @@
                     </div>
 
                     <hr class="border-gray-200">
+                </div>
+            {/if}
+        </section>
+
+        <!-- List Sparepart -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- Header / Toggle Button -->
+            <button 
+                onclick={() => isListSparepartExpanded = !isListSparepartExpanded}
+                class="w-full flex items-center justify-between p-4 sm:p-5 text-base sm:text-lg font-semibold text-left transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+            >
+                <h2 class="flex items-center text-gray-800 font-medium">
+                    <MessageSquare class="h-5 w-5 mr-2.5 text-green-500 shrink-0" />
+                    <span>{$t('List Sparepart')}</span>
+                </h2>
+                {#if isListSparepartExpanded}
+                    <ChevronUp class="h-5 w-5 transition-transform text-gray-400" />
+                {:else}
+                    <ChevronDown class="h-5 w-5 transition-transform text-gray-400" />
+                {/if}
+            </button>
+        
+            <!-- Content Collapse -->
+            {#if isListSparepartExpanded}
+                <div transition:slide class="px-4 pb-5 sm:px-5 space-y-4">
+                    <hr class="border-gray-100 -mt-1 mb-4" />
+
+                    {#if sparePartsList.length > 0}
+                        <div class="space-y-2">
+                            <label class="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-500">
+                                {$t('Spare Parts Used on this Machine')}
+                            </label>
+
+                            <!-- Grid Layout Responsif: 1 kolom di HP, 2 kolom di Laptop -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 max-h-[28rem] overflow-y-auto pr-1">
+                                {#each machineReports as mReport (mReport.id)}
+                                    <div class="bg-gray-50/80 rounded-lg p-3 sm:p-4 border-l-4 border-green-500 border border-gray-200/60 shadow-xs space-y-2">
+                                        <!-- Machine Title -->
+                                        <h3 class="flex items-center text-sm sm:text-base font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                                            <FileText class="h-4 w-4 mr-2 text-green-600 shrink-0" /> 
+                                            <span class="truncate">{$t('Machine')}: <span class="text-blue-600 font-bold">{mReport.name}</span></span>
+                                        </h3>
+                                        
+                                        <!-- Spareparts List -->
+                                        <div class="space-y-1.5 pt-1">
+                                            {#each sparePartsList as part}
+                                                {#if part.id_machine == mReport.id_machine}
+                                                    <div class="flex items-start bg-white p-2 rounded border border-gray-100 text-xs sm:text-sm">
+                                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-2 shrink-0"></span>
+                                                        <label for={`spare-part-${mReport.id}-${part.id_ticket_sparepart}`} class="text-gray-700 cursor-pointer leading-tight">
+                                                            <span class="font-medium text-gray-900">{part.sparepart_name}</span>
+                                                            <span class="text-gray-500 text-xs block sm:inline sm:ml-1">
+                                                                (P/N: {part.sparepart_sku || 'N/A'})
+                                                            </span>
+                                                            <span class="text-gray-500 text-xs block sm:inline sm:ml-1">
+                                                                (Qty: {part.quantity || 0})
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                {/if}
+                                            {/each}
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        </div>
+                    {/if}
                 </div>
             {/if}
         </section>
